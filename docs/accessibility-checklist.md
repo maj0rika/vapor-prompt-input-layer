@@ -34,10 +34,22 @@ Vapor 가 제공하는 기본 접근성 위에, 합성 컴포넌트 레이어에
 - [x] 데이터소스 선택 요약은 `aria-live="polite"` 로 안내
 - [x] 긴 파일명은 말줄임 처리하고 Tooltip 으로 전체 이름 노출
 
+## 채팅 화면 접근성
+
+- [x] 대화 thread 는 `role="log"` + `aria-live="polite"` 로 표시
+- [x] 스트리밍 중인 어시스턴트 텍스트는 `aria-live="polite"` 영역으로 점진 전달
+- [x] 스트리밍 중 ESC 로 응답 취소 가능 — E2E 로 검증
+- [x] 응답 생성 인디케이터는 `role="status"` + `aria-label`
+- [x] 메시지 액션(복사·재생성·피드백)은 모두 `aria-label` 을 가진 IconButton
+- [x] 피드백 토글 버튼은 `aria-pressed` 로 선택 상태 전달
+- [x] 미리보기 패널은 `aria-label="초안 미리보기"`, 닫기 버튼에 라벨 제공
+- [x] 테마 토글 버튼은 현재 모드에 맞는 `aria-label` 제공
+- [x] 에이전트 오류 메시지는 `role="alert"` 로 전달
+
 ## 자동 검증
 
 - `eslint-plugin-jsx-a11y` (recommended) — 일반 JSX 접근성 규칙
 - `eslint-plugin-vapor` — Vapor 컴포넌트 전용 접근성 규칙
-- Playwright E2E — 키보드 흐름, 포커스 순서, ESC 닫힘 검증
+- Playwright E2E — 키보드 흐름, 포커스 순서, ESC 취소·닫힘 검증
 
 `npm run lint` 와 `npm run test:e2e` 로 회귀를 방지한다.
