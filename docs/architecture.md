@@ -75,16 +75,24 @@ diff 에 드러난다.
 ## 컴포넌트 구성
 
 ```
-ChatScreen                  채팅 화면 최상위 합성 (split-panel)
+ChatScreen                  채팅 화면 최상위 합성 (헤더·본문·입력 통합 surface)
 ├─ ConversationView         메시지 thread 스크롤 컨테이너
-│  └─ MessageBubble         user/assistant 버블 + 스트리밍 텍스트
-│     └─ MessageActions     복사 / 재생성 / 피드백
-├─ PreviewPanel             에이전트 초안 문서 라이브 렌더링
+│  └─ MessageBubble         user/assistant 버블
+│     ├─ MessageAvatar      발신자 아바타
+│     ├─ AttachmentChip     함께 전송된 첨부 파일 칩
+│     ├─ Markdown           어시스턴트 응답 마크다운 렌더링
+│     └─ MessageActions     복사(완료 피드백) / 재생성 / 피드백
+├─ PreviewPanel             에이전트 초안 문서 라이브 렌더링 (Markdown)
 ├─ EmptyState               빈 상태 + 워크플로우 추천 칩
 ├─ ThemeToggle              라이트/다크 모드 전환
-└─ PromptBar                입력 영역 (prompt 레이어 재사용)
+└─ PromptBar                입력 영역 (prompt 레이어 재사용, bare 모드)
    ├─ PromptBox · Dropzone · AttachmentList · DataSourceSelector
 ```
+
+- 사용자가 첨부한 파일은 `ChatMessage.attachments` 로 보존되어 대화 버블에
+  칩으로 표시된다. 메시지는 `createdAt` 타임스탬프와 발신자 아바타를 가진다.
+- 어시스턴트 응답과 초안은 `react-markdown` 으로 렌더링하며, 색상은
+  `.chat-md` 규칙에서 Vapor 테마 토큰을 상속해 다크 모드에 적응한다.
 
 ## 스타일링
 
