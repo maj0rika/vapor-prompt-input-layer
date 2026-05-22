@@ -1,5 +1,6 @@
 import { IconButton, Text } from '@vapor-ui/core';
 import { CloseOutlineIcon } from '@vapor-ui/icons';
+import { Markdown } from './Markdown';
 
 export type PreviewPanelProps = {
   /** 에이전트가 작성 중/완료한 초안 문서. 스트리밍 중 점진 갱신된다. */
@@ -33,13 +34,9 @@ export function PreviewPanel({ draft, onClose }: PreviewPanelProps) {
 
       <div className="min-h-0 flex-1 overflow-y-auto p-v-300">
         {draft ? (
-          <Text
-            typography="body2"
-            className="block whitespace-pre-wrap break-words"
-            aria-live="polite"
-          >
-            {draft}
-          </Text>
+          <div aria-live="polite">
+            <Markdown>{draft}</Markdown>
+          </div>
         ) : (
           <Text typography="body3" foreground="hint-200">
             에이전트가 초안을 작성하면 여기에 표시됩니다.

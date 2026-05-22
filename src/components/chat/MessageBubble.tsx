@@ -1,6 +1,7 @@
 import { Text } from '@vapor-ui/core';
 import { isTerminal, type ChatMessage } from '../../agent';
 import { AttachmentChip } from './AttachmentChip';
+import { Markdown } from './Markdown';
 import { MessageActions } from './MessageActions';
 import { MessageAvatar } from './MessageAvatar';
 import { StreamingIndicator } from './StreamingIndicator';
@@ -86,15 +87,19 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
           {showIndicator ? (
             <StreamingIndicator />
           ) : (
-            message.text.length > 0 && (
+            message.text.length > 0 &&
+            (isUser ? (
               <Text
                 typography="body2"
                 className="block whitespace-pre-wrap break-words"
-                aria-live={!isUser && isStreaming ? 'polite' : undefined}
               >
                 {message.text}
               </Text>
-            )
+            ) : (
+              <div aria-live={isStreaming ? 'polite' : undefined}>
+                <Markdown>{message.text}</Markdown>
+              </div>
+            ))
           )}
 
           {message.status === 'error' && message.errorMessage && (
