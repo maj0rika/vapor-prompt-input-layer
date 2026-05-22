@@ -30,7 +30,7 @@ export function DataSourceSelector({
 
   return (
     <div className="flex flex-col gap-1">
-      <Text typography="body3" foreground="hint-200" render={<label />}>
+      <Text typography="body3" foreground="hint-200">
         데이터소스
       </Text>
 

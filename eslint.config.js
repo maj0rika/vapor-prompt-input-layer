@@ -2,6 +2,8 @@ import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
+import jsxA11y from 'eslint-plugin-jsx-a11y'
+import vapor from 'eslint-plugin-vapor'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
@@ -18,6 +20,17 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+  },
+  /* 일반 접근성 규칙 (eslint-plugin-jsx-a11y) */
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    extends: [jsxA11y.flatConfigs.recommended],
+  },
+  /* Vapor 컴포넌트 전용 접근성 규칙 (eslint-plugin-vapor) */
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    plugins: vapor.configs.flat.plugins,
+    rules: vapor.configs.flat.rules,
   },
   /*
    * 경계 규칙: 앱 레이어는 Vapor primitive 를 직접 사용하지 않는다.
