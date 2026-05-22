@@ -74,7 +74,7 @@ export function Dropzone({
         onDrop={handleDrop}
         data-state={disabled ? 'disabled' : isDragOver ? 'dragover' : 'idle'}
         className={[
-          'flex flex-col items-center gap-2 rounded-v-300 border border-dashed p-v-300 text-center transition-colors',
+          'flex min-h-[96px] flex-col items-center justify-center gap-2 rounded-v-300 border border-dashed p-v-300 text-center transition-colors',
           disabled
             ? 'border-v-hint opacity-60'
             : isDragOver

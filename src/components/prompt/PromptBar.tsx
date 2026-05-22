@@ -80,7 +80,7 @@ export function PromptBar({
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 rounded-v-400 border border-v-normal bg-v-canvas-100 p-v-300 sm:p-v-400">
       <DataSourceSelector
         options={dataSourceOptions}
         selected={dataSources}
