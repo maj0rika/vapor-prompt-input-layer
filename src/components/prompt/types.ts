@@ -38,6 +38,8 @@ export type DropzoneProps = {
   maxSize?: number;
   multiple?: boolean;
   disabled?: boolean;
+  /** 채팅 입력처럼 공간이 좁은 맥락에서 한 줄짜리 컴팩트 레이아웃을 쓴다. */
+  compact?: boolean;
   onFiles: (files: File[]) => void;
   onReject?: (rejection: FileRejection) => void;
 };

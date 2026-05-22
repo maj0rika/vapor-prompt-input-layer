@@ -18,7 +18,10 @@ export function ChatDemoPage() {
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <header className="flex flex-col gap-1">
         <h1 className="m-0 text-xl font-semibold">글쓰기 코치</h1>
-        <p className="m-0 text-sm text-gray-500">
+        <p
+          className="m-0 text-sm"
+          style={{ color: 'var(--vapor-color-foreground-hint-200)' }}
+        >
           Vapor UI 기반 AI 에이전트 채팅 화면 — 컴포넌트 레이어 케이스 스터디
         </p>
       </header>

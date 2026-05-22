@@ -15,6 +15,7 @@ export function Dropzone({
   maxSize,
   multiple = false,
   disabled = false,
+  compact = false,
   onFiles,
   onReject,
 }: DropzoneProps) {
@@ -74,7 +75,10 @@ export function Dropzone({
         onDrop={handleDrop}
         data-state={disabled ? 'disabled' : isDragOver ? 'dragover' : 'idle'}
         className={[
-          'flex min-h-[96px] flex-col items-center justify-center gap-2 rounded-v-300 border border-dashed p-v-300 text-center transition-colors',
+          'flex items-center gap-2 rounded-v-300 border border-dashed transition-colors',
+          compact
+            ? 'justify-between p-v-150'
+            : 'min-h-[96px] flex-col justify-center p-v-300 text-center',
           disabled
             ? 'border-v-hint opacity-60'
             : isDragOver
@@ -82,8 +86,10 @@ export function Dropzone({
               : 'border-v-normal',
         ].join(' ')}
       >
-        <Text typography="body2" foreground="hint-200">
-          파일을 여기에 끌어다 놓거나 버튼으로 선택하세요.
+        <Text typography={compact ? 'body3' : 'body2'} foreground="hint-200">
+          {compact
+            ? '파일을 끌어다 놓거나 첨부하세요.'
+            : '파일을 여기에 끌어다 놓거나 버튼으로 선택하세요.'}
         </Text>
         <Button
           type="button"

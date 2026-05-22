@@ -15,6 +15,9 @@
 body {
   margin: 0;
   min-height: 100vh;
+  /* Vapor 테마 토큰 — 라이트/다크 모드에 따라 자동 전환된다. */
+  background: var(--vapor-color-background-canvas-200);
+  color: var(--vapor-color-foreground-normal-100);
 }
 
 /* Vapor UI Portal(Dialog, Popover 등)이 항상 콘텐츠 위에 표시되도록

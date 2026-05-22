@@ -5,6 +5,7 @@ import { PromptBar, type DataSourceOption } from '../prompt';
 import { ConversationView } from './ConversationView';
 import { EmptyState } from './EmptyState';
 import { PreviewPanel } from './PreviewPanel';
+import { ThemeToggle } from './ThemeToggle';
 import { useAgentStream } from './useAgentStream';
 
 export type ChatScreenProps = {
@@ -63,6 +64,10 @@ export function ChatScreen({ dataSourceOptions, client }: ChatScreenProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <div className="flex items-center justify-end">
+        <ThemeToggle />
+      </div>
+
       <div className="flex min-h-0 flex-1 flex-col gap-3 md:flex-row">
         {/* 좌: 대화 thread */}
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-v-400 border border-v-normal bg-v-canvas-100">
@@ -100,6 +105,7 @@ export function ChatScreen({ dataSourceOptions, client }: ChatScreenProps) {
         defaultText={seedText}
         dataSourceOptions={dataSourceOptions}
         multipleDataSources
+        compactDropzone
         disabled={isStreaming}
         placeholder="글쓰기에 대해 무엇이든 물어보세요."
         onSubmit={(payload) =>

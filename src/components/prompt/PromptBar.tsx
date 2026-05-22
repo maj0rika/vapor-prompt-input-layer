@@ -25,6 +25,8 @@ export type PromptBarProps = {
    * 컴포넌트를 remount 한다 (예: 추천 칩 클릭).
    */
   defaultText?: string;
+  /** 좁은 맥락(채팅 입력)에서 Dropzone 을 컴팩트 레이아웃으로 렌더한다. */
+  compactDropzone?: boolean;
   onSubmit: (payload: PromptSubmitPayload) => void;
 };
 
@@ -47,6 +49,7 @@ export function PromptBar({
   disabled = false,
   placeholder = '무엇이든 물어보세요.',
   defaultText,
+  compactDropzone = false,
   onSubmit,
 }: PromptBarProps) {
   const [text, setText] = useState(defaultText ?? '');
@@ -100,6 +103,7 @@ export function PromptBar({
         maxSize={maxFileSize}
         multiple={multipleFiles}
         disabled={disabled}
+        compact={compactDropzone}
         onFiles={handleFiles}
       />
 
