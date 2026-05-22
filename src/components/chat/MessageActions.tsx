@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IconButton } from '@vapor-ui/core';
 import {
+  CheckCircleIcon,
   CopyOutlineIcon,
   DislikeThumbIcon,
   DislikeThumbOutlineIcon,
@@ -17,27 +18,50 @@ export type MessageActionsProps = {
 
 type Feedback = 'up' | 'down' | null;
 
+/** 복사 완료 표시 유지 시간(ms). */
+const COPIED_RESET_MS = 1600;
+
 /**
  * 어시스턴트 메시지의 액션 — 복사 / 재생성(재시도) / 피드백 리액션.
  *
- * 피드백은 백엔드가 없으므로 로컬 토글 상태로만 표현한다.
+ * 복사 시 잠시 완료 상태를 표시하고, 피드백은 백엔드가 없으므로 로컬 토글
+ * 상태로만 표현한다.
  */
 export function MessageActions({ onCopy, onRegenerate }: MessageActionsProps) {
   const [feedback, setFeedback] = useState<Feedback>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), COPIED_RESET_MS);
+    return () => clearTimeout(timer);
+  }, [copied]);
 
   const toggle = (value: Exclude<Feedback, null>) =>
     setFeedback((current) => (current === value ? null : value));
+
+  const handleCopy = () => {
+    onCopy();
+    setCopied(true);
+  };
 
   return (
     <div className="mt-1 flex items-center gap-0.5">
       <IconButton
         size="sm"
         variant="ghost"
-        aria-label="응답 복사"
-        onClick={onCopy}
+        aria-label={copied ? '복사됨' : '응답 복사'}
+        onClick={handleCopy}
       >
-        <CopyOutlineIcon size={15} />
+        {copied ? (
+          <CheckCircleIcon size={15} />
+        ) : (
+          <CopyOutlineIcon size={15} />
+        )}
       </IconButton>
+      <span className="sr-only" aria-live="polite">
+        {copied ? '응답이 복사되었습니다.' : ''}
+      </span>
 
       {onRegenerate && (
         <IconButton
