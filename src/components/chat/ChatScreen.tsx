@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Text } from '@vapor-ui/core';
+import { Button } from '@vapor-ui/core';
 import { MockAgentClient, type AgentClient } from '../../agent';
 import { PromptBar, type DataSourceOption } from '../prompt';
 import { ConversationView } from './ConversationView';
+import { EmptyState } from './EmptyState';
 import { PreviewPanel } from './PreviewPanel';
 import { useAgentStream } from './useAgentStream';
 
@@ -22,13 +23,18 @@ export type ChatScreenProps = {
  */
 export function ChatScreen({ dataSourceOptions, client }: ChatScreenProps) {
   const agent = useMemo(() => client ?? new MockAgentClient(), [client]);
-  const { messages, isStreaming, send, cancel } = useAgentStream(agent);
+  const { messages, isStreaming, send, regenerate, cancel } =
+    useAgentStream(agent);
 
   // 사용자가 명시적으로 닫은 초안의 id. 미리보기는 기본 열림이며,
   // 닫은 초안과 id 가 다른 새 초안이 오면 다시 열린다 (effect 불필요).
   const [closedDraftId, setClosedDraftId] = useState<string | undefined>(
     undefined,
   );
+
+  // 추천 칩으로 입력창을 채우기 위한 seed. key 와 함께 PromptBar 를 remount 한다.
+  const [seed, setSeed] = useState(0);
+  const [seedText, setSeedText] = useState('');
 
   useEffect(() => {
     if (!isStreaming) return;
@@ -50,6 +56,11 @@ export function ChatScreen({ dataSourceOptions, client }: ChatScreenProps) {
   const isEmpty = messages.length === 0;
   const showPreview = Boolean(draftId) && draftId !== closedDraftId;
 
+  const handlePickSuggestion = (suggestion: string) => {
+    setSeedText(suggestion);
+    setSeed((value) => value + 1);
+  };
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       <div className="flex min-h-0 flex-1 flex-col gap-3 md:flex-row">
@@ -67,14 +78,9 @@ export function ChatScreen({ dataSourceOptions, client }: ChatScreenProps) {
             </div>
           )}
           {isEmpty ? (
-            <div className="flex flex-1 items-center justify-center p-v-400 text-center">
-              <Text typography="body2" foreground="hint-200">
-                글쓰기에 대해 무엇이든 물어보세요. 문장 다듬기, 초안 작성, 제목
-                추천을 도와드립니다.
-              </Text>
-            </div>
+            <EmptyState onPick={handlePickSuggestion} />
           ) : (
-            <ConversationView messages={messages} />
+            <ConversationView messages={messages} onRegenerate={regenerate} />
           )}
         </div>
 
@@ -90,6 +96,8 @@ export function ChatScreen({ dataSourceOptions, client }: ChatScreenProps) {
       </div>
 
       <PromptBar
+        key={seed}
+        defaultText={seedText}
         dataSourceOptions={dataSourceOptions}
         multipleDataSources
         disabled={isStreaming}

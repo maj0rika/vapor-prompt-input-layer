@@ -5,6 +5,8 @@ export type UseAgentStreamResult = {
   messages: ChatMessage[];
   isStreaming: boolean;
   send: (request: AgentRequest) => void;
+  /** 해당 어시스턴트 메시지를 직전 user 메시지로 다시 생성한다 (재시도). */
+  regenerate: (assistantId: string) => void;
   cancel: () => void;
 };
 
@@ -119,9 +121,40 @@ export function useAgentStream(client: AgentClient): UseAgentStreamResult {
     [runStream],
   );
 
+  const regenerate = useCallback(
+    (assistantId: string) => {
+      const index = messages.findIndex((m) => m.id === assistantId);
+      if (index < 1) return;
+      const userMessage = messages[index - 1];
+      if (userMessage.role !== 'user') return;
+
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      // 직전 응답을 자리에서 초기화하고 같은 id 로 다시 스트리밍한다.
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.id === assistantId
+            ? {
+                ...message,
+                text: '',
+                status: 'streaming',
+                draft: undefined,
+                errorMessage: undefined,
+              }
+            : message,
+        ),
+      );
+      setIsStreaming(true);
+      void runStream({ text: userMessage.text }, assistantId, controller.signal);
+    },
+    [messages, runStream],
+  );
+
   const cancel = useCallback(() => {
     abortRef.current?.abort();
   }, []);
 
-  return { messages, isStreaming, send, cancel };
+  return { messages, isStreaming, send, regenerate, cancel };
 }

@@ -20,6 +20,11 @@ export type PromptBarProps = {
   multipleFiles?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  /**
+   * 입력창 초기 텍스트. 외부에서 텍스트를 주입하려면 `key` 와 함께 바꿔
+   * 컴포넌트를 remount 한다 (예: 추천 칩 클릭).
+   */
+  defaultText?: string;
   onSubmit: (payload: PromptSubmitPayload) => void;
 };
 
@@ -41,9 +46,10 @@ export function PromptBar({
   multipleFiles = true,
   disabled = false,
   placeholder = '무엇이든 물어보세요.',
+  defaultText,
   onSubmit,
 }: PromptBarProps) {
-  const [text, setText] = useState('');
+  const [text, setText] = useState(defaultText ?? '');
   const [attachments, setAttachments] = useState<PromptAttachment[]>([]);
   const [dataSources, setDataSources] = useState<string[]>([]);
 
