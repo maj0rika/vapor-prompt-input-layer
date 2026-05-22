@@ -1,5 +1,6 @@
 import { Text } from '@vapor-ui/core';
 import { isTerminal, type ChatMessage } from '../../agent';
+import { AttachmentChip } from './AttachmentChip';
 import { MessageActions } from './MessageActions';
 import { StreamingIndicator } from './StreamingIndicator';
 
@@ -37,6 +38,14 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
             isUser ? 'bg-v-primary-100' : 'bg-v-canvas-200',
           ].join(' ')}
         >
+          {message.attachments && message.attachments.length > 0 && (
+            <div className="mb-1.5 flex flex-wrap gap-1.5">
+              {message.attachments.map((attachment, index) => (
+                <AttachmentChip key={index} attachment={attachment} />
+              ))}
+            </div>
+          )}
+
           {showIndicator ? (
             <StreamingIndicator />
           ) : (
