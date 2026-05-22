@@ -18,7 +18,7 @@ export function PreviewPanel({ draft, onClose }: PreviewPanelProps) {
   return (
     <aside
       aria-label="초안 미리보기"
-      className="flex min-h-0 flex-col overflow-hidden rounded-v-400 border border-v-normal bg-v-canvas-100"
+      className="flex min-h-0 flex-col overflow-hidden border-t border-v-normal md:border-t-0 md:border-l"
     >
       <header className="flex items-center justify-between border-b border-v-normal px-v-200 py-v-150">
         <Text typography="subtitle2">초안 미리보기</Text>

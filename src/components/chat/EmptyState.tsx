@@ -1,4 +1,5 @@
 import { Button, Text } from '@vapor-ui/core';
+import { MagicWandIcon } from '@vapor-ui/icons';
 
 /** 글쓰기 코치 도메인의 워크플로우 추천 칩. */
 const SUGGESTIONS = [
@@ -17,11 +18,18 @@ export type EmptyStateProps = {
  */
 export function EmptyState({ onPick }: EmptyStateProps) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-3 p-v-400 text-center">
-      <Text typography="subtitle1">무엇을 도와드릴까요?</Text>
-      <Text typography="body3" foreground="hint-200">
-        문장 다듬기, 초안 작성, 제목 추천을 도와드립니다.
-      </Text>
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 p-v-500 text-center">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-v-primary-100 text-v-primary">
+        <MagicWandIcon size={26} aria-hidden="true" />
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <Text typography="heading5">무엇을 도와드릴까요?</Text>
+        <Text typography="body3" foreground="hint-200">
+          문장 다듬기, 초안 작성, 제목 추천 — 글쓰기 전 과정을 도와드립니다.
+        </Text>
+      </div>
+
       <div className="flex flex-wrap justify-center gap-2">
         {SUGGESTIONS.map((suggestion) => (
           <Button

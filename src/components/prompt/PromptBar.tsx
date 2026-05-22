@@ -27,6 +27,8 @@ export type PromptBarProps = {
   defaultText?: string;
   /** 좁은 맥락(채팅 입력)에서 Dropzone 을 컴팩트 레이아웃으로 렌더한다. */
   compactDropzone?: boolean;
+  /** 카드 chrome(테두리·배경·패딩) 없이 렌더한다. 상위 컨테이너에 끼울 때 사용. */
+  bare?: boolean;
   onSubmit: (payload: PromptSubmitPayload) => void;
 };
 
@@ -50,6 +52,7 @@ export function PromptBar({
   placeholder = '무엇이든 물어보세요.',
   defaultText,
   compactDropzone = false,
+  bare = false,
   onSubmit,
 }: PromptBarProps) {
   const [text, setText] = useState(defaultText ?? '');
@@ -89,7 +92,13 @@ export function PromptBar({
   };
 
   return (
-    <div className="flex flex-col gap-3 rounded-v-400 border border-v-normal bg-v-canvas-100 p-v-300 sm:p-v-400">
+    <div
+      className={
+        bare
+          ? 'flex flex-col gap-3'
+          : 'flex flex-col gap-3 rounded-v-400 border border-v-normal bg-v-canvas-100 p-v-300 sm:p-v-400'
+      }
+    >
       <DataSourceSelector
         options={dataSourceOptions}
         selected={dataSources}

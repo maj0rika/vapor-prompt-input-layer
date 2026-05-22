@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button } from '@vapor-ui/core';
+import { Button, Text } from '@vapor-ui/core';
 import { MockAgentClient, type AgentClient } from '../../agent';
 import { PromptBar, type DataSourceOption } from '../prompt';
 import { ConversationView } from './ConversationView';
@@ -20,9 +20,9 @@ export type ChatScreenProps = {
 /**
  * AI 에이전트 채팅 화면의 최상위 합성 컴포넌트.
  *
- * 좌측 대화 thread(ConversationView) + 우측 초안 미리보기(PreviewPanel)의
- * split-panel 셸이며, 하단에 입력 영역(PromptBar)을 둔다. 좁은 뷰포트에서는
- * 두 패널이 세로로 스택된다. 스트리밍 중 ESC 로 취소.
+ * 헤더 · 본문(대화 thread | 초안 미리보기) · 입력 영역을 하나의 통합
+ * surface 로 조립한다. 좁은 뷰포트에서는 본문 패널이 세로로 스택된다.
+ * 스트리밍 중 ESC 로 취소.
  */
 export function ChatScreen({
   dataSourceOptions,
@@ -69,25 +69,27 @@ export function ChatScreen({
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <div className="flex items-center justify-end">
-        <ThemeToggle />
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-v-400 border border-v-normal bg-v-canvas-100 shadow-sm">
+      {/* 헤더 바 */}
+      <div className="flex items-center justify-between border-b border-v-normal px-v-300 py-v-150">
+        <Text typography="subtitle2">대화</Text>
+        <div className="flex items-center gap-1">
+          {Boolean(draftId) && !showPreview && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setClosedDraftId(undefined)}
+            >
+              초안 보기
+            </Button>
+          )}
+          <ThemeToggle />
+        </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 md:flex-row">
-        {/* 좌: 대화 thread */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-v-400 border border-v-normal bg-v-canvas-100">
-          {Boolean(draftId) && !showPreview && (
-            <div className="flex justify-end border-b border-v-normal px-v-200 py-v-100">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setClosedDraftId(undefined)}
-              >
-                초안 보기
-              </Button>
-            </div>
-          )}
+      {/* 본문: 대화 thread | 초안 미리보기 */}
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+        <div className="flex min-h-0 flex-1 flex-col">
           {isEmpty ? (
             <EmptyState onPick={handlePickSuggestion} />
           ) : (
@@ -95,9 +97,8 @@ export function ChatScreen({
           )}
         </div>
 
-        {/* 우: 초안 미리보기 */}
         {showPreview && (
-          <div className="flex min-h-0 flex-1 flex-col md:max-w-[45%]">
+          <div className="flex min-h-0 flex-1 flex-col md:max-w-[44%]">
             <PreviewPanel
               draft={latestDraft}
               onClose={() => setClosedDraftId(draftId)}
@@ -106,26 +107,30 @@ export function ChatScreen({
         )}
       </div>
 
-      <PromptBar
-        key={seed}
-        defaultText={seedText}
-        dataSourceOptions={dataSourceOptions}
-        accept={acceptedFileTypes}
-        multipleDataSources
-        compactDropzone
-        disabled={isStreaming}
-        placeholder="글쓰기에 대해 무엇이든 물어보세요."
-        onSubmit={(payload) =>
-          send({
-            text: payload.text,
-            dataSources: payload.dataSources,
-            attachments: payload.attachments.map((attachment) => ({
-              fileName: attachment.fileName,
-              size: attachment.size,
-            })),
-          })
-        }
-      />
+      {/* 입력 영역 */}
+      <div className="border-t border-v-normal p-v-300">
+        <PromptBar
+          key={seed}
+          bare
+          defaultText={seedText}
+          dataSourceOptions={dataSourceOptions}
+          accept={acceptedFileTypes}
+          multipleDataSources
+          compactDropzone
+          disabled={isStreaming}
+          placeholder="글쓰기에 대해 무엇이든 물어보세요."
+          onSubmit={(payload) =>
+            send({
+              text: payload.text,
+              dataSources: payload.dataSources,
+              attachments: payload.attachments.map((attachment) => ({
+                fileName: attachment.fileName,
+                size: attachment.size,
+              })),
+            })
+          }
+        />
+      </div>
     </div>
   );
 }
