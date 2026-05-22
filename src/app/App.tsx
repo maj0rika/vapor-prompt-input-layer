@@ -1,9 +1,9 @@
-import { PromptInputDemo } from './demo/PromptInputDemo';
+import { ChatDemoPage } from './chat/ChatDemoPage';
 
 function App() {
   return (
-    <main className="mx-auto w-full max-w-2xl p-4 sm:p-6">
-      <PromptInputDemo />
+    <main className="mx-auto flex h-screen w-full max-w-3xl flex-col p-4 sm:p-6">
+      <ChatDemoPage />
     </main>
   );
 }
