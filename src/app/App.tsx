@@ -1,7 +1,9 @@
+import { PromptInputDemo } from './demo/PromptInputDemo';
+
 function App() {
   return (
-    <main>
-      <h1>Vapor Prompt Input Layer</h1>
+    <main className="mx-auto w-full max-w-2xl p-6">
+      <PromptInputDemo />
     </main>
   );
 }
