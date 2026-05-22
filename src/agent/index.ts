@@ -8,6 +8,8 @@
  */
 export type { AgentClient } from './AgentClient';
 export { MockAgentClient } from './MockAgentClient';
+export { messageReducer, isTerminal } from './messageMachine';
+export type { MachineEvent } from './messageMachine';
 export type {
   AgentEvent,
   AgentRequest,
