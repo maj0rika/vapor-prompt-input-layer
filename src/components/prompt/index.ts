@@ -7,6 +7,7 @@
 export { PromptBar } from './PromptBar';
 export { PromptBox } from './PromptBox';
 export { Dropzone } from './Dropzone';
+export { PromptModeSelector } from './PromptModeSelector';
 export { AttachmentList } from './AttachmentList';
 export { AttachmentItem } from './AttachmentItem';
 export { DataSourceSelector } from './DataSourceSelector';
@@ -15,8 +16,11 @@ export type { PromptBarProps, PromptSubmitPayload } from './PromptBar';
 export type {
   PromptBoxProps,
   DropzoneProps,
+  PromptModeSelectorProps,
   DataSourceSelectorProps,
   DataSourceOption,
+  PromptModeOption,
+  AgentMode,
   PromptAttachment,
   AttachmentStatus,
   FileRejectReason,

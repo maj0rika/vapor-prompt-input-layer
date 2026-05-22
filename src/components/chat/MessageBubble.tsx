@@ -14,7 +14,7 @@ export type MessageBubbleProps = {
 
 const SENDER_NAME: Record<ChatMessage['role'], string> = {
   user: '나',
-  assistant: '글쓰기 코치',
+  assistant: 'Vapor DS Agent',
 };
 
 function formatTime(timestamp: number): string {

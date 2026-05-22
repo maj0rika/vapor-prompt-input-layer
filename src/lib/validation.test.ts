@@ -76,4 +76,16 @@ describe('validateFiles', () => {
     expect(result.accepted).toHaveLength(0);
     expect(result.rejections[0].reason).toBe('exceeds-max-size');
   });
+
+  it('maxFiles 를 넘는 파일을 too-many-files 로 거부한다', () => {
+    const result = validateFiles(
+      [makeFile('a.png'), makeFile('b.png'), makeFile('c.png')],
+      { accept: ['.png'], multiple: true, maxFiles: 2 },
+    );
+
+    expect(result.accepted.map((f) => f.name)).toEqual(['a.png', 'b.png']);
+    expect(result.rejections).toEqual([
+      { fileName: 'c.png', reason: 'too-many-files' },
+    ]);
+  });
 });

@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('채팅 입력 키보드 조작', () => {
-  test('Enter 로 제출하고 Shift+Enter 로 줄바꿈한다', async ({ page }) => {
+test.describe('automation composer keyboard behavior', () => {
+  test('Enter submits and Shift+Enter inserts a newline', async ({ page }) => {
     await page.goto('/');
 
-    const textarea = page.getByLabel('프롬프트 입력');
+    const textarea = page.getByLabel('자동화 프롬프트 입력');
     await textarea.click();
     await textarea.fill('첫 줄');
     await textarea.press('Shift+Enter');
@@ -16,24 +16,22 @@ test.describe('채팅 입력 키보드 조작', () => {
     await expect(textarea).toHaveValue('');
   });
 
-  test('ESC 로 열린 데이터소스 메뉴를 닫는다', async ({ page }) => {
+  test('ESC closes the automation mode menu', async ({ page }) => {
     await page.goto('/');
 
-    await page.getByLabel('데이터소스 선택').click();
-    await expect(page.getByRole('option', { name: '내 문서' })).toBeVisible();
+    await page.getByLabel('자동화 모드 선택').click();
+    await expect(page.getByRole('option', { name: 'Component' })).toBeVisible();
 
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('option', { name: '내 문서' })).toBeHidden();
+    await expect(page.getByRole('option', { name: 'Component' })).toBeHidden();
   });
 
-  test('키보드로 파일 선택 버튼을 조작해 파일 대화상자를 연다', async ({
-    page,
-  }) => {
+  test('keyboard opens the inline file chooser', async ({ page }) => {
     await page.goto('/');
 
-    const selectFileButton = page.getByRole('button', { name: '파일 선택' });
-    await selectFileButton.focus();
-    await expect(selectFileButton).toBeFocused();
+    const attachButton = page.getByRole('button', { name: '참고 파일 첨부' });
+    await attachButton.focus();
+    await expect(attachButton).toBeFocused();
 
     const fileChooserPromise = page.waitForEvent('filechooser');
     await page.keyboard.press('Enter');
@@ -41,19 +39,19 @@ test.describe('채팅 입력 키보드 조작', () => {
     expect(fileChooser.element()).toBeTruthy();
   });
 
-  test('Tab 으로 데이터소스 → 파일 선택 → 입력창을 순회한다', async ({
+  test('Tab moves from mode selector to attach button to prompt input', async ({
     page,
   }) => {
     await page.goto('/');
 
-    const dataSource = page.getByLabel('데이터소스 선택');
-    await dataSource.focus();
-    await expect(dataSource).toBeFocused();
+    const mode = page.getByLabel('자동화 모드 선택');
+    await mode.focus();
+    await expect(mode).toBeFocused();
 
     await page.keyboard.press('Tab');
-    await expect(page.getByRole('button', { name: '파일 선택' })).toBeFocused();
+    await expect(page.getByRole('button', { name: '참고 파일 첨부' })).toBeFocused();
 
     await page.keyboard.press('Tab');
-    await expect(page.getByLabel('프롬프트 입력')).toBeFocused();
+    await expect(page.getByLabel('자동화 프롬프트 입력')).toBeFocused();
   });
 });

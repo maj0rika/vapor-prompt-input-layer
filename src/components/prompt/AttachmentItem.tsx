@@ -26,7 +26,7 @@ export type AttachmentItemProps = {
  * 긴 파일명은 말줄임 처리하고 Tooltip 으로 전체 이름을 노출한다.
  */
 export function AttachmentItem({ attachment, onRemove }: AttachmentItemProps) {
-  const { id, fileName, size, status, errorMessage } = attachment;
+  const { id, fileName, size, status, truncated, errorMessage } = attachment;
   const meta = STATUS_META[status];
   const isUploading = status === 'uploading';
 
@@ -52,6 +52,12 @@ export function AttachmentItem({ attachment, onRemove }: AttachmentItemProps) {
       <Text typography="body3" foreground="hint-200" className="shrink-0">
         {formatBytes(size)}
       </Text>
+
+      {truncated && (
+        <Badge colorPalette="warning" size="sm">
+          일부 포함
+        </Badge>
+      )}
 
       <IconButton
         size="sm"

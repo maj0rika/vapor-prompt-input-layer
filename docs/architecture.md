@@ -2,112 +2,139 @@
 
 ## 개요
 
-이 프로젝트는 AI 에이전트 채팅 화면을, 화면 하나가 아니라 **경계가 강제된
-레이어 구조**로 설계한 케이스 스터디다. Vapor primitive 를 제품 컴포넌트
-레이어로 감싸고, React 와 분리된 순수 에이전트 엔진을 두며, 레이어 간 import
-경계를 ESLint 로 강제한다.
+이 프로젝트는 Vapor Design System 기반 반복 작업을 자연어 에이전트로 자동화하는
+케이스 스터디다. 사용자는 DS 작업 요청과 참고 파일을 입력하고, 에이전트는
+컴포넌트, Storybook story, Vitest test, 접근성/token notes 를 생성한다.
+
+중요한 구조 원칙은 세 가지다.
+
+- Vite config 는 dev server wiring 만 담당한다.
+- prompt builder, artifact parser, token checker 는 `src/agent/**` 의 순수 모듈로
+  분리한다.
+- 브라우저는 same-origin API 만 호출하고 DeepSeek API key 는 서버 프록시에서만
+  읽는다.
 
 ## 레이어 구조
 
-```
+```txt
 @vapor-ui/core              ← 디자인시스템 primitive
         ↓
 Product Component Layer     ← src/components/prompt/**, src/components/chat/**
         ↓
 Demo App                    ← src/app/**
 
-src/agent/**                ← 모의 에이전트 엔진 (UI 무관 순수 로직)
+src/agent/**                ← AgentClient, prompt builder, parser, token checker
+server/deepseek/**          ← 서버 전용 DeepSeek proxy
 ```
 
 | 레이어 | 위치 | 책임 |
 | --- | --- | --- |
 | Vapor primitive | `@vapor-ui/core` | 접근성·테마·스타일을 갖춘 기본 UI 단위 |
-| Product Component Layer | `src/components/prompt/**`, `src/components/chat/**` | Vapor primitive 를 제품 요구사항에 맞게 합성·래핑 |
+| Product Component Layer | `src/components/**` | Vapor primitive 를 제품 요구사항에 맞게 합성·래핑 |
 | Demo App | `src/app/**` | 제품 컴포넌트를 조립해 실제 화면을 구성 |
-| Agent Engine | `src/agent/**` | 모의 스트리밍·상태머신 — React/DOM 무관 순수 로직 |
+| Agent Core | `src/agent/**` | 클라이언트 계약, prompt 구성, SSE/parser/token check |
+| Server Proxy | `server/deepseek/**` | API key 보호, DeepSeek payload 구성, stream forwarding |
 
-## 경계 규칙 (ESLint 로 강제하는 2종)
+## Agent Flow
 
-경계는 문서 권고가 아니라 `eslint.config.js` 의 `no-restricted-imports` 로
-강제된다. 위반 시 `npm run lint` 가 실패한다.
+```txt
+PromptBar submit
+  → AgentRequest { text, mode, attachments }
+  → DeepSeekAgentClient / MockAgentClient
+  → server/deepseek/chatProxy.ts
+  → buildDeepSeekPayload()
+  → DeepSeek stream
+  → token events
+  → parseGeneratedArtifact() after completion
+  → artifactToMarkdown()
+  → checkTokenUsage()
+  → PreviewPanel tabs + validation badges
+```
 
-### 1. Vapor 경계
+생성과 검증은 분리한다. streaming 중에는 사용자에게 즉시 토큰을 보여주고, 응답이
+완성된 뒤 artifact 를 파싱해 preview 와 token usage check 를 갱신한다.
 
-`@vapor-ui/core` 직접 import 는 `src/**` 전역에서 차단되고, 허용 소비처를
-**명시적으로 열거**해 해제한다.
+## Structured Output
 
-- 허용: `src/components/prompt/**`, `src/components/chat/**`, `src/main.tsx`
-- 금지: `src/app/**`, `src/agent/**` 등 그 외 전역
+LLM 응답은 자연어 문장과 함께 다음 delimiter 를 사용한다.
 
-레이어를 추가하려면 이 열거 목록에 한 줄을 더해야 하므로, 경계 결정이 항상
-diff 에 드러난다.
+````md
+<artifact type="component" filename="PrimaryButton.tsx">
+```tsx
+...
+```
+</artifact>
 
-### 2. agent-internal 경계
+<artifact type="story" filename="PrimaryButton.stories.tsx">
+```tsx
+...
+```
+</artifact>
 
-`src/agent/**` 엔진은 배럴(`src/agent/index.ts`)로만 노출된다.
+<artifact type="test" filename="PrimaryButton.test.tsx">
+```tsx
+...
+```
+</artifact>
 
-- `src/app/**`, `src/components/chat/**` 는 `src/agent` 배럴만 import 가능
-- `src/agent/MockAgentClient` 등 내부 모듈 deep import 는 ESLint error
+<notes type="a11y">
+...
+</notes>
 
-이로써 엔진의 내부 구조가 캡슐화되고, 공개 표면이 배럴 하나로 고정된다.
+<notes type="token">
+...
+</notes>
+````
 
-### 분리의 목적
-
-- Vapor / 엔진 내부 API 변경 시 수정 범위를 해당 레이어로 한정
-- 제품 전반의 UI 사용 패턴을 일관화
-- 접근성·상태·검증 로직을 단일 지점에서 관리
-- 디자인시스템 · 제품 컴포넌트 · 순수 로직의 책임을 명확히 구분
-
-## 에이전트 엔진 (`src/agent/**`)
-
-백엔드 없이 동작하는 모의 스트리밍 엔진. React 에 의존하지 않으므로 단독으로
-단위 테스트된다.
-
-- `AgentClient` — `sendMessage(request, signal): AsyncIterable<AgentEvent>`
-  인터페이스. 실제 백엔드 클라이언트로 교체 가능.
-- `MockAgentClient` — `async function*` 제너레이터로 도메인 스크립트를 토큰
-  단위로 지연 방출 (SSE 흉내).
-- `messageMachine` — 순수 상태머신 `idle → streaming → done | error | cancelled`.
-- **Teardown 계약** — `sendMessage` 는 `AbortSignal` 을 받는다. 소비 훅
-  `useAgentStream` 이 send 마다 `AbortController` 를 소유하고, 언마운트·재send
-  시 abort 한다. 언마운트 후에는 상태를 갱신하지 않는다.
+이 포맷은 완전 JSON 출력을 강제하지 않으면서도 preview 와 validation 에 필요한
+부분을 안정적으로 추출한다.
 
 ## 컴포넌트 구성
 
-```
-ChatScreen                  채팅 화면 최상위 합성 (헤더·본문·입력 통합 surface)
-├─ ConversationView         메시지 thread 스크롤 컨테이너
+```txt
+ChatScreen                  채팅 화면 최상위 합성
+├─ ConversationView         메시지 thread
 │  └─ MessageBubble         user/assistant 버블
-│     ├─ MessageAvatar      발신자 아바타
-│     ├─ AttachmentChip     함께 전송된 첨부 파일 칩
-│     ├─ Markdown           어시스턴트 응답 마크다운 렌더링
-│     └─ MessageActions     복사(완료 피드백) / 재생성 / 피드백
-├─ PreviewPanel             에이전트 초안 문서 라이브 렌더링 (Markdown)
-├─ EmptyState               빈 상태 + 워크플로우 추천 칩
+│     ├─ AttachmentChip     참고 파일 칩
+│     ├─ Markdown           어시스턴트 응답 렌더링
+│     └─ MessageActions     복사 / 재생성 / 반응
+├─ PreviewPanel             artifact workspace
+│  └─ Component / Story / Test / Validation tabs
+├─ EmptyState               첫 assistant bubble + 작업 템플릿
 ├─ ThemeToggle              라이트/다크 모드 전환
-└─ PromptBar                입력 영역 (prompt 레이어 재사용, bare 모드)
-   ├─ PromptBox · Dropzone · AttachmentList · DataSourceSelector
+└─ PromptBar                mode selector + inline attach + textarea
 ```
 
-- 사용자가 첨부한 파일은 `ChatMessage.attachments` 로 보존되어 대화 버블에
-  칩으로 표시된다. 메시지는 `createdAt` 타임스탬프와 발신자 아바타를 가진다.
-- 어시스턴트 응답과 초안은 `react-markdown` 으로 렌더링하며, 색상은
-  `.chat-md` 규칙에서 Vapor 테마 토큰을 상속해 다크 모드에 적응한다.
+## 경계 규칙
+
+경계는 문서 권고가 아니라 `eslint.config.js` 의 `no-restricted-imports` 로 강제된다.
+
+### Vapor 경계
+
+`@vapor-ui/core` 직접 import 는 제품 컴포넌트 레이어와 `src/main.tsx` 에만 허용한다.
+앱 레이어와 agent core 는 Vapor primitive 를 직접 알지 않는다.
+
+### Agent 내부 경계
+
+`src/app/**`, `src/components/chat/**` 는 `src/agent` 배럴만 import 한다.
+`src/agent/MockAgentClient` 같은 내부 deep import 는 ESLint error 로 막는다.
+
+## Token Usage Check
+
+MVP 검증은 rule-based static check 다.
+
+- raw hex, `rgb(...)`, `rgba(...)` 사용 감지
+- hard-coded `px` spacing/radius 감지
+- `--vapor-`, `@vapor-ui/core`, `colorPalette` 같은 Vapor token/primitives 사용 확인
+- pass/warn/fail 로 정규화해 Validation tab 과 badge 에 반영
+
+완전한 linter 가 아니라, DS 포트폴리오 MVP 에서 빠르게 피드백 가능한 안전장치로
+설계했다.
 
 ## 스타일링
 
 스타일은 Tailwind CSS v4 와 Vapor UI 의 Tailwind 프리셋을 함께 사용한다.
 
-- `@vapor-ui/core/tailwind.css` 프리셋이 Vapor 디자인 토큰을 `v-` 접두사
-  유틸리티(`bg-v-canvas-100`, `gap-v-200` 등)로 노출한다.
-- CSS `@layer` 우선순위는 `tw-theme → vapor → tw-utilities` 순서.
-- Vapor 가 자체 CSS reset 을 포함하므로 Tailwind preflight 는 쓰지 않는다.
-- 다크 모드는 Vapor `ThemeProvider` + `useTheme` 로 전환하며, 시맨틱 토큰이
-  자동으로 라이트/다크 값에 매핑된다.
-
-## Props 설계 원칙
-
-Vapor primitive 의 props 를 그대로 외부로 노출하지 않는다. 제품 컴포넌트의
-공개 API 는 Vapor 내부 구조와 무관하게 제품 언어(`value`, `onSubmit`,
-`disabled`, `status` 등)로 정의한다. 앱은 Vapor 를 몰라도 제품 컴포넌트를
-사용할 수 있어야 한다.
+- Vapor 토큰은 `bg-v-canvas-100`, `gap-v-200` 같은 `v-` 유틸리티로 사용한다.
+- 다크 모드는 Vapor `ThemeProvider` + `useTheme` 로 전환한다.
+- primary color 는 강조색으로 제한하고, 검증 상태에는 semantic color 를 사용한다.

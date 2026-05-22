@@ -4,6 +4,7 @@ export type FileConstraints = {
   accept?: string[];
   maxSize?: number;
   multiple?: boolean;
+  maxFiles?: number;
 };
 
 export type FileCheckResult =
@@ -50,7 +51,8 @@ export type ValidationResult = {
 /**
  * 파일 목록을 제약 조건에 따라 통과/거부로 분류한다.
  *
- * `multiple` 이 아니면 두 번째 파일부터 `too-many-files` 로 거부한다.
+ * `multiple` 이 아니면 두 번째 파일부터, `maxFiles` 를 넘으면 초과분을
+ * `too-many-files` 로 거부한다.
  */
 export function validateFiles(
   files: File[],
@@ -58,9 +60,10 @@ export function validateFiles(
 ): ValidationResult {
   const accepted: File[] = [];
   const rejections: FileRejection[] = [];
+  const fileLimit = constraints.multiple === true ? constraints.maxFiles : 1;
 
-  files.forEach((file, index) => {
-    if (constraints.multiple !== true && index > 0) {
+  files.forEach((file) => {
+    if (fileLimit != null && accepted.length >= fileLimit) {
       rejections.push({ fileName: file.name, reason: 'too-many-files' });
       return;
     }

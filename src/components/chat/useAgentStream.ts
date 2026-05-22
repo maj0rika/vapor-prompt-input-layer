@@ -108,6 +108,7 @@ export function useAgentStream(client: AgentClient): UseAgentStreamResult {
         status: 'done',
         createdAt: now,
         attachments: request.attachments,
+        request,
       };
       const assistantId = crypto.randomUUID();
       const assistantMessage: ChatMessage = {
@@ -151,7 +152,11 @@ export function useAgentStream(client: AgentClient): UseAgentStreamResult {
         ),
       );
       setIsStreaming(true);
-      void runStream({ text: userMessage.text }, assistantId, controller.signal);
+      void runStream(
+        userMessage.request ?? { text: userMessage.text },
+        assistantId,
+        controller.signal,
+      );
     },
     [messages, runStream],
   );

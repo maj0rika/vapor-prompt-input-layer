@@ -5,80 +5,92 @@ Prompt Input Component Layer 의 공개 컴포넌트와 props 명세.
 
 ## PromptBar
 
-PromptBox / Dropzone / AttachmentList / DataSourceSelector 를 조립한
-최상위 합성 컴포넌트. 입력·첨부·데이터소스 상태를 내부에서 관리한다.
+Vapor DS 자동화 요청을 입력하는 composer 컴포넌트. 모드 선택, 텍스트 입력,
+첨부 파일 읽기, 제출 상태를 내부에서 관리한다.
 
 | Prop | Type | Default | 설명 |
 | --- | --- | --- | --- |
-| `dataSourceOptions` | `DataSourceOption[]` | — | 선택 가능한 데이터소스 목록 |
-| `multipleDataSources` | `boolean` | `false` | 데이터소스 다중 선택 허용 |
-| `maxLength` | `number` | `1000` | 프롬프트 최대 글자수 |
+| `modeOptions` | `PromptModeOption[]` | 기본 4개 모드 | 자동화 mode 목록 |
+| `defaultMode` | `AgentMode` | `'component'` | 초기 선택 mode |
+| `maxLength` | `number` | `1600` | 프롬프트 최대 글자수 |
 | `accept` | `string[]` | — | 허용 파일 형식 (확장자 / MIME) |
-| `maxFileSize` | `number` | — | 첨부 파일 최대 크기(byte) |
+| `maxFileSize` | `number` | `300 * 1024` | 첨부 파일 최대 크기(byte) |
+| `maxFiles` | `number` | `5` | 한 요청에 포함 가능한 최대 파일 수 |
 | `multipleFiles` | `boolean` | `true` | 파일 다중 첨부 허용 |
 | `disabled` | `boolean` | `false` | 전체 비활성화 |
-| `placeholder` | `string` | `'무엇이든 물어보세요.'` | 입력창 placeholder |
+| `placeholder` | `string` | DS 자동화 요청 문구 | 입력창 placeholder |
+| `defaultText` | `string` | — | 템플릿 클릭 등으로 주입하는 초기 텍스트 |
+| `bare` | `boolean` | `false` | 상위 surface 안에 끼울 때 card chrome 제거 |
 | `onSubmit` | `(payload: PromptSubmitPayload) => void` | — | 제출 콜백 |
 
-`PromptSubmitPayload = { text: string; attachments: PromptAttachment[]; dataSources: string[] }`
+```ts
+type PromptSubmitPayload = {
+  text: string;
+  attachments: PromptAttachment[];
+  mode: AgentMode;
+  dataSources: string[]; // legacy compatibility: selected mode id
+};
+```
 
-## PromptBox
+## PromptModeSelector
 
-프롬프트 입력 · 제출 · 글자수를 담당한다.
+자동화 실행 모드를 선택한다. 입력 전에 intent 를 고정해 prompt builder 와 검증
+기준을 안정화한다.
 
-| Prop | Type | Default | 설명 |
-| --- | --- | --- | --- |
-| `value` | `string` | — | 입력값 (controlled) |
-| `onValueChange` | `(value: string) => void` | — | 입력값 변경 콜백 |
-| `onSubmit` | `() => void` | — | 제출 콜백 |
-| `maxLength` | `number` | — | 최대 글자수. 지정 시 글자수 표시 |
-| `disabled` | `boolean` | `false` | 비활성화 |
-| `placeholder` | `string` | — | placeholder |
-| `submitLabel` | `string` | `'보내기'` | 제출 버튼 라벨 |
+```ts
+type AgentMode = 'component' | 'token-sync' | 'a11y-audit' | 'story-test';
 
-동작: Enter 제출 / Shift+Enter 줄바꿈 / IME 조합 중 Enter 무시 /
-빈 값·maxLength 초과 시 제출 비활성화.
-
-## Dropzone
-
-파일 드래그&드롭 / 클릭 업로드를 담당한다.
-
-| Prop | Type | Default | 설명 |
-| --- | --- | --- | --- |
-| `accept` | `string[]` | — | 허용 형식. 확장자(`.png`), 와일드카드(`image/*`), MIME |
-| `maxSize` | `number` | — | 최대 크기(byte) |
-| `multiple` | `boolean` | `false` | 다중 선택 허용 |
-| `disabled` | `boolean` | `false` | 비활성화 |
-| `onFiles` | `(files: File[]) => void` | — | 통과한 파일 콜백 |
-| `onReject` | `(rejection: FileRejection) => void` | — | 거부된 파일 콜백 |
-
-`FileRejection = { fileName: string; reason: FileRejectReason }`
-`FileRejectReason = 'unaccepted-type' | 'exceeds-max-size' | 'too-many-files'`
-
-## AttachmentList
-
-첨부 파일 목록을 표시한다. 첨부가 없으면 렌더링하지 않는다.
+type PromptModeOption = {
+  id: string;
+  label: string;
+  description?: string;
+};
+```
 
 | Prop | Type | 설명 |
 | --- | --- | --- |
-| `attachments` | `PromptAttachment[]` | 첨부 파일 목록 |
-| `onRemove` | `(id: string) => void` | 파일 제거 콜백 |
+| `options` | `PromptModeOption[]` | 선택 가능한 mode 목록 |
+| `value` | `AgentMode` | 현재 mode |
+| `onChange` | `(value: AgentMode) => void` | mode 변경 콜백 |
+| `disabled` | `boolean` | 비활성화 |
 
-`PromptAttachment = { id: string; fileName: string; size: number; status: AttachmentStatus; errorMessage?: string }`
-`AttachmentStatus = 'idle' | 'uploading' | 'done' | 'error'`
+## Attachments
 
-## DataSourceSelector
+첨부는 composer 내부 아이콘 버튼과 drag-and-drop 으로 처리한다. 텍스트 추출 가능한
+파일만 1차 지원한다.
 
-AI 답변 생성에 사용할 데이터소스를 선택한다.
+```ts
+type PromptAttachment = {
+  id: string;
+  fileName: string;
+  size: number;
+  status: 'idle' | 'uploading' | 'done' | 'error';
+  kind?: 'tokens' | 'component' | 'spec' | 'text';
+  contentText?: string;
+  truncated?: boolean;
+  errorMessage?: string;
+};
+```
 
-| Prop | Type | Default | 설명 |
-| --- | --- | --- | --- |
-| `options` | `DataSourceOption[]` | — | 선택 가능한 데이터소스 |
-| `selected` | `string[]` | — | 선택된 데이터소스 id 목록 |
-| `onChange` | `(selected: string[]) => void` | — | 선택 변경 콜백 |
-| `multiple` | `boolean` | `false` | 다중 선택 허용 |
-| `disabled` | `boolean` | `false` | 비활성화 |
+## PromptBox / Dropzone / DataSourceSelector
 
-`DataSourceOption = { id: string; label: string; description?: string }`
+기존 단위 컴포넌트는 호환성과 테스트 케이스를 위해 남아 있다. 현재 메인 제품
+화면은 별도 Dropzone 영역이나 DataSourceSelector 를 사용하지 않고, `PromptBar`
+내부의 mode selector 와 inline attach control 을 사용한다.
 
-`multiple` 여부와 무관하게 공개 API 는 항상 문자열 배열(`selected`)로 통일한다.
+## ChatScreen
+
+대화 thread, artifact workspace, prompt composer 를 조립하는 제품 화면.
+
+| Prop | Type | 설명 |
+| --- | --- | --- |
+| `modeOptions` | `PromptModeOption[]` | 앱 레이어가 주입하는 자동화 mode 목록 |
+| `acceptedFileTypes` | `string[]` | 허용 첨부 확장자 |
+| `maxFileSize` | `number` | 첨부 파일당 최대 크기 |
+| `maxFiles` | `number` | 최대 첨부 개수 |
+| `client` | `AgentClient` | 테스트/데모용 에이전트 클라이언트 주입점 |
+
+## PreviewPanel
+
+생성물을 Component / Story / Test / Validation 탭으로 보여주는 artifact workspace.
+대화 텍스트와 코드 산출물을 분리해 검토 속도를 높인다.

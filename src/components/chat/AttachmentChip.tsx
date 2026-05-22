@@ -17,6 +17,7 @@ export function AttachmentChip({ attachment }: AttachmentChipProps) {
       </Text>
       <Text typography="body4" foreground="hint-200" className="shrink-0">
         {formatBytes(attachment.size)}
+        {attachment.truncated ? ' · 일부 포함' : ''}
       </Text>
     </div>
   );

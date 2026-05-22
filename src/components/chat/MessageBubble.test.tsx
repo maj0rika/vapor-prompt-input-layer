@@ -57,7 +57,7 @@ describe('MessageBubble', () => {
 
   it('발신자 이름과 시각 메타를 표시한다', () => {
     render(<MessageBubble message={makeMessage({ role: 'assistant' })} />);
-    expect(screen.getByText('글쓰기 코치')).toBeInTheDocument();
+    expect(screen.getByText('Vapor DS Agent')).toBeInTheDocument();
 
     render(<MessageBubble message={makeMessage({ role: 'user', text: '질문' })} />);
     expect(screen.getByText('나')).toBeInTheDocument();

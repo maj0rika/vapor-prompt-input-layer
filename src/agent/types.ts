@@ -35,7 +35,7 @@ export type ChatMessage = {
   createdAt: number;
   /** 함께 전송된 첨부 파일. */
   attachments?: MessageAttachment[];
-  /** 어시스턴트가 작성한 초안 문서 (PreviewPanel 에 렌더링). */
+  /** 어시스턴트가 작성한 생성 artifact (PreviewPanel 에 렌더링). */
   draft?: string;
   /** status 가 'error' 일 때의 사유. */
   errorMessage?: string;
@@ -54,7 +54,7 @@ export type AgentRequest = {
 /**
  * 스트리밍 중 방출되는 이벤트.
  * - token: 응답 본문 토큰
- * - draft: PreviewPanel 에 렌더링할 초안 문서 토큰
+ * - draft: PreviewPanel 에 렌더링할 생성 artifact 토큰
  * - done : 정상 종료
  * - error: 오류 종료
  */

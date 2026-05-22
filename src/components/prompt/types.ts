@@ -55,17 +55,31 @@ export type PromptAttachment = {
   fileName: string;
   size: number;
   status: AttachmentStatus;
+  kind?: 'tokens' | 'component' | 'spec' | 'text';
+  contentText?: string;
+  truncated?: boolean;
   errorMessage?: string;
 };
 
 /* ------------------------------------------------------------------ */
-/* DataSourceSelector                                                 */
+/* PromptModeSelector / legacy DataSourceSelector                     */
 /* ------------------------------------------------------------------ */
 
-export type DataSourceOption = {
+export type AgentMode = 'component' | 'token-sync' | 'a11y-audit' | 'story-test';
+
+export type PromptModeOption = {
   id: string;
   label: string;
   description?: string;
+};
+
+export type DataSourceOption = PromptModeOption;
+
+export type PromptModeSelectorProps = {
+  options: PromptModeOption[];
+  value: AgentMode;
+  onChange: (value: AgentMode) => void;
+  disabled?: boolean;
 };
 
 export type DataSourceSelectorProps = {

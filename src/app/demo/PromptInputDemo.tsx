@@ -1,18 +1,19 @@
 import { useState } from 'react';
 import {
   PromptBar,
-  type DataSourceOption,
+  type PromptModeOption,
   type PromptSubmitPayload,
 } from '../../components/prompt';
 
-const DATA_SOURCES: DataSourceOption[] = [
-  { id: 'docs', label: '내 문서', description: '업로드한 문서에서 검색' },
-  { id: 'web', label: '웹 검색', description: '최신 웹 결과 포함' },
-  { id: 'code', label: '코드베이스', description: '연결된 저장소 검색' },
+const MODE_OPTIONS: PromptModeOption[] = [
+  { id: 'component', label: 'Component', description: 'React + TSX 생성' },
+  { id: 'token-sync', label: 'Token Sync', description: '토큰 매핑' },
+  { id: 'a11y-audit', label: 'A11y Audit', description: '접근성 점검' },
+  { id: 'story-test', label: 'Story/Test', description: '스토리와 테스트' },
 ];
 
-const ACCEPTED_TYPES = ['.png', '.jpg', '.jpeg', '.pdf'];
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ACCEPTED_TYPES = ['.json', '.ts', '.tsx', '.md', '.txt'];
+const MAX_FILE_SIZE = 300 * 1024;
 
 /**
  * Prompt Input 컴포넌트 레이어의 사용 예시 화면.
@@ -26,17 +27,17 @@ export function PromptInputDemo() {
   return (
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-1">
-        <h1 className="m-0 text-xl font-semibold">Prompt Input Layer</h1>
+        <h1 className="m-0 text-xl font-semibold">Automation Prompt Layer</h1>
         <p className="m-0 text-sm text-gray-500">
-          Vapor UI 기반 AI 챗 입력 컴포넌트 레이어 데모
+          Vapor DS 자동화 에이전트용 입력 컴포넌트 레이어 데모
         </p>
       </header>
 
       <PromptBar
-        dataSourceOptions={DATA_SOURCES}
-        multipleDataSources
+        modeOptions={MODE_OPTIONS}
         accept={ACCEPTED_TYPES}
         maxFileSize={MAX_FILE_SIZE}
+        maxFiles={5}
         maxLength={1000}
         onSubmit={setLastSubmit}
       />
@@ -54,7 +55,7 @@ export function PromptInputDemo() {
             </dd>
             <dt className="text-gray-500">첨부</dt>
             <dd className="m-0">{lastSubmit.attachments.length}개</dd>
-            <dt className="text-gray-500">데이터소스</dt>
+            <dt className="text-gray-500">모드</dt>
             <dd className="m-0">
               {lastSubmit.dataSources.length > 0
                 ? lastSubmit.dataSources.join(', ')

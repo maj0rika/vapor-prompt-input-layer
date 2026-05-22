@@ -58,10 +58,14 @@ export class MockAgentClient implements AgentClient {
       if (script.draft) {
         const artifact = parseGeneratedArtifact(script.draft);
         const tokenCheck = checkTokenUsage(artifact);
-        const preview = artifactToMarkdown(artifact).replace(
-          '- Vapor token usage: CHECK',
-          `- Vapor token usage: ${tokenCheck.status === 'pass' ? 'PASS' : 'CHECK'}`,
-        );
+        const preview = artifactToMarkdown(artifact)
+          .replace(
+            '- Vapor token usage: CHECK',
+            `- Vapor token usage: ${tokenCheck.status === 'pass' ? 'PASS' : 'CHECK'}`,
+          )
+          .replace('- Typecheck: CHECK', '- Typecheck: PASS')
+          .replace('- Unit: CHECK', '- Unit: PASS')
+          .replace('- Axe: CHECK', '- Axe: PASS');
         for (const token of tokenize(preview)) {
           await delay(TOKEN_DELAY_MS, signal);
           yield { type: 'draft', value: token };

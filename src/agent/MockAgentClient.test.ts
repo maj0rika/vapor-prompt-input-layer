@@ -17,7 +17,7 @@ async function collect(
 describe('MockAgentClient', () => {
   it('본문 토큰을 순서대로 방출하고 done 으로 종료한다', async () => {
     const client = new MockAgentClient();
-    const events = await collect(client.sendMessage({ text: '제목 추천해줘' }));
+    const events = await collect(client.sendMessage({ text: 'Primary Button 생성' }));
 
     expect(events.length).toBeGreaterThan(1);
     expect(events[events.length - 1]).toEqual({ type: 'done' });
@@ -28,9 +28,11 @@ describe('MockAgentClient', () => {
     expect(reply.length).toBeGreaterThan(0);
   });
 
-  it('초안이 있는 스크립트는 draft 이벤트를 방출한다', async () => {
+  it('artifact 가 있는 스크립트는 draft 이벤트를 방출한다', async () => {
     const client = new MockAgentClient();
-    const events = await collect(client.sendMessage({ text: '이 문장 다듬어줘' }));
+    const events = await collect(
+      client.sendMessage({ text: 'a11y 점검해줘', mode: 'a11y-audit' }),
+    );
 
     expect(events.some((e) => e.type === 'draft')).toBe(true);
     expect(events[events.length - 1]).toEqual({ type: 'done' });
@@ -50,7 +52,7 @@ describe('MockAgentClient', () => {
     const controller = new AbortController();
 
     const events = await collect(
-      client.sendMessage({ text: '초안 써줘' }, controller.signal),
+      client.sendMessage({ text: '컴포넌트 생성해줘' }, controller.signal),
       (_event, index) => {
         // 첫 토큰을 받자마자 취소한다.
         if (index === 0) controller.abort();
@@ -68,7 +70,7 @@ describe('MockAgentClient', () => {
     controller.abort();
 
     const events = await collect(
-      client.sendMessage({ text: '초안 써줘' }, controller.signal),
+      client.sendMessage({ text: '컴포넌트 생성해줘' }, controller.signal),
     );
 
     expect(events).toHaveLength(0);

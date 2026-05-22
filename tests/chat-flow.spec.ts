@@ -10,37 +10,46 @@ function makeTempFile(name: string, content = 'sample'): string {
   return filePath;
 }
 
-test.describe('채팅 대화 흐름', () => {
-  test('빈 상태에서 추천 칩을 누르면 입력창이 채워진다', async ({ page }) => {
+test.describe('Vapor DS automation flow', () => {
+  test('empty state template fills the automation prompt', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('무엇을 도와드릴까요?')).toBeVisible();
+    await expect(page.getByText('무엇을 자동화할까요?')).toBeVisible();
 
-    await page.getByRole('button', { name: '제목 추천해줘' }).click();
-    await expect(page.getByLabel('프롬프트 입력')).toHaveValue('제목 추천해줘');
+    await page.getByRole('button', { name: 'Primary Button' }).click();
+    await expect(page.getByLabel('자동화 프롬프트 입력')).toHaveValue(
+      'primary 버튼 컴포넌트 생성, dark mode 지원, Vapor 토큰 준수',
+    );
   });
 
-  test('메시지를 보내면 어시스턴트 응답이 스트리밍되고 액션이 노출된다', async ({
+  test('component request streams response and opens artifact workspace', async ({
     page,
   }) => {
     await page.goto('/');
-    await page.getByLabel('프롬프트 입력').fill('제목 추천해줘');
-    await page.getByRole('button', { name: '보내기' }).click();
+    await page
+      .getByLabel('자동화 프롬프트 입력')
+      .fill('primary 버튼 컴포넌트 생성, dark mode 지원, Vapor 토큰 준수');
+    await page.getByRole('button', { name: '자동화 실행' }).click();
 
     await expect(page.locator('[data-role="user"]')).toBeVisible();
     await expect
       .poll(() => page.locator('[data-status="done"]').count(), {
         timeout: 6000,
       })
-      .toBeGreaterThanOrEqual(2); // user + assistant 모두 done
+      .toBeGreaterThanOrEqual(2);
 
-    await expect(page.getByRole('button', { name: '응답 복사' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '응답 재생성' })).toBeVisible();
+    const workspace = page.getByLabel('생성물 워크스페이스');
+    await expect(workspace).toBeVisible();
+    await expect(workspace).toContainText('PrimaryActionButton');
+    await expect(workspace).toContainText('Typecheck: PASS');
+    await expect(workspace).toContainText('Vapor token usage: PASS');
   });
 
-  test('스트리밍 중 ESC 를 누르면 응답이 중단된다', async ({ page }) => {
+  test('streaming can be cancelled with ESC', async ({ page }) => {
     await page.goto('/');
-    await page.getByLabel('프롬프트 입력').fill('블로그 글 초안 작성해줘');
-    await page.getByRole('button', { name: '보내기' }).click();
+    await page
+      .getByLabel('자동화 프롬프트 입력')
+      .fill('DataTable 컴포넌트와 story/test 생성');
+    await page.getByRole('button', { name: '자동화 실행' }).click();
 
     await expect(page.locator('[data-role="assistant"]')).toBeVisible();
     await page.keyboard.press('Escape');
@@ -48,28 +57,27 @@ test.describe('채팅 대화 흐름', () => {
     await expect(page.getByText('응답이 중단되었습니다.')).toBeVisible();
   });
 
-  test('초안이 생기면 미리보기 패널이 열리고 닫고 다시 열 수 있다', async ({
+  test('artifact workspace can be closed and reopened', async ({ page }) => {
+    await page.goto('/');
+    await page.getByLabel('자동화 프롬프트 입력').fill('a11y audit 요청');
+    await page.getByRole('button', { name: '자동화 실행' }).click();
+
+    const workspace = page.getByLabel('생성물 워크스페이스');
+    await expect(workspace).toBeVisible({ timeout: 6000 });
+
+    await page.getByRole('button', { name: '워크스페이스 닫기' }).click();
+    await expect(workspace).toBeHidden();
+
+    await page.getByRole('button', { name: 'Artifact 보기' }).click();
+    await expect(workspace).toBeVisible();
+  });
+
+  test('response regeneration keeps the original automation request', async ({
     page,
   }) => {
     await page.goto('/');
-    await page.getByLabel('프롬프트 입력').fill('이 문장 다듬어줘');
-    await page.getByRole('button', { name: '보내기' }).click();
-
-    const preview = page.getByLabel('초안 미리보기');
-    await expect(preview).toBeVisible({ timeout: 6000 });
-    await expect(preview).toContainText('수정본', { timeout: 6000 });
-
-    await page.getByRole('button', { name: '미리보기 닫기' }).click();
-    await expect(preview).toBeHidden();
-
-    await page.getByRole('button', { name: '초안 보기' }).click();
-    await expect(preview).toBeVisible();
-  });
-
-  test('응답 재생성을 누르면 다시 스트리밍한다', async ({ page }) => {
-    await page.goto('/');
-    await page.getByLabel('프롬프트 입력').fill('제목 추천해줘');
-    await page.getByRole('button', { name: '보내기' }).click();
+    await page.getByLabel('자동화 프롬프트 입력').fill('token sync 도와줘');
+    await page.getByRole('button', { name: '자동화 실행' }).click();
     await expect
       .poll(() => page.locator('[data-status="done"]').count(), {
         timeout: 6000,
@@ -77,7 +85,6 @@ test.describe('채팅 대화 흐름', () => {
       .toBeGreaterThanOrEqual(2);
 
     await page.getByRole('button', { name: '응답 재생성' }).click();
-    // 재생성 직후 어시스턴트 메시지가 다시 스트리밍 상태가 된다.
     await expect(page.locator('[data-role="assistant"]')).toHaveAttribute(
       'data-status',
       'streaming',
@@ -89,7 +96,7 @@ test.describe('채팅 대화 흐름', () => {
       .toBeGreaterThanOrEqual(2);
   });
 
-  test('지원하지 않는 파일은 거부 피드백을 표시한다', async ({ page }) => {
+  test('unsupported file shows rejection feedback', async ({ page }) => {
     await page.goto('/');
     await page
       .locator('input[type="file"]')
@@ -99,16 +106,17 @@ test.describe('채팅 대화 흐름', () => {
     );
   });
 
-  test('첨부한 파일이 대화 메시지에 함께 표시된다', async ({ page }) => {
+  test('attached token file appears in user message', async ({ page }) => {
     await page.goto('/');
     await page
       .locator('input[type="file"]')
-      .setInputFiles(makeTempFile('outline.md'));
-    await page.getByLabel('프롬프트 입력').fill('이 개요 검토해줘');
-    await page.getByRole('button', { name: '보내기' }).click();
+      .setInputFiles(makeTempFile('tokens.json', '{"color.primary.500":"#0066ff"}'));
+    await page.getByLabel('자동화 프롬프트 입력').fill('토큰 매핑해줘');
+    await expect(page.getByText('완료')).toBeVisible();
+    await page.getByRole('button', { name: '자동화 실행' }).click();
 
     const userBubble = page.locator('[data-role="user"]');
-    await expect(userBubble).toContainText('이 개요 검토해줘');
-    await expect(userBubble).toContainText('outline.md');
+    await expect(userBubble).toContainText('토큰 매핑해줘');
+    await expect(userBubble).toContainText('tokens.json');
   });
 });
