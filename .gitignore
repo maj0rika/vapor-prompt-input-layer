@@ -37,6 +37,7 @@ coverage
 .windsurf/
 .aider*
 .mcp/
+.omc/
 prompts/
 ai-notes/
 scratch/
