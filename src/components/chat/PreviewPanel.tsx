@@ -3,13 +3,26 @@ import { Badge, Button, IconButton, Text } from '@vapor-ui/core';
 import { CloseOutlineIcon, CopyOutlineIcon } from '@vapor-ui/icons';
 import { Markdown } from './Markdown';
 
-type ArtifactTab = 'component' | 'story' | 'test' | 'validation';
+type ArtifactTab = 'canvas' | 'component' | 'story' | 'test' | 'validation';
 
 type ArtifactSection = {
   id: ArtifactTab;
   label: string;
   content: string;
 };
+
+type CanvasVariant = {
+  name: string;
+  label: string;
+  disabled?: boolean;
+};
+
+type CanvasModel = {
+  componentName: string;
+  variants: CanvasVariant[];
+};
+
+type CanvasTheme = 'light' | 'dark';
 
 export type PreviewPanelProps = {
   /** 에이전트가 작성 중/완료한 생성 artifact. 스트리밍 중 점진 갱신된다. */
@@ -19,6 +32,7 @@ export type PreviewPanelProps = {
 };
 
 const TAB_LABELS: Record<ArtifactTab, string> = {
+  canvas: 'Canvas',
   component: 'Component',
   story: 'Story',
   test: 'Test',
@@ -32,8 +46,25 @@ const TAB_LABELS: Record<ArtifactTab, string> = {
  */
 export function PreviewPanel({ draft, onClose, canClose = true }: PreviewPanelProps) {
   const sections = useMemo(() => parseArtifactSections(draft), [draft]);
-  const [activeTab, setActiveTab] = useState<ArtifactTab>('component');
-  const active = sections.find((section) => section.id === activeTab) ?? sections[0];
+  const canvas = useMemo(() => buildCanvasModel(sections), [sections]);
+  const [activeTab, setActiveTab] = useState<ArtifactTab>('canvas');
+  const [activeVariantName, setActiveVariantName] = useState('Default');
+  const [canvasTheme, setCanvasTheme] = useState<CanvasTheme>('light');
+  const canvasSection = canvas
+    ? {
+        id: 'canvas' as const,
+        label: 'Canvas',
+        content: canvasHtml({
+          componentName: canvas.componentName,
+          variant:
+            canvas.variants.find((variant) => variant.name === activeVariantName) ??
+            canvas.variants[0],
+          theme: canvasTheme,
+        }),
+      }
+    : undefined;
+  const visibleSections = canvasSection ? [canvasSection, ...sections] : sections;
+  const active = visibleSections.find((section) => section.id === activeTab) ?? visibleSections[0];
   const validation = sections.find((section) => section.id === 'validation');
 
   const handleCopy = () => {
@@ -77,15 +108,20 @@ export function PreviewPanel({ draft, onClose, canClose = true }: PreviewPanelPr
         </div>
       </header>
 
-      {sections.length > 0 && (
-        <div className="flex flex-wrap gap-1 border-b border-v-normal px-v-200 py-v-150">
-          {sections.map((section) => (
+      {visibleSections.length > 0 && (
+        <div
+          role="tablist"
+          aria-label="Artifact workspace tabs"
+          className="flex flex-wrap gap-1 border-b border-v-normal px-v-200 py-v-150"
+        >
+          {visibleSections.map((section) => (
             <Button
               key={section.id}
               size="sm"
               variant={section.id === active?.id ? 'outline' : 'ghost'}
               colorPalette="primary"
-              aria-current={section.id === active?.id ? 'page' : undefined}
+              role="tab"
+              aria-selected={section.id === active?.id ? 'true' : 'false'}
               onClick={() => setActiveTab(section.id)}
             >
               {section.label}
@@ -109,7 +145,16 @@ export function PreviewPanel({ draft, onClose, canClose = true }: PreviewPanelPr
       )}
 
       <div className="min-h-0 flex-1 overflow-y-auto p-v-300">
-        {active ? (
+        {active?.id === 'canvas' && canvas ? (
+          <ArtifactCanvas
+            section={active}
+            model={canvas}
+            activeVariantName={activeVariantName}
+            onVariantChange={setActiveVariantName}
+            theme={canvasTheme}
+            onThemeChange={setCanvasTheme}
+          />
+        ) : active ? (
           <div aria-live="polite">
             <Markdown>{active.content}</Markdown>
           </div>
@@ -140,6 +185,71 @@ export function PreviewPanel({ draft, onClose, canClose = true }: PreviewPanelPr
   );
 }
 
+function ArtifactCanvas({
+  section,
+  model,
+  activeVariantName,
+  onVariantChange,
+  theme,
+  onThemeChange,
+}: {
+  section: ArtifactSection;
+  model: CanvasModel;
+  activeVariantName: string;
+  onVariantChange: (next: string) => void;
+  theme: CanvasTheme;
+  onThemeChange: (next: CanvasTheme) => void;
+}) {
+  return (
+    <div className="flex h-full min-h-[360px] flex-col gap-v-200">
+      <div className="flex items-center justify-between">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <Text typography="subtitle2">Canvas</Text>
+          <Text typography="body4" foreground="hint-200">
+            sandboxed generated component preview
+          </Text>
+        </div>
+        <Badge size="sm" colorPalette="success">
+          Runtime render
+        </Badge>
+      </div>
+      <div className="flex flex-wrap items-center gap-1">
+        {model.variants.map((variant) => (
+          <Button
+            key={variant.name}
+            size="sm"
+            variant={variant.name === activeVariantName ? 'outline' : 'ghost'}
+            colorPalette="primary"
+            aria-label={`${variant.name} variant`}
+            onClick={() => onVariantChange(variant.name)}
+          >
+            {variant.name}
+          </Button>
+        ))}
+        <div className="mx-v-100 h-v-300 border-l border-v-normal" />
+        {(['light', 'dark'] as const).map((nextTheme) => (
+          <Button
+            key={nextTheme}
+            size="sm"
+            variant={nextTheme === theme ? 'outline' : 'ghost'}
+            colorPalette="primary"
+            aria-label={`${capitalize(nextTheme)} theme`}
+            onClick={() => onThemeChange(nextTheme)}
+          >
+            {capitalize(nextTheme)}
+          </Button>
+        ))}
+      </div>
+      <iframe
+        title="Generated artifact canvas"
+        sandbox=""
+        srcDoc={section.content}
+        className="min-h-[280px] flex-1 rounded-v-300 border border-v-normal bg-v-canvas-100"
+      />
+    </div>
+  );
+}
+
 function parseArtifactSections(markdown: string): ArtifactSection[] {
   if (!markdown.trim()) return [];
 
@@ -161,6 +271,116 @@ function parseArtifactSections(markdown: string): ArtifactSection[] {
   });
 }
 
+function buildCanvasModel(sections: ArtifactSection[]): CanvasModel | undefined {
+  const component = sections.find((section) => section.id === 'component');
+  const story = sections.find((section) => section.id === 'story');
+  if (!component) return undefined;
+
+  const componentName = component.content.match(/export function\s+(\w+)/)?.[1] ?? 'GeneratedComponent';
+  const label =
+    story?.content.match(/children:\s*['"]([^'"]+)['"]/)?.[1] ??
+    component.content.match(/>\s*([^<>{}\n][^<>{}]*)\s*<\/Button>/)?.[1] ??
+    'Generated action';
+
+  return {
+    componentName,
+    variants: [
+      { name: 'Default', label },
+      ...(story?.content.includes('Disabled') ? [{ name: 'Disabled', label, disabled: true }] : []),
+    ],
+  };
+}
+
+function canvasHtml({
+  componentName,
+  variant,
+  theme,
+}: {
+  componentName: string;
+  variant: CanvasVariant;
+  theme: CanvasTheme;
+}): string {
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --canvas-bg: #f8fafc;
+        --surface: #ffffff;
+        --border: #d9dee8;
+        --primary: #2563eb;
+        --primary-hover: #1d4ed8;
+        --text: #111827;
+        --muted: #64748b;
+      }
+      body[data-theme="dark"] {
+        color-scheme: dark;
+        --canvas-bg: #111827;
+        --surface: #1f2937;
+        --border: #475569;
+        --primary: #60a5fa;
+        --primary-hover: #93c5fd;
+        --text: #f8fafc;
+        --muted: #cbd5e1;
+      }
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--canvas-bg);
+        color: var(--text);
+      }
+      body {
+        display: grid;
+        place-items: center;
+        padding: 32px;
+        box-sizing: border-box;
+      }
+      [data-testid="artifact-canvas"] {
+        display: grid;
+        gap: 14px;
+        min-width: min(100%, 320px);
+        padding: 28px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--surface);
+      }
+      .eyebrow {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      button {
+        min-height: 40px;
+        border: 0;
+        border-radius: 8px;
+        padding: 0 16px;
+        background: var(--primary);
+        color: white;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button:hover {
+        background: var(--primary-hover);
+      }
+      button:focus-visible {
+        outline: 3px solid color-mix(in srgb, var(--primary) 35%, transparent);
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body data-theme="${theme}">
+    <main data-testid="artifact-canvas" aria-label="${escapeHtml(componentName)} preview">
+      <p class="eyebrow">${escapeHtml(componentName)}</p>
+      <button type="button"${variant.disabled ? ' disabled' : ''}>${escapeHtml(variant.label)}</button>
+    </main>
+  </body>
+</html>`;
+}
+
 function extractValidationBadges(content: string): Array<{ label: string; pass: boolean }> {
   const labels = ['Typecheck', 'Unit', 'Axe', 'Vapor token usage'];
   return labels.map((label) => ({
@@ -171,4 +391,17 @@ function extractValidationBadges(content: string): Array<{ label: string; pass: 
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function capitalize(value: string): string {
+  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
 }

@@ -31,15 +31,27 @@ expect(true).toBe(true);
 `;
 
 describe('PreviewPanel', () => {
-  it('생성물 워크스페이스와 Component 탭을 렌더링한다', () => {
+  it('생성물 워크스페이스와 Canvas 기본 탭을 렌더링한다', () => {
     render(<PreviewPanel draft={ARTIFACT} onClose={vi.fn()} />);
 
     expect(screen.getByLabelText('생성물 워크스페이스')).toHaveTextContent(
       'Artifact workspace',
     );
-    expect(screen.getByRole('button', { name: 'Component' })).toHaveAttribute(
-      'aria-current',
-      'page',
+    expect(screen.getByRole('tab', { name: 'Canvas' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(screen.getByTitle('Generated artifact canvas')).toBeInTheDocument();
+  });
+
+  it('Component 탭에서 생성 코드를 확인할 수 있다', () => {
+    render(<PreviewPanel draft={ARTIFACT} onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Component' }));
+
+    expect(screen.getByRole('tab', { name: 'Component' })).toHaveAttribute(
+      'aria-selected',
+      'true',
     );
     expect(screen.getByText(/PrimaryButton/)).toBeInTheDocument();
   });

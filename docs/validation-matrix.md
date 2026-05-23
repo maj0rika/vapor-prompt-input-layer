@@ -1,23 +1,28 @@
 # Validation Matrix
 
-This matrix separates verified MVP behavior from final portfolio gates.
+This matrix separates verified MVP behavior from final portfolio gates. Evidence
+levels are defined in [Reality Check](./reality-check.md).
 
 ## Current Status
 
-| Area | Status | Evidence |
+| Area | Status | Evidence level | Evidence |
 | --- | --- | --- |
-| Product concept | implemented | Vapor DS Automation Agent UI |
-| DeepSeek proxy | implemented | same-origin `/api/deepseek/chat` stream smoke |
-| Artifact parser | implemented | `src/agent/responseParser.ts` tests |
-| Token usage static check | implemented | `src/agent/tokenUsage.ts` tests |
-| Artifact workspace | implemented | Component / Story / Test / Validation tabs |
-| Inline attachment composer | implemented | `.json/.ts/.tsx/.md/.txt` text extraction |
-| Generated typecheck runner | implemented | `npm run verify:generated` |
-| Generated Vitest runner | implemented | temp workspace Vitest |
-| Generated Axe runner | implemented | runtime `jest-axe` test |
-| Live validation endpoint | implemented | `/api/deepseek/validate` runs the temp workspace gate |
-| Bundle budget | implemented | `npm run verify:bundle` enforces initial JS gzip <= 200KB |
-| Lighthouse budget | implemented | `npm run verify:lighthouse` enforces app quality scores and vitals |
+| Product concept | implemented | ui-visible | Vapor DS Automation Agent UI |
+| DeepSeek proxy | implemented | script-verified | same-origin `/api/deepseek/chat` stream smoke |
+| Artifact parser | implemented | script-verified | `src/agent/responseParser.ts` tests |
+| Token usage static check | implemented | script-verified | `src/agent/tokenUsage.ts` tests |
+| Artifact workspace | implemented | ui-visible | Component / Story / Test / Validation tabs |
+| Inline attachment composer | implemented | user-verifiable | `.json/.ts/.tsx/.md/.txt` text extraction |
+| Generated typecheck runner | implemented | script-verified | `npm run verify:generated` |
+| Generated Vitest runner | implemented | script-verified | temp workspace Vitest |
+| Generated Axe runner | implemented | script-verified | runtime `jest-axe` test |
+| Live validation endpoint | implemented | script-verified | `/api/deepseek/validate` runs the temp workspace gate |
+| Generated component Canvas | implemented | ui-visible | sandbox iframe preview from parsed artifact/story metadata |
+| Variant/theme controls | implemented | user-verifiable | Default/Disabled and Light/Dark controls covered by E2E |
+| Repair loop | not-started | not-started | failed validation is not sent back to agent yet |
+| Approval gate | not-started | not-started | no approve-only-after-pass state yet |
+| Bundle budget | implemented | script-verified | `npm run verify:bundle` enforces initial JS gzip <= 200KB |
+| Lighthouse budget | implemented | script-verified | `npm run verify:lighthouse` enforces app quality scores and vitals |
 
 ## AI Agent Behavior
 

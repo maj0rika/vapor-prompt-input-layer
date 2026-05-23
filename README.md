@@ -1,12 +1,15 @@
-# Vapor DS Automation Agent
+# Vapor DS Automation Workbench
 
 Vapor Design System 기반 컴포넌트 생성, Storybook 스토리 작성, Vitest 테스트,
 접근성 검증을 자연어 에이전트로 자동화하는 포트폴리오 케이스 스터디입니다.
 
 목표는 단순 채팅 UI 가 아니라 DS 엔지니어의 반복 작업을 줄이고 산출물 품질을
 높이는 자동화 워크플로우입니다. 사용자는 컴포넌트 요구사항과 참고 파일을
-입력하고, 에이전트는 Vapor 기준에 맞는 artifact 를 생성해 우측 workspace 에
-분리해 보여줍니다.
+입력하고, 에이전트는 Vapor 기준에 맞는 artifact 를 생성해 workspace 에 분리해
+보여줍니다. 현재 코드는 parser, validation runner, artifact tabs 까지 검증됐고,
+생성 컴포넌트는 Canvas 탭의 sandboxed iframe 에 렌더링되며, 기본/비활성 variant 와
+light/dark theme 를 전환할 수 있습니다. 현재 Canvas 는 parsed artifact/story
+metadata 기반 preview 이며, 임의 TSX를 직접 컴파일하는 runtime 은 후속 강화 대상입니다.
 
 > 데모: 로컬에서 `npm run dev` 로 실행할 수 있습니다. DeepSeek 연결은
 > `.env.local` 의 `DEEPSEEK_API_KEY` 를 서버 프록시에서만 읽습니다.
@@ -17,7 +20,7 @@ Vapor Design System 기반 컴포넌트 생성, Storybook 스토리 작성, Vite
    DS 자동화 intent 를 명확히 라우팅
 2. **구조화된 artifact 출력** — LLM 응답을 delimiter 기반 component/story/test
    artifact 로 파싱하고 preview tab 으로 분리
-3. **검증 피드백** — Typecheck, Unit, Axe, Vapor token usage 상태를 badge 와
+3. **검증 피드백** — Typecheck, Unit, Axe, Vapor token usage runner 결과를
    Validation tab 에 노출
 4. **첨부 기반 컨텍스트** — Figma Variables JSON, token JSON, TS/TSX, MD/TXT 를
    composer 내부에서 첨부하고 텍스트로 추출
@@ -62,9 +65,10 @@ artifact 가 추출되면 `/api/deepseek/validate`가 실제 temp workspace runn
 호출하고, Typecheck, Unit, Axe, Vapor token 결과로 preview validation 상태를
 교체합니다.
 
-최종 포트폴리오 기준은 더 엄격합니다. 생성물이 실제 temp workspace 에 파일로
-써지고, TypeScript, Vitest, Axe, Vapor token gate 를 통과한 뒤에만 성공으로
-인정합니다. 이 기준과 현재 미구현 항목은 [Quality Gates](docs/quality-gates.md)와
+최종 Workbench 기준은 더 엄격합니다. 생성물이 실제 temp workspace 에 파일로
+써지고, TypeScript, Vitest, Axe, Vapor token gate 를 통과하는 것뿐 아니라,
+사용자가 Canvas 에 mount 된 컴포넌트와 실패/수정 루프를 화면에서 확인할 수 있어야
+합니다. 현재 증거 수준은 [Reality Check](docs/reality-check.md)와
 [Validation Matrix](docs/validation-matrix.md)에 명시합니다.
 
 ## Tech Stack
@@ -103,6 +107,7 @@ npm run dev -- --host 127.0.0.1
 - [Vapor Mapping](docs/vapor-mapping.md) — Vapor primitive 매핑과 래핑 이유
 - [Accessibility Checklist](docs/accessibility-checklist.md) — 접근성 점검 항목
 - [Quality Gates](docs/quality-gates.md) — 최종 통과 기준과 명령
+- [Reality Check](docs/reality-check.md) — CLI 검증과 사용자 검증의 차이
 - [Validation Matrix](docs/validation-matrix.md) — 현재 구현/미구현 검증 매트릭스
 - [Git History Notes](docs/git-history.md) — 작업 단위별 커밋 의도
 
