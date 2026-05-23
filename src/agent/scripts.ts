@@ -15,7 +15,19 @@ export type AgentScript = {
   error?: string;
 };
 
-const COMPONENT_ARTIFACT = `<artifact type="component" filename="PrimaryActionButton.tsx">
+const COMPONENT_ARTIFACT = `<artifact-meta>
+{
+  "componentName": "PrimaryActionButton",
+  "primaryExport": "PrimaryActionButton",
+  "defaultProps": { "children": "Deploy component" },
+  "variants": [
+    { "name": "Default", "props": { "children": "Deploy component" } },
+    { "name": "Disabled", "props": { "children": "Deploy component", "disabled": true } }
+  ]
+}
+</artifact-meta>
+
+<artifact type="component" filename="PrimaryActionButton.tsx">
 \`\`\`tsx
 import { Button } from '@vapor-ui/core';
 
@@ -137,7 +149,18 @@ Maps Figma variable names to existing Vapor CSS custom properties.
 </notes>
 `;
 
-const A11Y_ARTIFACT = `<artifact type="component" filename="AccessibleAttachButton.tsx">
+const A11Y_ARTIFACT = `<artifact-meta>
+{
+  "componentName": "AccessibleAttachButton",
+  "primaryExport": "AccessibleAttachButton",
+  "defaultProps": {},
+  "variants": [
+    { "name": "Default", "props": {} }
+  ]
+}
+</artifact-meta>
+
+<artifact type="component" filename="AccessibleAttachButton.tsx">
 \`\`\`tsx
 import { IconButton, Tooltip } from '@vapor-ui/core';
 import { AttachFileOutlineIcon } from '@vapor-ui/icons';
@@ -189,7 +212,18 @@ No raw color, spacing, or radius values are introduced.
 </notes>
 `;
 
-const BROKEN_ARTIFACT = `<artifact type="component" filename="BrokenRawColorButton.tsx">
+const BROKEN_ARTIFACT = `<artifact-meta>
+{
+  "componentName": "BrokenRawColorButton",
+  "primaryExport": "BrokenRawColorButton",
+  "defaultProps": { "children": "Broken action" },
+  "variants": [
+    { "name": "Default", "props": { "children": "Broken action" } }
+  ]
+}
+</artifact-meta>
+
+<artifact type="component" filename="BrokenRawColorButton.tsx">
 \`\`\`tsx
 export function BrokenRawColorButton({ children }: { children: string }) {
   return (
@@ -243,7 +277,18 @@ This artifact intentionally uses raw color values so the token gate fails.
 </notes>
 `;
 
-const TYPECHECK_FAIL_ARTIFACT = `<artifact type="component" filename="TypecheckFailButton.tsx">
+const TYPECHECK_FAIL_ARTIFACT = `<artifact-meta>
+{
+  "componentName": "TypecheckFailButton",
+  "primaryExport": "TypecheckFailButton",
+  "defaultProps": { "children": "Typecheck fail action" },
+  "variants": [
+    { "name": "Default", "props": { "children": "Typecheck fail action" } }
+  ]
+}
+</artifact-meta>
+
+<artifact type="component" filename="TypecheckFailButton.tsx">
 \`\`\`tsx
 export function TypecheckFailButton({ children }: { children: string }) {
   const invalid: number = children;
@@ -289,7 +334,18 @@ No token assertion is intended for this fixture.
 </notes>
 `;
 
-const RUNTIME_FAIL_ARTIFACT = `<artifact type="component" filename="RuntimeFailButton.tsx">
+const RUNTIME_FAIL_ARTIFACT = `<artifact-meta>
+{
+  "componentName": "RuntimeFailButton",
+  "primaryExport": "RuntimeFailButton",
+  "defaultProps": { "children": "Runtime fail action" },
+  "variants": [
+    { "name": "Default", "props": { "children": "Runtime fail action" } }
+  ]
+}
+</artifact-meta>
+
+<artifact type="component" filename="RuntimeFailButton.tsx">
 \`\`\`tsx
 export function RuntimeFailButton({ children }: { children: string }) {
   throw new Error('runtime render fixture failure');
@@ -335,7 +391,18 @@ No token assertion is intended for this fixture.
 </notes>
 `;
 
-const AXE_FAIL_ARTIFACT = `<artifact type="component" filename="AxeFailImage.tsx">
+const AXE_FAIL_ARTIFACT = `<artifact-meta>
+{
+  "componentName": "AxeFailImage",
+  "primaryExport": "AxeFailImage",
+  "defaultProps": {},
+  "variants": [
+    { "name": "Default", "props": {} }
+  ]
+}
+</artifact-meta>
+
+<artifact type="component" filename="AxeFailImage.tsx">
 \`\`\`tsx
 export function AxeFailImage() {
   return <img src="/missing-preview.png" />;

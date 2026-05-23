@@ -7,7 +7,20 @@ export type CodeArtifact = {
   content: string;
 };
 
+export type ArtifactVariantMetadata = {
+  name: string;
+  props?: Record<string, unknown>;
+};
+
+export type ArtifactMetadata = {
+  componentName?: string;
+  primaryExport?: string;
+  defaultProps?: Record<string, unknown>;
+  variants?: ArtifactVariantMetadata[];
+};
+
 export type GeneratedArtifact = {
+  metadata?: ArtifactMetadata;
   component?: CodeArtifact;
   story?: CodeArtifact;
   test?: CodeArtifact;
@@ -17,10 +30,13 @@ export type GeneratedArtifact = {
 
 const ARTIFACT_RE =
   /<artifact\s+type="(component|story|test)"\s+filename="([^"]+)">\s*```(tsx|ts)?\s*([\s\S]*?)```\s*<\/artifact>/g;
+const META_RE = /<artifact-meta>\s*([\s\S]*?)\s*<\/artifact-meta>/;
 const NOTES_RE = /<notes\s+type="(a11y|token)">([\s\S]*?)<\/notes>/g;
 
 export function parseGeneratedArtifact(markdown: string): GeneratedArtifact {
   const result: GeneratedArtifact = {};
+  const metadata = parseArtifactMetadata(markdown);
+  if (metadata) result.metadata = metadata;
 
   for (const match of markdown.matchAll(ARTIFACT_RE)) {
     const type = match[1] as ArtifactType;
@@ -72,6 +88,45 @@ export function artifactToMarkdown(artifact: GeneratedArtifact): string {
   return sections.join('\n\n');
 }
 
+function parseArtifactMetadata(markdown: string): ArtifactMetadata | undefined {
+  const match = markdown.match(META_RE);
+  if (!match) return undefined;
+
+  try {
+    const raw = JSON.parse(match[1]) as unknown;
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+    const value = raw as Record<string, unknown>;
+    const metadata: ArtifactMetadata = {};
+
+    if (typeof value.componentName === 'string' && value.componentName.trim()) {
+      metadata.componentName = value.componentName.trim();
+    }
+    if (typeof value.primaryExport === 'string' && value.primaryExport.trim()) {
+      metadata.primaryExport = value.primaryExport.trim();
+    }
+    if (isRecord(value.defaultProps)) {
+      metadata.defaultProps = value.defaultProps;
+    }
+    if (Array.isArray(value.variants)) {
+      metadata.variants = value.variants.flatMap((variant) => {
+        if (!isRecord(variant) || typeof variant.name !== 'string' || !variant.name.trim()) {
+          return [];
+        }
+        return [
+          {
+            name: variant.name.trim(),
+            ...(isRecord(variant.props) ? { props: variant.props } : {}),
+          },
+        ];
+      });
+    }
+
+    return Object.keys(metadata).length > 0 ? metadata : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function codeSection(title: string, artifact: CodeArtifact): string {
   return [
     `## ${title}`,
@@ -86,4 +141,8 @@ function codeSection(title: string, artifact: CodeArtifact): string {
 
 function inferLanguage(filename: string): 'ts' | 'tsx' {
   return filename.endsWith('.tsx') ? 'tsx' : 'ts';
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }

@@ -5,8 +5,8 @@ import { PreviewPanel } from './PreviewPanel';
 const ARTIFACT = `## Component
 
 \`\`\`tsx
-export function PrimaryButton() {
-  return <button>Save</button>;
+export function PrimaryButton({ children, disabled = false }: { children: string; disabled?: boolean }) {
+  return <button disabled={disabled}>{children}</button>;
 }
 \`\`\`
 
@@ -30,9 +30,29 @@ expect(true).toBe(true);
 - Vapor token usage: PASS
 `;
 
+const ARTIFACT_SOURCE = `<artifact-meta>
+{
+  "componentName": "PrimaryButton",
+  "primaryExport": "PrimaryButton",
+  "defaultProps": { "children": "Save" },
+  "variants": [
+    { "name": "Default", "props": { "children": "Save" } },
+    { "name": "Disabled", "props": { "children": "Save", "disabled": true } }
+  ]
+}
+</artifact-meta>
+
+<artifact type="component" filename="PrimaryButton.tsx">
+\`\`\`tsx
+export function PrimaryButton({ children, disabled = false }: { children: string; disabled?: boolean }) {
+  return <button disabled={disabled}>{children}</button>;
+}
+\`\`\`
+</artifact>`;
+
 describe('PreviewPanel', () => {
   it('생성물 워크스페이스와 Canvas 기본 탭을 렌더링한다', () => {
-    render(<PreviewPanel draft={ARTIFACT} artifactSource="<artifact />" onClose={vi.fn()} />);
+    render(<PreviewPanel draft={ARTIFACT} artifactSource={ARTIFACT_SOURCE} onClose={vi.fn()} />);
 
     expect(screen.getByLabelText('생성물 워크스페이스')).toHaveTextContent(
       'Artifact workspace',
@@ -42,6 +62,46 @@ describe('PreviewPanel', () => {
       'true',
     );
     expect(screen.getByTitle('Generated artifact canvas')).toBeInTheDocument();
+    expect(screen.getByText('Metadata contract')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Disabled variant' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Canvas runtime: loading')).toBeInTheDocument();
+  });
+
+  it('Canvas runtime ready/error message 를 parent UI 에 반영한다', async () => {
+    render(<PreviewPanel draft={ARTIFACT} artifactSource={ARTIFACT_SOURCE} onClose={vi.fn()} />);
+
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        origin: window.location.origin,
+        data: { type: 'vapor-preview-ready', variant: 'Default', theme: 'light' },
+      }),
+    );
+
+    await screen.findByLabelText('Canvas runtime: ready');
+
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        origin: window.location.origin,
+        data: {
+          type: 'vapor-preview-error',
+          variant: 'Default',
+          theme: 'light',
+          message: 'preview exploded',
+        },
+      }),
+    );
+
+    await screen.findByLabelText('Canvas runtime: failed');
+    expect(screen.getByText('preview exploded')).toBeInTheDocument();
+  });
+
+  it('artifact-meta 가 없으면 휴리스틱 props 사용을 명시한다', () => {
+    render(<PreviewPanel draft={ARTIFACT} artifactSource="<artifact />" onClose={vi.fn()} />);
+
+    expect(screen.getByText('Heuristic props')).toBeInTheDocument();
+    expect(screen.getByText(/artifact-meta가 없어/)).toBeInTheDocument();
   });
 
   it('artifactSource 가 없으면 Canvas 를 실제 preview 로 위장하지 않는다', () => {
@@ -77,7 +137,7 @@ describe('PreviewPanel', () => {
     render(
       <PreviewPanel
         draft={ARTIFACT.replaceAll('PASS', 'CHECK')}
-        artifactSource="<artifact />"
+        artifactSource={ARTIFACT_SOURCE}
         artifactProvenance="deterministic-sample"
         onClose={vi.fn()}
       />,
@@ -105,7 +165,7 @@ describe('PreviewPanel', () => {
     render(
       <PreviewPanel
         draft={ARTIFACT.replaceAll('PASS', 'CHECK')}
-        artifactSource="<artifact />"
+        artifactSource={ARTIFACT_SOURCE}
         artifactProvenance="deterministic-sample"
         onClose={vi.fn()}
       />,

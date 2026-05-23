@@ -25,6 +25,8 @@ test.describe('artifact canvas runtime', () => {
     await expect(page.locator('[aria-label="Artifact: pass"]')).toBeVisible();
     await expect(page.locator('[aria-label="Canvas: pass"]')).toBeVisible();
     await expect(page.locator('[aria-label="Validation: waiting"]')).toBeVisible();
+    await expect(page.getByText('Metadata contract')).toBeVisible();
+    await expect(page.locator('[aria-label="Canvas runtime: ready"]')).toBeVisible();
 
     const canvas = page.frameLocator('iframe[title="Generated artifact canvas"]');
     await expect(page.locator('iframe[title="Generated artifact canvas"]')).toHaveAttribute(
@@ -166,6 +168,9 @@ test.describe('artifact canvas runtime', () => {
       .getByLabel('자동화 프롬프트 입력')
       .fill('runtime fail component fixture');
     await page.getByRole('button', { name: '자동화 실행' }).click();
+    await expect(page.locator('[aria-label="Canvas runtime: failed"]')).toBeVisible({
+      timeout: 8000,
+    });
 
     await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
       timeout: 6000,

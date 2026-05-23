@@ -22,10 +22,14 @@ export async function writeGeneratedFiles(
   await writeFile(join(srcDir, artifact.test.filename), artifact.test.content, 'utf8');
   await writeFile(
     join(srcDir, 'GeneratedRuntimeRender.test.tsx'),
-    runtimeRenderTest(artifact.component.filename),
+    runtimeRenderTest(artifact.component.filename, artifact.metadata?.primaryExport, buildRuntimeProps(artifact)),
     'utf8',
   );
-  await writeFile(join(srcDir, 'GeneratedRuntimeAxe.test.tsx'), axeTest(artifact.component.filename), 'utf8');
+  await writeFile(
+    join(srcDir, 'GeneratedRuntimeAxe.test.tsx'),
+    axeTest(artifact.component.filename, artifact.metadata?.primaryExport, buildRuntimeProps(artifact)),
+    'utf8',
+  );
 }
 
 function packageJson(): string {
@@ -76,8 +80,13 @@ function storybookTypes(): string {
   ].join('\n');
 }
 
-function runtimeRenderTest(componentFilename: string): string {
+function runtimeRenderTest(
+  componentFilename: string,
+  primaryExport: string | undefined,
+  previewProps: Record<string, unknown>,
+): string {
   const importPath = `./${componentFilename.replace(/\.tsx?$/, '')}`;
+  const componentLookup = componentLookupExpression(primaryExport);
   return [
     "import React from 'react';",
     "import { render } from '@testing-library/react';",
@@ -95,20 +104,24 @@ function runtimeRenderTest(componentFilename: string): string {
     '});',
     '',
     "it('mounts the generated component without runtime console errors', () => {",
-    '  const maybeComponent = Object.values(ComponentModule).find(',
-    "    (value) => typeof value === 'function',",
-    '  );',
+    `  const maybeComponent = ${componentLookup};`,
     "  if (!maybeComponent) throw new Error('No exported React component found.');",
-    '  const Component = maybeComponent as React.ComponentType<{ children?: React.ReactNode }>;',
-    '  render(<Component>Generated action</Component>);',
+    '  const Component = maybeComponent as React.ComponentType<Record<string, unknown>>;',
+    `  const previewProps = ${JSON.stringify(previewProps)};`,
+    '  render(React.createElement(Component, previewProps));',
     '  expect(consoleErrorSpy).not.toHaveBeenCalled();',
     '});',
     '',
   ].join('\n');
 }
 
-function axeTest(componentFilename: string): string {
+function axeTest(
+  componentFilename: string,
+  primaryExport: string | undefined,
+  previewProps: Record<string, unknown>,
+): string {
   const importPath = `./${componentFilename.replace(/\.tsx?$/, '')}`;
+  const componentLookup = componentLookupExpression(primaryExport);
   return [
     "import React from 'react';",
     "import { render } from '@testing-library/react';",
@@ -117,15 +130,31 @@ function axeTest(componentFilename: string): string {
     `import * as ComponentModule from '${importPath}';`,
     '',
     "it('renders without axe violations', async () => {",
-    '  const maybeComponent = Object.values(ComponentModule).find(',
-    "    (value) => typeof value === 'function',",
-    '  );',
+    `  const maybeComponent = ${componentLookup};`,
     "  if (!maybeComponent) throw new Error('No exported React component found.');",
-    '  const Component = maybeComponent as React.ComponentType<{ children?: React.ReactNode }>;',
-    "  const { container } = render(<Component>Generated action</Component>);",
+    '  const Component = maybeComponent as React.ComponentType<Record<string, unknown>>;',
+    `  const previewProps = ${JSON.stringify(previewProps)};`,
+    '  const { container } = render(React.createElement(Component, previewProps));',
     '  const result = await axe(container);',
     '  expect(result.violations).toHaveLength(0);',
     '});',
     '',
   ].join('\n');
+}
+
+function buildRuntimeProps(artifact: GeneratedArtifact): Record<string, unknown> {
+  const metadata = artifact.metadata;
+  if (!metadata) return { children: 'Generated action' };
+  const defaultVariant = metadata.variants?.find((variant) => variant.name === 'Default');
+  return {
+    ...(metadata.defaultProps ?? {}),
+    ...(defaultVariant?.props ?? {}),
+  };
+}
+
+function componentLookupExpression(primaryExport: string | undefined): string {
+  const fallback = "Object.values(ComponentModule).find((value) => typeof value === 'function')";
+  return primaryExport
+    ? `ComponentModule[${JSON.stringify(primaryExport)}] ?? ${fallback}`
+    : fallback;
 }

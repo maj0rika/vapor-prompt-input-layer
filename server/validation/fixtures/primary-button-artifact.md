@@ -1,3 +1,15 @@
+<artifact-meta>
+{
+  "componentName": "PrimaryActionButton",
+  "primaryExport": "PrimaryActionButton",
+  "defaultProps": { "children": "Deploy component" },
+  "variants": [
+    { "name": "Default", "props": { "children": "Deploy component" } },
+    { "name": "Disabled", "props": { "children": "Deploy component", "disabled": true } }
+  ]
+}
+</artifact-meta>
+
 <artifact type="component" filename="PrimaryActionButton.tsx">
 ```tsx
 import type React from 'react';

@@ -1,7 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { artifactToMarkdown, parseGeneratedArtifact } from './responseParser';
 
-const RESPONSE = `<artifact type="component" filename="PrimaryButton.tsx">
+const RESPONSE = `<artifact-meta>
+{
+  "componentName": "PrimaryButton",
+  "primaryExport": "PrimaryButton",
+  "defaultProps": { "children": "Save" },
+  "variants": [
+    { "name": "Default", "props": { "children": "Save" } },
+    { "name": "Disabled", "props": { "children": "Save", "disabled": true } }
+  ]
+}
+</artifact-meta>
+
+<artifact type="component" filename="PrimaryButton.tsx">
 \`\`\`tsx
 export function PrimaryButton() {
   return <button>Save</button>;
@@ -33,6 +45,9 @@ describe('responseParser', () => {
   it('delimiter 기반 artifact 를 타입별로 추출한다', () => {
     const artifact = parseGeneratedArtifact(RESPONSE);
 
+    expect(artifact.metadata?.primaryExport).toBe('PrimaryButton');
+    expect(artifact.metadata?.defaultProps?.children).toBe('Save');
+    expect(artifact.metadata?.variants).toHaveLength(2);
     expect(artifact.component?.filename).toBe('PrimaryButton.tsx');
     expect(artifact.component?.content).toContain('PrimaryButton');
     expect(artifact.story?.filename).toBe('PrimaryButton.stories.tsx');
@@ -52,5 +67,14 @@ describe('responseParser', () => {
 
   it('잘못된 응답은 빈 artifact 로 처리한다', () => {
     expect(parseGeneratedArtifact('plain assistant text')).toEqual({});
+  });
+
+  it('잘못된 artifact-meta JSON 은 artifact 추출을 깨지 않는다', () => {
+    const artifact = parseGeneratedArtifact(
+      `<artifact-meta>{bad json}</artifact-meta>\n${RESPONSE}`,
+    );
+
+    expect(artifact.metadata).toBeUndefined();
+    expect(artifact.component?.filename).toBe('PrimaryButton.tsx');
   });
 });

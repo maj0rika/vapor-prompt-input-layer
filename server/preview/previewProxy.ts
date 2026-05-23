@@ -38,15 +38,16 @@ export async function handleArtifactPreview(
   await writeFile(join(srcDir, artifact.component.filename), artifact.component.content, 'utf8');
 
   const entryPath = join(srcDir, 'PreviewEntry.tsx');
+  const primaryExport =
+    artifact.metadata?.primaryExport ?? inferPrimaryExport(artifact.component.content);
   await writeFile(
     entryPath,
     previewEntry({
       componentFilename: artifact.component.filename,
-      primaryExport: inferPrimaryExport(artifact.component.content),
+      primaryExport,
       variant,
       theme,
-      defaultLabel: inferDefaultLabel(markdown),
-      disabled: variant === 'Disabled',
+      previewProps: buildPreviewProps(markdown, artifact, variant),
     }),
     'utf8',
   );
@@ -85,15 +86,13 @@ function previewEntry({
   primaryExport,
   variant,
   theme,
-  defaultLabel,
-  disabled,
+  previewProps,
 }: {
   componentFilename: string;
   primaryExport: string;
   variant: string;
   theme: 'light' | 'dark';
-  defaultLabel: string;
-  disabled: boolean;
+  previewProps: Record<string, unknown>;
 }): string {
   const importPath = `./${componentFilename.replace(/\.tsx?$/, '')}`;
   return [
@@ -105,13 +104,47 @@ function previewEntry({
     '',
     `const Component = ComponentModule[${JSON.stringify(primaryExport)}] ?? Object.values(ComponentModule).find((value) => typeof value === 'function');`,
     "if (!Component) throw new Error('No exported React component found.');",
-    `const previewChildren = ${JSON.stringify(defaultLabel)};`,
+    `const previewProps = ${JSON.stringify(previewProps)};`,
+    `const previewVariant = ${JSON.stringify(variant)};`,
+    `const previewTheme = ${JSON.stringify(theme)};`,
+    '',
+    'function notifyPreview(type: "vapor-preview-ready" | "vapor-preview-error", message?: string) {',
+    '  window.parent.postMessage({ type, variant: previewVariant, theme: previewTheme, message }, window.location.origin);',
+    '}',
+    '',
+    'class PreviewErrorBoundary extends React.Component<',
+    '  { children: React.ReactNode },',
+    '  { error?: Error }',
+    '> {',
+    '  state: { error?: Error } = {};',
+    '  componentDidCatch(error: Error) {',
+    '    this.setState({ error });',
+    '    notifyPreview("vapor-preview-error", error.message);',
+    '  }',
+    '  render() {',
+    '    if (this.state.error) {',
+    '      return <pre data-preview-error>{this.state.error.message}</pre>;',
+    '    }',
+    '    return this.props.children;',
+    '  }',
+    '}',
+    '',
+    'function ReadyReporter() {',
+    '  React.useEffect(() => {',
+    '    notifyPreview("vapor-preview-ready");',
+    '  }, []);',
+    '  return null;',
+    '}',
     '',
     'function PreviewApp() {',
+    '  const element = React.createElement(',
+    '    Component as React.ComponentType<Record<string, unknown>>,',
+    '    previewProps,',
+    '  );',
     '  return (',
     `    <ThemeProvider defaultTheme={${JSON.stringify(theme)}}>`,
     `      <main data-testid="artifact-canvas" aria-label={${JSON.stringify(`${primaryExport} preview`)}} style={{ display: 'grid', placeItems: 'start center', minHeight: '100vh', padding: 24 }}>`,
-    `        <Component disabled={${JSON.stringify(disabled)}}>{previewChildren}</Component>`,
+    '        {element}',
     '      </main>',
     '    </ThemeProvider>',
     '  );',
@@ -120,9 +153,14 @@ function previewEntry({
     "const rootElement = document.getElementById('root')!;",
     "const root = (window as any).__vaporPreviewRoot ?? createRoot(rootElement);",
     "(window as any).__vaporPreviewRoot = root;",
-    'root.render(<PreviewApp />);',
-    `document.body.dataset.theme = ${JSON.stringify(theme)};`,
-    `document.body.dataset.variant = ${JSON.stringify(variant)};`,
+    'root.render(',
+    '  <PreviewErrorBoundary>',
+    '    <PreviewApp />',
+    '    <ReadyReporter />',
+    '  </PreviewErrorBoundary>,',
+    ');',
+    'document.body.dataset.theme = previewTheme;',
+    'document.body.dataset.variant = previewVariant;',
     '',
   ].join('\n');
 }
@@ -133,6 +171,26 @@ function inferPrimaryExport(componentSource: string): string {
 
 function inferDefaultLabel(markdown: string): string {
   return markdown.match(/children:\s*['"]([^'"]+)['"]/)?.[1] ?? 'Generated action';
+}
+
+function buildPreviewProps(
+  markdown: string,
+  artifact: ReturnType<typeof parseGeneratedArtifact>,
+  variant: string,
+): Record<string, unknown> {
+  const metadata = artifact.metadata;
+  if (metadata) {
+    const selectedVariant = metadata.variants?.find((item) => item.name === variant);
+    return {
+      ...(metadata.defaultProps ?? {}),
+      ...(selectedVariant?.props ?? {}),
+    };
+  }
+
+  return {
+    children: inferDefaultLabel(markdown),
+    ...(variant === 'Disabled' ? { disabled: true } : {}),
+  };
 }
 
 function send(res: ServerResponse, status: number, message: string): void {

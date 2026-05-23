@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Badge, Button, IconButton, Text } from '@vapor-ui/core';
 import { CloseOutlineIcon, CopyOutlineIcon } from '@vapor-ui/icons';
-import type { ArtifactProvenance } from '../../agent';
+import { parseGeneratedArtifact, type ArtifactProvenance, type GeneratedArtifact } from '../../agent';
 import { Markdown } from './Markdown';
 
 type ArtifactTab = 'canvas' | 'component' | 'story' | 'test' | 'validation';
@@ -22,9 +22,11 @@ type CanvasModel = {
   componentName: string;
   variants: CanvasVariant[];
   canRunReactPreview: boolean;
+  hasMetadata: boolean;
 };
 
 type CanvasTheme = 'light' | 'dark';
+type CanvasPreviewStatus = 'loading' | 'ready' | 'failed';
 
 export type PreviewPanelProps = {
   /** 에이전트가 작성 중/완료한 생성 artifact. 스트리밍 중 점진 갱신된다. */
@@ -69,11 +71,18 @@ export function PreviewPanel({
   canClose = true,
 }: PreviewPanelProps) {
   const sections = useMemo(() => parseArtifactSections(draft), [draft]);
+  const parsedArtifact = useMemo(
+    () => (artifactSource ? parseGeneratedArtifact(artifactSource) : undefined),
+    [artifactSource],
+  );
   const [validationOverride, setValidationOverride] = useState<string | undefined>();
   const [validationStatus, setValidationStatus] = useState<'idle' | 'running' | 'error'>('idle');
   const [validationResult, setValidationResult] = useState<RemoteValidationResult | undefined>();
   const [approved, setApproved] = useState(false);
-  const canvas = useMemo(() => buildCanvasModel(sections), [sections]);
+  const canvas = useMemo(
+    () => buildCanvasModel(sections, parsedArtifact),
+    [sections, parsedArtifact],
+  );
   const [activeTab, setActiveTab] = useState<ArtifactTab>('canvas');
   const [activeVariantName, setActiveVariantName] = useState('Default');
   const [canvasTheme, setCanvasTheme] = useState<CanvasTheme>('light');
@@ -408,6 +417,37 @@ function ArtifactCanvas({
     artifactSource && model.canRunReactPreview
       ? `/api/deepseek/preview?artifact=${encodeURIComponent(artifactSource)}&variant=${encodeURIComponent(activeVariantName)}&theme=${theme}`
       : undefined;
+  const [previewState, setPreviewState] = useState<{
+    src?: string;
+    status: CanvasPreviewStatus;
+    error?: string;
+  }>({ status: 'loading' });
+  const previewStatus = previewState.src === previewSrc ? previewState.status : 'loading';
+  const previewError = previewState.src === previewSrc ? previewState.error : undefined;
+
+  useEffect(() => {
+    if (!previewSrc) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (!isPreviewMessage(event.data)) return;
+      if (event.data.variant !== activeVariantName || event.data.theme !== theme) return;
+
+      if (event.data.type === 'vapor-preview-ready') {
+        setPreviewState({ src: previewSrc, status: 'ready' });
+      }
+      if (event.data.type === 'vapor-preview-error') {
+        setPreviewState({
+          src: previewSrc,
+          status: 'failed',
+          error: event.data.message || 'Preview runtime failed.',
+        });
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [activeVariantName, previewSrc, theme]);
 
   if (!previewSrc) {
     return (
@@ -433,17 +473,42 @@ function ArtifactCanvas({
 
   return (
     <div className="flex h-full min-h-[360px] flex-col gap-v-200">
-      <div className="flex items-center justify-between">
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <Text typography="subtitle2">Canvas</Text>
-          <Text typography="body4" foreground="hint-200">
-            sandboxed generated component preview
+        <div className="flex items-center justify-between">
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <Text typography="subtitle2">Canvas</Text>
+            <Text typography="body4" foreground="hint-200">
+              sandboxed generated component preview
+            </Text>
+          </div>
+        <div className="flex flex-wrap justify-end gap-1">
+          <Badge size="sm" colorPalette="primary">
+            Canvas preview
+          </Badge>
+          <Badge size="sm" colorPalette={model.hasMetadata ? 'success' : 'warning'}>
+            {model.hasMetadata ? 'Metadata contract' : 'Heuristic props'}
+          </Badge>
+          <Badge
+            size="sm"
+            aria-label={`Canvas runtime: ${previewStatus}`}
+            colorPalette={
+              previewStatus === 'ready'
+                ? 'success'
+                : previewStatus === 'failed'
+                  ? 'danger'
+                  : 'warning'
+            }
+          >
+            Runtime {previewStatus}
+          </Badge>
+        </div>
+      </div>
+      {!model.hasMetadata && (
+        <div className="rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-200 py-v-150">
+          <Text typography="body4">
+            artifact-meta가 없어 Canvas가 component/story 텍스트에서 props를 추정합니다.
           </Text>
         </div>
-        <Badge size="sm" colorPalette="primary">
-          Canvas preview
-        </Badge>
-      </div>
+      )}
       <div className="flex flex-wrap items-center gap-1">
         {model.variants.map((variant) => (
           <Button
@@ -477,6 +542,11 @@ function ArtifactCanvas({
         src={previewSrc}
         className="min-h-[180px] flex-1 rounded-v-300 border border-v-normal bg-v-canvas-100"
       />
+      {previewStatus === 'failed' && previewError && (
+        <div className="rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-200 py-v-150">
+          <Text typography="body4">{previewError}</Text>
+        </div>
+      )}
     </div>
   );
 }
@@ -502,25 +572,58 @@ function parseArtifactSections(markdown: string): ArtifactSection[] {
   });
 }
 
-function buildCanvasModel(sections: ArtifactSection[]): CanvasModel | undefined {
+function buildCanvasModel(
+  sections: ArtifactSection[],
+  artifact?: GeneratedArtifact,
+): CanvasModel | undefined {
   const component = sections.find((section) => section.id === 'component');
   const story = sections.find((section) => section.id === 'story');
   if (!component) return undefined;
 
-  const componentName = component.content.match(/export function\s+(\w+)/)?.[1] ?? 'GeneratedComponent';
+  const metadata = artifact?.metadata;
+  const componentName =
+    metadata?.componentName ??
+    metadata?.primaryExport ??
+    component.content.match(/export function\s+(\w+)/)?.[1] ??
+    'GeneratedComponent';
   const label =
     story?.content.match(/children:\s*['"]([^'"]+)['"]/)?.[1] ??
     component.content.match(/>\s*([^<>{}\n][^<>{}]*)\s*<\/Button>/)?.[1] ??
     'Generated action';
+  const metadataVariants = metadata ? buildMetadataVariants(metadata.defaultProps, metadata.variants) : [];
 
   return {
     componentName,
     canRunReactPreview: /export function\s+\w+/.test(component.content),
-    variants: [
-      { name: 'Default', label },
-      ...(story?.content.includes('Disabled') ? [{ name: 'Disabled', label, disabled: true }] : []),
-    ],
+    hasMetadata: Boolean(metadata),
+    variants:
+      metadataVariants.length > 0
+        ? metadataVariants
+        : [
+            { name: 'Default', label },
+            ...(story?.content.includes('Disabled')
+              ? [{ name: 'Disabled', label, disabled: true }]
+              : []),
+          ],
   };
+}
+
+function buildMetadataVariants(
+  defaultProps: Record<string, unknown> | undefined,
+  variants: Array<{ name: string; props?: Record<string, unknown> }> | undefined,
+): CanvasVariant[] {
+  const sourceVariants =
+    variants && variants.length > 0 ? variants : [{ name: 'Default', props: defaultProps ?? {} }];
+
+  return sourceVariants.map((variant) => {
+    const props = { ...(defaultProps ?? {}), ...(variant.props ?? {}) };
+    const label = typeof props.children === 'string' ? props.children : variant.name;
+    return {
+      name: variant.name,
+      label,
+      disabled: props.disabled === true,
+    };
+  });
 }
 
 function canvasHtml({
@@ -761,4 +864,20 @@ function escapeHtml(value: string): string {
 
 function capitalize(value: string): string {
   return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+}
+
+function isPreviewMessage(value: unknown): value is {
+  type: 'vapor-preview-ready' | 'vapor-preview-error';
+  variant: string;
+  theme: CanvasTheme;
+  message?: string;
+} {
+  if (!value || typeof value !== 'object') return false;
+  const record = value as Record<string, unknown>;
+  return (
+    (record.type === 'vapor-preview-ready' || record.type === 'vapor-preview-error') &&
+    typeof record.variant === 'string' &&
+    (record.theme === 'light' || record.theme === 'dark') &&
+    (record.message === undefined || typeof record.message === 'string')
+  );
 }

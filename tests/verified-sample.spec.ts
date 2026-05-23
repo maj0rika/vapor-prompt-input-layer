@@ -40,6 +40,8 @@ test.describe('verified sample run', () => {
         .frameLocator('iframe[title="Generated artifact canvas"]')
         .getByRole('button', { name: 'Deploy component' }),
     ).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Metadata contract')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Disabled variant' })).toBeVisible();
 
     await page.getByRole('button', { name: 'Run validation' }).click();
     await expect(page.locator('[aria-label="Validation: active"]')).toBeVisible();

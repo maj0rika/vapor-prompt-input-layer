@@ -14,6 +14,8 @@ describe('promptBuilder', () => {
     expect(payload.messages[0].content).toContain(
       '<artifact type="component"',
     );
+    expect(payload.messages[0].content).toContain('<artifact-meta>');
+    expect(payload.messages[0].content).toContain('primaryExport');
     expect(payload.messages[0].content).toContain('untrusted reference material');
   });
 
@@ -33,6 +35,7 @@ describe('promptBuilder', () => {
     });
 
     expect(content).toContain('Mode: token-sync');
+    expect(content).toContain('<artifact-meta>');
     expect(content).toContain('[tokens.json]');
     expect(content).toContain('full text included');
     expect(content).toContain('color.primary.500');
