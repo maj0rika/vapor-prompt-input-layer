@@ -15,6 +15,7 @@ This matrix separates verified MVP behavior from final portfolio gates.
 | Generated typecheck runner | implemented | `npm run verify:generated` |
 | Generated Vitest runner | implemented | temp workspace Vitest |
 | Generated Axe runner | implemented | runtime `jest-axe` test |
+| Live validation endpoint | implemented | `/api/deepseek/validate` runs the temp workspace gate |
 | Bundle budget | implemented | `npm run verify:bundle` enforces initial JS gzip <= 200KB |
 | Lighthouse budget | implemented | `npm run verify:lighthouse` enforces app quality scores and vitals |
 
@@ -28,7 +29,7 @@ This matrix separates verified MVP behavior from final portfolio gates.
 | attachment context | text included in request payload | pass |
 | prompt injection defense | attachments treated as untrusted | prompt-level only |
 | DeepSeek stream | `[DONE]`, malformed SSE, abort, network error handled | pass |
-| validation pending/result | generated completion then result display | modeled |
+| validation pending/result | generated completion then real result display for live DeepSeek artifacts | pass |
 | mock mode | deterministic E2E response | pass |
 
 ## Generated Artifact Validation
@@ -52,7 +53,7 @@ Required scenarios:
 | Scenario | Status |
 | --- | --- |
 | empty state + artifact empty workspace | pass |
-| component generation + validation badges | pass with mock validation |
+| component generation + validation badges | pass with mock validation in E2E; live DeepSeek path calls real endpoint |
 | file attach content | pass |
 | unsupported file rejection | pass |
 | maxFiles across repeated attachments | unit pass |
@@ -68,10 +69,11 @@ Required scenarios:
 Say:
 
 ```txt
-The product shell, prompt routing, artifact parsing, token check, and fixture
-generated-artifact validation are implemented. Mock validation is still used for
-deterministic UI E2E, while npm run verify:generated is the real generated code
-gate.
+The product shell, prompt routing, artifact parsing, token check, live
+validation endpoint, and fixture generated-artifact validation are implemented.
+Mock validation is still used for deterministic UI E2E, while live DeepSeek
+artifacts call `/api/deepseek/validate` and npm run verify:generated remains the
+CLI generated code gate.
 ```
 
 Do not say:
@@ -80,5 +82,6 @@ Do not say:
 All generated code from arbitrary LLM responses is fully verified in production.
 ```
 
-until the app runs this validation for every live DeepSeek artifact and displays
-the real result in the UI.
+This local portfolio demo verifies live DeepSeek artifacts through the Vite
+server endpoint. Static hosting would still need a server or serverless proxy for
+the same guarantee.

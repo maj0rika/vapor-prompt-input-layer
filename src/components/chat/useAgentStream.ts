@@ -60,7 +60,7 @@ export function useAgentStream(client: AgentClient): UseAgentStreamResult {
               patchMessage(assistantId, { text });
               break;
             case 'draft':
-              draft += event.value;
+              draft = event.replace ? event.value : draft + event.value;
               patchMessage(assistantId, { draft });
               break;
             case 'done':

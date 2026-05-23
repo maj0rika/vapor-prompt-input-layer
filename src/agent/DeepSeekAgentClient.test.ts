@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DeepSeekAgentClient, parseDeepSeekSseFrame } from './DeepSeekAgentClient';
 import type { AgentEvent } from './types';
 
@@ -19,6 +19,10 @@ function streamFrom(chunks: string[]): ReadableStream<Uint8Array> {
 }
 
 describe('DeepSeekAgentClient', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('SSE token chunk 를 token 이벤트로 변환한다', () => {
     const events = parseDeepSeekSseFrame(
       'data: {"choices":[{"delta":{"content":"안녕"}}]}\n\n',
@@ -81,6 +85,77 @@ describe('DeepSeekAgentClient', () => {
       { type: 'token', value: '녕' },
       { type: 'done' },
     ]);
+  });
+
+  it('artifact stream 완료 후 실제 validation 결과로 draft 를 교체한다', async () => {
+    const artifact = `<artifact type="component" filename="PrimaryButton.tsx">
+\`\`\`tsx
+export function PrimaryButton() {
+  return <button>Save</button>;
+}
+\`\`\`
+</artifact>
+
+<artifact type="story" filename="PrimaryButton.stories.tsx">
+\`\`\`tsx
+export const Default = {};
+\`\`\`
+</artifact>
+
+<artifact type="test" filename="PrimaryButton.test.tsx">
+\`\`\`tsx
+expect(true).toBe(true);
+\`\`\`
+</artifact>
+
+<notes type="a11y">
+Uses a native button.
+</notes>`;
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(
+          streamFrom([
+            `data: ${JSON.stringify({ choices: [{ delta: { content: artifact } }] })}\n\n`,
+            'data: [DONE]\n\n',
+          ]),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            status: 'pass',
+            durationMs: 123,
+            details: [
+              { label: 'Typecheck', status: 'pass', message: 'ok' },
+              { label: 'Unit', status: 'pass', message: 'ok' },
+              { label: 'Axe', status: 'pass', message: 'ok' },
+              { label: 'Vapor token usage', status: 'pass', message: 'ok' },
+            ],
+          }),
+          { status: 200 },
+        ),
+      );
+    const client = new DeepSeekAgentClient('/chat', '/validate');
+
+    const events = await collect(client.sendMessage({ text: '버튼 생성' }));
+    const drafts = events.filter((event) => event.type === 'draft');
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      '/validate',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ markdown: artifact }),
+      }),
+    );
+    expect(drafts).toHaveLength(2);
+    expect(drafts[0]).toMatchObject({ type: 'draft' });
+    expect(drafts[0]).not.toHaveProperty('replace');
+    expect(drafts[1]).toMatchObject({ type: 'draft', replace: true });
+    expect(drafts[1]?.value).toContain('- Typecheck: PASS');
+    expect(events.at(-1)).toEqual({ type: 'done' });
   });
 
   it('abort 시 done/error 없이 종료한다', async () => {

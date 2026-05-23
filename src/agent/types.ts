@@ -60,6 +60,6 @@ export type AgentRequest = {
  */
 export type AgentEvent =
   | { type: 'token'; value: string }
-  | { type: 'draft'; value: string }
+  | { type: 'draft'; value: string; replace?: boolean }
   | { type: 'done' }
   | { type: 'error'; message: string };

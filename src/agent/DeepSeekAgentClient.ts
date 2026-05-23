@@ -88,9 +88,11 @@ async function* parseDeepSeekStream(
  */
 export class DeepSeekAgentClient implements AgentClient {
   private readonly endpoint: string;
+  private readonly validationEndpoint: string;
 
-  constructor(endpoint = '/api/deepseek/chat') {
+  constructor(endpoint = '/api/deepseek/chat', validationEndpoint = '/api/deepseek/validate') {
     this.endpoint = endpoint;
+    this.validationEndpoint = validationEndpoint;
   }
 
   async *sendMessage(
@@ -124,8 +126,7 @@ export class DeepSeekAgentClient implements AgentClient {
           yield event;
         } else if (event.type === 'done') {
           emittedDone = true;
-          const preview = buildPreviewArtifact(responseText);
-          if (preview) yield { type: 'draft', value: preview };
+          yield* this.buildDraftEvents(responseText, signal);
           yield event;
         } else {
           yield event;
@@ -133,8 +134,7 @@ export class DeepSeekAgentClient implements AgentClient {
       }
 
       if (!signal?.aborted && !emittedDone) {
-        const preview = buildPreviewArtifact(responseText);
-        if (preview) yield { type: 'draft', value: preview };
+        yield* this.buildDraftEvents(responseText, signal);
         yield { type: 'done' };
       }
     } catch (err) {
@@ -144,6 +144,25 @@ export class DeepSeekAgentClient implements AgentClient {
         message: err instanceof Error ? err.message : 'DeepSeek request failed.',
       };
     }
+  }
+
+  private async *buildDraftEvents(
+    responseText: string,
+    signal?: AbortSignal,
+  ): AsyncIterable<AgentEvent> {
+    const preview = buildPreviewArtifact(responseText);
+    if (!preview || signal?.aborted) return;
+
+    yield { type: 'draft', value: preview };
+
+    const validated = await applyRemoteValidation(
+      preview,
+      responseText,
+      this.validationEndpoint,
+      signal,
+    );
+    if (!validated || signal?.aborted) return;
+    yield { type: 'draft', value: validated, replace: true };
   }
 }
 
@@ -155,6 +174,83 @@ function buildPreviewArtifact(responseText: string): string {
     '- Vapor token usage: CHECK',
     `- Vapor token usage: ${tokenCheck.status === 'pass' ? 'PASS' : 'CHECK'}`,
   );
+}
+
+type RemoteValidationResult = {
+  status: 'pass' | 'warn' | 'fail';
+  durationMs: number;
+  details: Array<{
+    label: string;
+    status: 'pass' | 'warn' | 'fail';
+    message: string;
+    durationMs?: number;
+  }>;
+};
+
+async function applyRemoteValidation(
+  preview: string,
+  responseText: string,
+  endpoint: string,
+  signal?: AbortSignal,
+): Promise<string> {
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ markdown: responseText }),
+      signal,
+    });
+    if (!response.ok) {
+      return replaceValidationSection(preview, [
+        '- Typecheck: CHECK',
+        '- Unit: CHECK',
+        '- Axe: CHECK',
+        '- Vapor token usage: CHECK',
+        '',
+        `### Validation runner`,
+        `Generated validation failed (${response.status}).`,
+      ]);
+    }
+
+    const result = (await response.json()) as RemoteValidationResult;
+    return replaceValidationSection(preview, validationResultLines(result));
+  } catch (error) {
+    if (signal?.aborted || isAbortError(error)) return '';
+    return replaceValidationSection(preview, [
+      '- Typecheck: CHECK',
+      '- Unit: CHECK',
+      '- Axe: CHECK',
+      '- Vapor token usage: CHECK',
+      '',
+      '### Validation runner',
+      error instanceof Error ? error.message : 'Generated validation failed.',
+    ]);
+  }
+}
+
+function validationResultLines(result: RemoteValidationResult): string[] {
+  const detailsByLabel = new Map(result.details.map((detail) => [detail.label, detail]));
+  const labels = ['Typecheck', 'Unit', 'Axe', 'Vapor token usage'];
+  const lines = labels.map((label) => {
+    const detail = detailsByLabel.get(label);
+    const status = detail?.status === 'pass' ? 'PASS' : detail?.status === 'fail' ? 'FAIL' : 'CHECK';
+    return `- ${label}: ${status}`;
+  });
+
+  lines.push('', '### Runner details');
+  for (const detail of result.details) {
+    const duration = detail.durationMs ? ` (${detail.durationMs}ms)` : '';
+    lines.push(`- ${detail.label}: ${detail.status.toUpperCase()}${duration} - ${detail.message}`);
+  }
+  lines.push(`- Duration: ${result.durationMs}ms`);
+  return lines;
+}
+
+function replaceValidationSection(preview: string, lines: string[]): string {
+  if (!preview.includes('## Validation')) {
+    return `${preview}\n\n## Validation\n\n${lines.join('\n')}`;
+  }
+  return preview.replace(/## Validation[\s\S]*$/m, `## Validation\n\n${lines.join('\n')}`);
 }
 
 async function readErrorMessage(response: Response): Promise<string> {

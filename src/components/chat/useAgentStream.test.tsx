@@ -26,6 +26,14 @@ class SpyAgentClient implements AgentClient {
   }
 }
 
+class DraftReplaceClient implements AgentClient {
+  async *sendMessage(): AsyncIterable<AgentEvent> {
+    yield { type: 'draft', value: 'pending' };
+    yield { type: 'draft', value: 'validated', replace: true };
+    yield { type: 'done' };
+  }
+}
+
 function Harness({ client }: { client: AgentClient }) {
   const { messages, isStreaming, send, cancel } = useAgentStream(client);
   const assistant = messages.find((m) => m.role === 'assistant');
@@ -37,6 +45,7 @@ function Harness({ client }: { client: AgentClient }) {
       <span data-testid="count">{messages.length}</span>
       <span data-testid="assistant-status">{assistant?.status ?? 'none'}</span>
       <span data-testid="assistant-text">{assistant?.text ?? ''}</span>
+      <span data-testid="assistant-draft">{assistant?.draft ?? ''}</span>
     </div>
   );
 }
@@ -94,5 +103,19 @@ describe('useAgentStream', () => {
     // 언마운트 후 남은 타이머가 흘러도 오류가 없어야 한다.
     await new Promise((resolve) => setTimeout(resolve, 40));
     expect(client.lastSignal?.aborted).toBe(true);
+  });
+
+  it('replace draft 이벤트는 기존 artifact preview 를 교체한다', async () => {
+    render(<Harness client={new DraftReplaceClient()} />);
+
+    fireEvent.click(screen.getByText('send'));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('assistant-status')).toHaveTextContent('done'),
+    );
+    expect(screen.getByTestId('assistant-draft')).toHaveTextContent('validated');
+    expect(screen.getByTestId('assistant-draft')).not.toHaveTextContent(
+      'pendingvalidated',
+    );
   });
 });
