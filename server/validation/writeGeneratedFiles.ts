@@ -20,6 +20,11 @@ export async function writeGeneratedFiles(
   await writeFile(join(srcDir, artifact.component.filename), artifact.component.content, 'utf8');
   await writeFile(join(srcDir, artifact.story.filename), artifact.story.content, 'utf8');
   await writeFile(join(srcDir, artifact.test.filename), artifact.test.content, 'utf8');
+  await writeFile(
+    join(srcDir, 'GeneratedRuntimeRender.test.tsx'),
+    runtimeRenderTest(artifact.component.filename),
+    'utf8',
+  );
   await writeFile(join(srcDir, 'GeneratedRuntimeAxe.test.tsx'), axeTest(artifact.component.filename), 'utf8');
 }
 
@@ -67,6 +72,37 @@ function storybookTypes(): string {
     '  export type Meta<T = unknown> = Record<string, unknown> & { component?: T };',
     '  export type StoryObj<T = unknown> = Record<string, unknown> & { args?: Record<string, unknown> };',
     '}',
+    '',
+  ].join('\n');
+}
+
+function runtimeRenderTest(componentFilename: string): string {
+  const importPath = `./${componentFilename.replace(/\.tsx?$/, '')}`;
+  return [
+    "import React from 'react';",
+    "import { render } from '@testing-library/react';",
+    "import { afterEach, beforeEach, expect, it, vi } from 'vitest';",
+    `import * as ComponentModule from '${importPath}';`,
+    '',
+    'let consoleErrorSpy: ReturnType<typeof vi.spyOn>;',
+    '',
+    'beforeEach(() => {',
+    "  consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});",
+    '});',
+    '',
+    'afterEach(() => {',
+    '  consoleErrorSpy.mockRestore();',
+    '});',
+    '',
+    "it('mounts the generated component without runtime console errors', () => {",
+    '  const maybeComponent = Object.values(ComponentModule).find(',
+    "    (value) => typeof value === 'function',",
+    '  );',
+    "  if (!maybeComponent) throw new Error('No exported React component found.');",
+    '  const Component = maybeComponent as React.ComponentType<{ children?: React.ReactNode }>;',
+    '  render(<Component>Generated action</Component>);',
+    '  expect(consoleErrorSpy).not.toHaveBeenCalled();',
+    '});',
     '',
   ].join('\n');
 }

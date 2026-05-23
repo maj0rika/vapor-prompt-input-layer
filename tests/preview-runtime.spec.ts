@@ -68,11 +68,14 @@ test.describe('artifact canvas runtime', () => {
       timeout: 6000,
     });
     await page.getByRole('button', { name: 'Run validation' }).click();
+    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+      timeout: 20000,
+    });
     await page.getByRole('tab', { name: 'Tests' }).click();
 
-    await expect(page.getByRole('listitem').filter({ hasText: 'Typecheck: PASS' })).toBeVisible({
-      timeout: 8000,
-    });
+    await expect(
+      page.getByRole('listitem').filter({ hasText: /^Typecheck: PASS$/ }),
+    ).toBeVisible({ timeout: 8000 });
     await expect(
       page.getByRole('listitem').filter({ hasText: /^Runtime Render: PASS$/ }),
     ).toBeVisible();
@@ -92,12 +95,93 @@ test.describe('artifact canvas runtime', () => {
       timeout: 6000,
     });
     await page.getByRole('button', { name: 'Run validation' }).click();
+    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+      timeout: 20000,
+    });
     await page.getByRole('tab', { name: 'Tests' }).click();
 
     await expect(
       page.getByRole('listitem').filter({ hasText: /^Vapor token usage: FAIL$/ }),
     ).toBeVisible({ timeout: 8000 });
     await expect(page.getByText(/raw color value/)).toBeVisible();
+  });
+
+  test('shows typecheck failure output from the real runner', async ({ page }) => {
+    await page.goto('/');
+    await page
+      .getByLabel('자동화 프롬프트 입력')
+      .fill('typecheck fail component fixture');
+    await page.getByRole('button', { name: '자동화 실행' }).click();
+
+    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+      timeout: 6000,
+    });
+    await page.getByRole('button', { name: 'Run validation' }).click();
+    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+      timeout: 20000,
+    });
+    await page.getByRole('tab', { name: 'Tests' }).click();
+
+    await expect(
+      page.getByRole('listitem').filter({ hasText: /^Typecheck: FAIL$/ }),
+    ).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Typecheck output')).toBeVisible();
+    await expect(page.getByText(/TypecheckFailButton\.tsx/)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Copy failing output' })).toBeVisible();
+  });
+
+  test('shows runtime render failure independently from unit output', async ({ page }) => {
+    await page.goto('/');
+    await page
+      .getByLabel('자동화 프롬프트 입력')
+      .fill('runtime fail component fixture');
+    await page.getByRole('button', { name: '자동화 실행' }).click();
+
+    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+      timeout: 6000,
+    });
+    await page.getByRole('button', { name: 'Run validation' }).click();
+    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+      timeout: 20000,
+    });
+    await page.getByRole('tab', { name: 'Tests' }).click();
+
+    await expect(
+      page.getByRole('listitem').filter({ hasText: /^Unit: PASS$/ }),
+    ).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.getByRole('listitem').filter({ hasText: /^Runtime Render: FAIL$/ }),
+    ).toBeVisible();
+    await expect(page.getByText('Runtime Render output')).toBeVisible();
+    await expect(
+      page.locator('code').filter({ hasText: /runtime render fixture failure/ }),
+    ).toHaveCount(2);
+  });
+
+  test('shows axe failure output from the accessibility runner', async ({ page }) => {
+    await page.goto('/');
+    await page
+      .getByLabel('자동화 프롬프트 입력')
+      .fill('axe alt image failure fixture');
+    await page.getByRole('button', { name: '자동화 실행' }).click();
+
+    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+      timeout: 6000,
+    });
+    await page.getByRole('button', { name: 'Run validation' }).click();
+    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+      timeout: 20000,
+    });
+    await page.getByRole('tab', { name: 'Tests' }).click();
+
+    await expect(
+      page.getByRole('listitem').filter({ hasText: /^Runtime Render: PASS$/ }),
+    ).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.getByRole('listitem').filter({ hasText: /^Axe: FAIL$/ }),
+    ).toBeVisible();
+    await expect(page.getByText('Axe output')).toBeVisible();
+    await expect(page.getByText(/image-alt|Images must have alternate text/)).toBeVisible();
   });
 
   test('repairs a failed artifact and allows approval only after pass', async ({
@@ -110,6 +194,9 @@ test.describe('artifact canvas runtime', () => {
     await page.getByRole('button', { name: '자동화 실행' }).click();
 
     await page.getByRole('button', { name: 'Run validation' }).click();
+    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+      timeout: 20000,
+    });
     await page.getByRole('tab', { name: 'Tests' }).click();
     await expect(
       page.getByRole('listitem').filter({ hasText: /^Vapor token usage: FAIL$/ }),
@@ -125,6 +212,9 @@ test.describe('artifact canvas runtime', () => {
     ).toBeVisible({ timeout: 6000 });
 
     await page.getByRole('button', { name: 'Run validation' }).click();
+    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+      timeout: 20000,
+    });
     await page.getByRole('tab', { name: 'Tests' }).click();
     await expect(
       page.getByRole('listitem').filter({ hasText: /^Vapor token usage: PASS$/ }),

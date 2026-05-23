@@ -100,6 +100,10 @@ export function PreviewPanel({
     if (!active) return;
     void navigator.clipboard?.writeText(active.content);
   };
+  const handleCopyFailureOutput = () => {
+    if (!validationResult) return;
+    void navigator.clipboard?.writeText(formatFailureOutput(validationResult));
+  };
   const handleRunValidation = () => {
     if (!artifactSource || validationStatus === 'running') return;
     setValidationStatus('running');
@@ -173,6 +177,16 @@ export function PreviewPanel({
               }
             >
               Fix with Agent
+            </Button>
+          )}
+          {validationResult && failedGates.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              colorPalette="danger"
+              onClick={handleCopyFailureOutput}
+            >
+              Copy failing output
             </Button>
           )}
           {validationResult && (
@@ -538,6 +552,18 @@ async function runValidation(markdown: string): Promise<RemoteValidationResult> 
 function formatValidationResult(result: RemoteValidationResult): string {
   const details = new Map(result.details.map((detail) => [detail.label, detail]));
   const labels = ['Typecheck', 'Unit', 'Runtime Render', 'Axe', 'Vapor token usage', 'Cleanup'];
+  const outputBlocks = result.details.flatMap((detail) => {
+    const output = detail.output?.trim();
+    if (!output) return [];
+    return [
+      '',
+      `#### ${detail.label} output`,
+      '',
+      '```txt',
+      trimRunnerOutput(output),
+      '```',
+    ];
+  });
   return [
     '## Tests',
     '',
@@ -553,6 +579,7 @@ function formatValidationResult(result: RemoteValidationResult): string {
       const duration = detail.durationMs ? ` (${detail.durationMs}ms)` : '';
       return `- ${detail.label}: ${detail.status.toUpperCase()}${duration} - ${detail.message}`;
     }),
+    ...outputBlocks,
     `- Duration: ${result.durationMs}ms`,
   ].join('\n');
 }
@@ -595,6 +622,24 @@ function extractFailedGates(
         return [];
     }
   });
+}
+
+function formatFailureOutput(result: RemoteValidationResult): string {
+  const failures = result.details.filter((detail) => detail.status === 'fail');
+  if (failures.length === 0) return 'No failing validation output.';
+  return failures
+    .map((detail) => {
+      const output = detail.output?.trim() || detail.message;
+      return [`[${detail.label}]`, output].join('\n');
+    })
+    .join('\n\n');
+}
+
+function trimRunnerOutput(output: string): string {
+  const maxLength = 6_000;
+  return output.length > maxLength
+    ? `${output.slice(0, maxLength)}\n... output truncated ...`
+    : output;
 }
 
 function escapeRegExp(value: string): string {

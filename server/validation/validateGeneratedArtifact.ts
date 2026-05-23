@@ -34,6 +34,10 @@ export async function validateGeneratedArtifact(
   if (!parsePass) {
     return finish(startedAt, details, tokenUsage.status);
   }
+  const testArtifact = artifact.test;
+  if (!testArtifact) {
+    return finish(startedAt, details, tokenUsage.status);
+  }
 
   const workspace = await createTempWorkspace();
   try {
@@ -57,38 +61,52 @@ export async function validateGeneratedArtifact(
       output: typecheck.output,
     });
 
-    const unitAndAxe = await runCommand(
+    const unit = await runCommand(
       join(workspace.path, 'node_modules/.bin/vitest'),
-      ['run', '--config', 'vitest.config.ts'],
+      ['run', '--config', 'vitest.config.ts', join('src', testArtifact.filename)],
       workspace.path,
       30_000,
     );
     details.push({
       label: 'Unit',
-      status: unitAndAxe.exitCode === 0 ? 'pass' : 'fail',
-      message: unitAndAxe.exitCode === 0 ? 'Vitest generated tests passed.' : 'Vitest failed.',
-      durationMs: unitAndAxe.durationMs,
-      output: unitAndAxe.output,
+      status: unit.exitCode === 0 ? 'pass' : 'fail',
+      message: unit.exitCode === 0 ? 'Generated unit tests passed.' : 'Generated unit tests failed.',
+      durationMs: unit.durationMs,
+      output: unit.output,
     });
+
+    const runtimeRender = await runCommand(
+      join(workspace.path, 'node_modules/.bin/vitest'),
+      ['run', '--config', 'vitest.config.ts', join('src', 'GeneratedRuntimeRender.test.tsx')],
+      workspace.path,
+      30_000,
+    );
     details.push({
       label: 'Runtime Render',
-      status: unitAndAxe.exitCode === 0 ? 'pass' : 'fail',
+      status: runtimeRender.exitCode === 0 ? 'pass' : 'fail',
       message:
-        unitAndAxe.exitCode === 0
-          ? 'Generated component mounted in the runtime axe harness.'
-          : 'Generated component failed to render in the runtime axe harness.',
-      durationMs: unitAndAxe.durationMs,
-      output: unitAndAxe.output,
+        runtimeRender.exitCode === 0
+          ? 'Generated component mounted without runtime console errors.'
+          : 'Generated component failed to render or emitted runtime console errors.',
+      durationMs: runtimeRender.durationMs,
+      output: runtimeRender.output,
     });
+
+    const axe = await runCommand(
+      join(workspace.path, 'node_modules/.bin/vitest'),
+      ['run', '--config', 'vitest.config.ts', join('src', 'GeneratedRuntimeAxe.test.tsx')],
+      workspace.path,
+      30_000,
+    );
     details.push({
       label: 'Axe',
-      status: unitAndAxe.exitCode === 0 ? 'pass' : 'fail',
+      status: axe.exitCode === 0 ? 'pass' : 'fail',
       message:
-        unitAndAxe.exitCode === 0
+        axe.exitCode === 0
           ? 'Generated runtime axe test reported violations 0.'
           : 'Generated runtime axe test failed.',
-      durationMs: unitAndAxe.durationMs,
-      output: unitAndAxe.output,
+      durationMs: axe.durationMs,
+      output: axe.output,
     });
   } catch (error) {
     details.push({

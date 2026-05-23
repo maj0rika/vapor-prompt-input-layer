@@ -201,6 +201,7 @@ type RemoteValidationResult = {
     status: 'pass' | 'warn' | 'fail';
     message: string;
     durationMs?: number;
+    output?: string;
   }>;
 };
 
@@ -262,9 +263,19 @@ function validationResultLines(result: RemoteValidationResult): string[] {
   for (const detail of result.details) {
     const duration = detail.durationMs ? ` (${detail.durationMs}ms)` : '';
     lines.push(`- ${detail.label}: ${detail.status.toUpperCase()}${duration} - ${detail.message}`);
+    if (detail.output?.trim()) {
+      lines.push('', `#### ${detail.label} output`, '', '```txt', trimRunnerOutput(detail.output), '```');
+    }
   }
   lines.push(`- Duration: ${result.durationMs}ms`);
   return lines;
+}
+
+function trimRunnerOutput(output: string): string {
+  const maxLength = 6_000;
+  return output.length > maxLength
+    ? `${output.slice(0, maxLength)}\n... output truncated ...`
+    : output;
 }
 
 function replaceValidationSection(preview: string, lines: string[]): string {

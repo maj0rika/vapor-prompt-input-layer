@@ -243,6 +243,146 @@ This artifact intentionally uses raw color values so the token gate fails.
 </notes>
 `;
 
+const TYPECHECK_FAIL_ARTIFACT = `<artifact type="component" filename="TypecheckFailButton.tsx">
+\`\`\`tsx
+export function TypecheckFailButton({ children }: { children: string }) {
+  const invalid: number = children;
+  return <button type="button">{invalid}</button>;
+}
+\`\`\`
+</artifact>
+
+<artifact type="story" filename="TypecheckFailButton.stories.tsx">
+\`\`\`tsx
+import type { Meta, StoryObj } from '@storybook/react';
+import { TypecheckFailButton } from './TypecheckFailButton';
+
+const meta = {
+  title: 'Vapor Automation/TypecheckFailButton',
+  component: TypecheckFailButton,
+  args: { children: 'Typecheck fail action' },
+} satisfies Meta<typeof TypecheckFailButton>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {};
+\`\`\`
+</artifact>
+
+<artifact type="test" filename="TypecheckFailButton.test.tsx">
+\`\`\`tsx
+import { expect, it } from 'vitest';
+
+it('keeps the fixture deterministic', () => {
+  expect(true).toBe(true);
+});
+\`\`\`
+</artifact>
+
+<notes type="a11y">
+This fixture intentionally fails TypeScript before runtime gates are trusted.
+</notes>
+
+<notes type="token">
+No token assertion is intended for this fixture.
+</notes>
+`;
+
+const RUNTIME_FAIL_ARTIFACT = `<artifact type="component" filename="RuntimeFailButton.tsx">
+\`\`\`tsx
+export function RuntimeFailButton({ children }: { children: string }) {
+  throw new Error('runtime render fixture failure');
+  return <button type="button">{children}</button>;
+}
+\`\`\`
+</artifact>
+
+<artifact type="story" filename="RuntimeFailButton.stories.tsx">
+\`\`\`tsx
+import type { Meta, StoryObj } from '@storybook/react';
+import { RuntimeFailButton } from './RuntimeFailButton';
+
+const meta = {
+  title: 'Vapor Automation/RuntimeFailButton',
+  component: RuntimeFailButton,
+  args: { children: 'Runtime fail action' },
+} satisfies Meta<typeof RuntimeFailButton>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {};
+\`\`\`
+</artifact>
+
+<artifact type="test" filename="RuntimeFailButton.test.tsx">
+\`\`\`tsx
+import { expect, it } from 'vitest';
+
+it('passes unit tests so runtime render fails independently', () => {
+  expect('unit').toBe('unit');
+});
+\`\`\`
+</artifact>
+
+<notes type="a11y">
+This fixture intentionally throws during render.
+</notes>
+
+<notes type="token">
+No token assertion is intended for this fixture.
+</notes>
+`;
+
+const AXE_FAIL_ARTIFACT = `<artifact type="component" filename="AxeFailImage.tsx">
+\`\`\`tsx
+export function AxeFailImage() {
+  return <img src="/missing-preview.png" />;
+}
+\`\`\`
+</artifact>
+
+<artifact type="story" filename="AxeFailImage.stories.tsx">
+\`\`\`tsx
+import type { Meta, StoryObj } from '@storybook/react';
+import { AxeFailImage } from './AxeFailImage';
+
+const meta = {
+  title: 'Vapor Automation/AxeFailImage',
+  component: AxeFailImage,
+  args: {},
+} satisfies Meta<typeof AxeFailImage>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {};
+\`\`\`
+</artifact>
+
+<artifact type="test" filename="AxeFailImage.test.tsx">
+\`\`\`tsx
+import { render } from '@testing-library/react';
+import { expect, it } from 'vitest';
+import { AxeFailImage } from './AxeFailImage';
+
+it('renders so axe can catch the missing alt text', () => {
+  const { container } = render(<AxeFailImage />);
+  expect(container.querySelector('img')).toBeTruthy();
+});
+\`\`\`
+</artifact>
+
+<notes type="a11y">
+This fixture intentionally omits image alt text so the Axe gate fails.
+</notes>
+
+<notes type="token">
+No token assertion is intended for this fixture.
+</notes>
+`;
+
 const DEFAULT: AgentScript = {
   reply:
     '요청을 DS 자동화 작업으로 분해했습니다.\n\n' +
@@ -260,6 +400,24 @@ const ERROR: AgentScript = {
 
 export function selectScript(input: string, mode: AgentMode = 'component'): AgentScript {
   const text = input.toLowerCase();
+  if (/typecheck|타입/.test(text)) {
+    return {
+      reply: '의도적으로 Typecheck 실패 artifact 를 생성했습니다. Tests 탭에서 실패 로그를 확인하세요.',
+      draft: TYPECHECK_FAIL_ARTIFACT,
+    };
+  }
+  if (/runtime|render fail|런타임|렌더/.test(text)) {
+    return {
+      reply: '의도적으로 Runtime Render 실패 artifact 를 생성했습니다. Tests 탭에서 독립 runtime 실패를 확인하세요.',
+      draft: RUNTIME_FAIL_ARTIFACT,
+    };
+  }
+  if (/axe|alt|이미지/.test(text)) {
+    return {
+      reply: '의도적으로 Axe 실패 artifact 를 생성했습니다. Tests 탭에서 접근성 실패를 확인하세요.',
+      draft: AXE_FAIL_ARTIFACT,
+    };
+  }
   if (/broken|raw|깨진/.test(text)) {
     return {
       reply: '의도적으로 깨진 raw color artifact 를 생성했습니다. Tests 탭에서 실패 게이트를 확인하세요.',
