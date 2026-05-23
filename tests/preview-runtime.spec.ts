@@ -22,6 +22,9 @@ test.describe('artifact canvas runtime', () => {
       'aria-selected',
       'true',
     );
+    await expect(page.locator('[aria-label="Artifact: pass"]')).toBeVisible();
+    await expect(page.locator('[aria-label="Canvas: pass"]')).toBeVisible();
+    await expect(page.locator('[aria-label="Validation: waiting"]')).toBeVisible();
 
     const canvas = page.frameLocator('iframe[title="Generated artifact canvas"]');
     await expect(page.locator('iframe[title="Generated artifact canvas"]')).toHaveAttribute(
@@ -68,11 +71,13 @@ test.describe('artifact canvas runtime', () => {
       timeout: 6000,
     });
     await page.getByRole('button', { name: 'Run validation' }).click();
+    await expect(page.locator('[aria-label="Validation: active"]')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
       timeout: 20000,
     });
     await page.getByRole('tab', { name: 'Tests' }).click();
 
+    await expect(page.locator('[aria-label="Validation: pass"]')).toBeVisible();
     await expect(
       page.getByRole('listitem').filter({ hasText: /^Typecheck: PASS$/ }),
     ).toBeVisible({ timeout: 8000 });
@@ -100,6 +105,7 @@ test.describe('artifact canvas runtime', () => {
     });
     await page.getByRole('tab', { name: 'Tests' }).click();
 
+    await expect(page.locator('[aria-label="Validation: fail"]')).toBeVisible();
     await expect(
       page.getByRole('listitem').filter({ hasText: /^Vapor token usage: FAIL$/ }),
     ).toBeVisible({ timeout: 8000 });

@@ -30,6 +30,8 @@ export type PreviewPanelProps = {
   draft: string;
   /** 실제 validation runner 에 다시 전달할 delimiter 기반 artifact 원문. */
   artifactSource?: string;
+  /** 실제 validation runner 상태를 상위 pipeline rail 에 반영한다. */
+  onValidationStateChange?: (state: ValidationPipelineState) => void;
   onRepair?: (payload: {
     artifactSource: string;
     validationResult: RemoteValidationResult;
@@ -38,6 +40,8 @@ export type PreviewPanelProps = {
   onClose: () => void;
   canClose?: boolean;
 };
+
+export type ValidationPipelineState = 'idle' | 'running' | 'pass' | 'fail' | 'error';
 
 const TAB_LABELS: Record<ArtifactTab, string> = {
   canvas: 'Canvas',
@@ -55,6 +59,7 @@ const TAB_LABELS: Record<ArtifactTab, string> = {
 export function PreviewPanel({
   draft,
   artifactSource,
+  onValidationStateChange,
   onRepair,
   onClose,
   canClose = true,
@@ -107,6 +112,7 @@ export function PreviewPanel({
   const handleRunValidation = () => {
     if (!artifactSource || validationStatus === 'running') return;
     setValidationStatus('running');
+    onValidationStateChange?.('running');
     void runValidation(artifactSource)
       .then((result) => {
         setValidationResult(result);
@@ -114,6 +120,7 @@ export function PreviewPanel({
         setActiveTab('validation');
         setApproved(false);
         setValidationStatus('idle');
+        onValidationStateChange?.(result.status === 'pass' ? 'pass' : 'fail');
       })
       .catch((error) => {
         setValidationResult(undefined);
@@ -121,6 +128,7 @@ export function PreviewPanel({
         setActiveTab('validation');
         setApproved(false);
         setValidationStatus('error');
+        onValidationStateChange?.('error');
       });
   };
   const failedGates = validationResult ? extractFailedGates(validationResult) : [];

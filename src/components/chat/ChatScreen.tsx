@@ -8,7 +8,11 @@ import {
 import { PromptBar, type PromptModeOption } from '../prompt';
 import { ConversationView } from './ConversationView';
 import { EmptyState } from './EmptyState';
-import { PreviewPanel } from './PreviewPanel';
+import { PreviewPanel, type ValidationPipelineState } from './PreviewPanel';
+import {
+  deriveRunPipelineSteps,
+  type PipelineStepStatus,
+} from './runPipeline';
 import { ThemeToggle } from './ThemeToggle';
 import { useAgentStream } from './useAgentStream';
 
@@ -50,6 +54,10 @@ export function ChatScreen({
   );
   const [previewWidth, setPreviewWidth] = useState(44);
   const [isResizing, setIsResizing] = useState(false);
+  const [validationPipeline, setValidationPipeline] = useState<{
+    draftId?: string;
+    state: ValidationPipelineState;
+  }>({ state: 'idle' });
   const splitRef = useRef<HTMLDivElement>(null);
 
   // 작업 템플릿으로 입력창을 채우기 위한 seed. key 와 함께 PromptBar 를 remount 한다.
@@ -100,14 +108,14 @@ export function ChatScreen({
 
   const isEmpty = messages.length === 0;
   const showPreview = draftId ? draftId !== closedDraftId : true;
-  const pipelineSteps = [
-    { label: 'Prompt', status: messages.length > 0 ? 'pass' : 'waiting' },
-    { label: 'Artifact', status: latestDraft ? 'pass' : 'waiting' },
-    { label: 'Canvas', status: latestArtifactSource ? 'pass' : 'waiting' },
-    { label: 'Validation', status: latestDraft.includes('Typecheck:') ? 'pass' : 'waiting' },
-    { label: 'Repair', status: 'waiting' },
-    { label: 'Approve', status: 'waiting' },
-  ] as const;
+  const currentValidationPipeline =
+    validationPipeline.draftId === draftId ? validationPipeline.state : 'idle';
+  const pipelineSteps = deriveRunPipelineSteps({
+    hasPrompt: messages.length > 0,
+    hasDraft: Boolean(latestDraft),
+    hasArtifactSource: Boolean(latestArtifactSource),
+    validationState: currentValidationPipeline,
+  });
 
   const handlePickSuggestion = (suggestion: string) => {
     setSeedText(suggestion);
@@ -181,6 +189,9 @@ export function ChatScreen({
                 key={draftId}
                 draft={latestDraft}
                 artifactSource={latestArtifactSource}
+                onValidationStateChange={(state) =>
+                  setValidationPipeline({ draftId, state })
+                }
                 onRepair={(payload) =>
                   send({
                     text:
@@ -239,7 +250,7 @@ function RunPipelineBar({
 }: {
   steps: ReadonlyArray<{
     label: string;
-    status: 'waiting' | 'active' | 'pass';
+    status: PipelineStepStatus;
   }>;
 }) {
   return (
@@ -250,10 +261,13 @@ function RunPipelineBar({
       {steps.map((step, index) => (
         <div key={step.label} className="flex items-center gap-1">
           <span
+            aria-label={`${step.label}: ${step.status}`}
             className={[
               'rounded-v-200 border px-v-150 py-v-075 text-xs font-medium',
               step.status === 'pass'
                 ? 'border-v-success bg-v-success-100 text-v-success'
+                : step.status === 'fail'
+                  ? 'border-v-danger bg-v-danger-100 text-v-danger'
                 : step.status === 'active'
                   ? 'border-v-primary bg-v-primary-100 text-v-primary'
                   : 'border-v-normal bg-v-canvas-200 text-v-hint',

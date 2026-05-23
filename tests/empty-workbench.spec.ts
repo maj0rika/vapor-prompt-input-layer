@@ -12,6 +12,7 @@ test.describe('empty workbench', () => {
     await expect(
       page.getByLabel('Prompt to Artifact to Canvas to Validation to Repair to Approve'),
     ).toBeVisible();
+    await expect(page.locator('[aria-label="Validation: waiting"]')).toBeVisible();
     await expect(page.getByText('Canvas waiting')).toBeVisible();
     await expect(page.getByText('Validation gates ready')).toBeVisible();
     await expect(page.getByText('Repair loop available after failure')).toBeVisible();
