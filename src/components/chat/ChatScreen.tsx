@@ -55,7 +55,7 @@ export function ChatScreen({
   const [previewWidth, setPreviewWidth] = useState(44);
   const [isResizing, setIsResizing] = useState(false);
   const [validationPipeline, setValidationPipeline] = useState<{
-    draftId?: string;
+    artifactRunId?: string;
     state: ValidationPipelineState;
   }>({ state: 'idle' });
   const splitRef = useRef<HTMLDivElement>(null);
@@ -105,11 +105,16 @@ export function ChatScreen({
   const latestDraft = draftMessage?.draft ?? '';
   const latestArtifactSource = draftMessage?.artifactSource;
   const draftId = draftMessage?.id;
+  const artifactRunId = draftMessage
+    ? `${draftMessage.id}:${draftMessage.createdAt}`
+    : undefined;
 
   const isEmpty = messages.length === 0;
   const showPreview = draftId ? draftId !== closedDraftId : true;
   const currentValidationPipeline =
-    validationPipeline.draftId === draftId ? validationPipeline.state : 'idle';
+    validationPipeline.artifactRunId === artifactRunId
+      ? validationPipeline.state
+      : 'idle';
   const pipelineSteps = deriveRunPipelineSteps({
     hasPrompt: messages.length > 0,
     hasDraft: Boolean(latestDraft),
@@ -186,11 +191,11 @@ export function ChatScreen({
               style={{ '--artifact-workspace-width': `${previewWidth}%` } as CSSProperties}
             >
               <PreviewPanel
-                key={draftId}
+                key={artifactRunId}
                 draft={latestDraft}
                 artifactSource={latestArtifactSource}
                 onValidationStateChange={(state) =>
-                  setValidationPipeline({ draftId, state })
+                  setValidationPipeline({ artifactRunId, state })
                 }
                 onRepair={(payload) =>
                   send({

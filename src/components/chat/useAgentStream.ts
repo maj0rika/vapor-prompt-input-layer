@@ -147,12 +147,13 @@ export function useAgentStream(client: AgentClient): UseAgentStreamResult {
         prev.map((message) =>
           message.id === assistantId
             ? {
-                ...message,
-                text: '',
-                status: 'streaming',
-                draft: undefined,
-                artifactSource: undefined,
-                errorMessage: undefined,
+              ...message,
+              text: '',
+              status: 'streaming',
+              createdAt: Date.now(),
+              draft: undefined,
+              artifactSource: undefined,
+              errorMessage: undefined,
               }
             : message,
         ),

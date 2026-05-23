@@ -89,6 +89,30 @@ test.describe('artifact canvas runtime', () => {
     ).toBeVisible();
   });
 
+  test('resets validation rail when a validated artifact is regenerated', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await page
+      .getByLabel('자동화 프롬프트 입력')
+      .fill('primary 버튼 컴포넌트 생성, dark mode 지원, Vapor 토큰 준수');
+    await page.getByRole('button', { name: '자동화 실행' }).click();
+
+    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+      timeout: 6000,
+    });
+    await page.getByRole('button', { name: 'Run validation' }).click();
+    await expect(page.locator('[aria-label="Validation: pass"]')).toBeVisible({
+      timeout: 20000,
+    });
+
+    await page.getByRole('button', { name: '응답 재생성' }).click();
+    await expect(page.locator('[aria-label="Validation: waiting"]')).toBeVisible({
+      timeout: 6000,
+    });
+    await expect(page.locator('[aria-label="Validation: pass"]')).toHaveCount(0);
+  });
+
   test('shows clear fail states when generated code is broken', async ({ page }) => {
     await page.goto('/');
     await page

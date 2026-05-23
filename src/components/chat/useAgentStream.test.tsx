@@ -35,17 +35,19 @@ class DraftReplaceClient implements AgentClient {
 }
 
 function Harness({ client }: { client: AgentClient }) {
-  const { messages, isStreaming, send, cancel } = useAgentStream(client);
+  const { messages, isStreaming, send, regenerate, cancel } = useAgentStream(client);
   const assistant = messages.find((m) => m.role === 'assistant');
   return (
     <div>
       <button onClick={() => send({ text: '안녕' })}>send</button>
+      <button onClick={() => assistant && regenerate(assistant.id)}>regenerate</button>
       <button onClick={cancel}>cancel</button>
       <span data-testid="streaming">{String(isStreaming)}</span>
       <span data-testid="count">{messages.length}</span>
       <span data-testid="assistant-status">{assistant?.status ?? 'none'}</span>
       <span data-testid="assistant-text">{assistant?.text ?? ''}</span>
       <span data-testid="assistant-draft">{assistant?.draft ?? ''}</span>
+      <span data-testid="assistant-created-at">{assistant?.createdAt ?? ''}</span>
     </div>
   );
 }
@@ -116,6 +118,26 @@ describe('useAgentStream', () => {
     expect(screen.getByTestId('assistant-draft')).toHaveTextContent('validated');
     expect(screen.getByTestId('assistant-draft')).not.toHaveTextContent(
       'pendingvalidated',
+    );
+  });
+
+  it('regenerate 는 같은 메시지를 새 artifact run 으로 취급하도록 createdAt 을 갱신한다', async () => {
+    render(<Harness client={new DraftReplaceClient()} />);
+
+    fireEvent.click(screen.getByText('send'));
+    await waitFor(() =>
+      expect(screen.getByTestId('assistant-status')).toHaveTextContent('done'),
+    );
+    const firstCreatedAt = screen.getByTestId('assistant-created-at').textContent;
+
+    await new Promise((resolve) => setTimeout(resolve, 2));
+    fireEvent.click(screen.getByText('regenerate'));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('assistant-status')).toHaveTextContent('done'),
+    );
+    expect(screen.getByTestId('assistant-created-at').textContent).not.toBe(
+      firstCreatedAt,
     );
   });
 });
