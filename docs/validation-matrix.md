@@ -12,10 +12,11 @@ This matrix separates verified MVP behavior from final portfolio gates.
 | Token usage static check | implemented | `src/agent/tokenUsage.ts` tests |
 | Artifact workspace | implemented | Component / Story / Test / Validation tabs |
 | Inline attachment composer | implemented | `.json/.ts/.tsx/.md/.txt` text extraction |
-| Generated typecheck runner | not implemented | `npm run verify:generated` intentionally fails |
-| Generated Vitest runner | not implemented | pending `server/validation/*` |
-| Generated Axe runner | not implemented | pending `server/validation/*` |
-| Lighthouse budget | not implemented | pending config and script |
+| Generated typecheck runner | implemented | `npm run verify:generated` |
+| Generated Vitest runner | implemented | temp workspace Vitest |
+| Generated Axe runner | implemented | runtime `jest-axe` test |
+| Bundle budget | implemented | `npm run verify:bundle` enforces initial JS gzip <= 200KB |
+| Lighthouse budget | implemented | `npm run verify:lighthouse` enforces app quality scores and vitals |
 
 ## AI Agent Behavior
 
@@ -35,14 +36,14 @@ This matrix separates verified MVP behavior from final portfolio gates.
 | Step | Owner module | Pass criteria | Status |
 | --- | --- | --- | --- |
 | parse | `src/agent/responseParser.ts` | component/story/test found | pass |
-| temp workspace | `server/validation/createTempWorkspace.ts` | isolated temp dir created | pending |
-| file write | `server/validation/writeGeneratedFiles.ts` | generated files written | pending |
-| typecheck | `server/validation/runGeneratedTypecheck.ts` | TS error 0 | pending |
-| unit | `server/validation/runGeneratedVitest.ts` | generated tests pass | pending |
-| axe | `server/validation/runGeneratedAxe.ts` | violations 0 | pending |
-| token | `server/validation/runTokenUsageCheck.ts` | fail 0, warn below threshold | pending |
-| aggregate | `server/validation/validateGeneratedArtifact.ts` | normalized result | pending |
-| CLI | `server/validation/run-generated-validation.ts` | exits 0 only when all pass | placeholder fail |
+| temp workspace | `server/validation/createTempWorkspace.ts` | isolated temp dir created | pass |
+| file write | `server/validation/writeGeneratedFiles.ts` | generated files written | pass |
+| typecheck | `server/validation/validateGeneratedArtifact.ts` | TS error 0 | pass |
+| unit | `server/validation/validateGeneratedArtifact.ts` | generated tests pass | pass |
+| axe | `server/validation/validateGeneratedArtifact.ts` | violations 0 | pass |
+| token | `server/validation/validateGeneratedArtifact.ts` | fail 0, warn below threshold | pass |
+| aggregate | `server/validation/validateGeneratedArtifact.ts` | normalized result | pass |
+| CLI | `server/validation/run-generated-validation.ts` | exits 0 only when all pass | pass |
 
 ## E2E Expansion
 
@@ -67,17 +68,17 @@ Required scenarios:
 Say:
 
 ```txt
-The MVP proves the product shell, prompt routing, artifact parsing, and token
-check. The next gate is real generated artifact validation in an isolated temp
-workspace. Mock validation is used only for deterministic E2E and is documented
-as not real validation.
+The product shell, prompt routing, artifact parsing, token check, and fixture
+generated-artifact validation are implemented. Mock validation is still used for
+deterministic UI E2E, while npm run verify:generated is the real generated code
+gate.
 ```
 
 Do not say:
 
 ```txt
-Generated code is fully verified.
+All generated code from arbitrary LLM responses is fully verified in production.
 ```
 
-until `npm run verify:generated` passes with real typecheck, Vitest, Axe, token
-check, and cleanup.
+until the app runs this validation for every live DeepSeek artifact and displays
+the real result in the UI.

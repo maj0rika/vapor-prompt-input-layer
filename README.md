@@ -68,8 +68,8 @@ style 사용을 탐지해 pass/warn/fail 로 판정합니다. Typecheck, Unit, A
 
 ## Tech Stack
 
-React · TypeScript · Vite · Vapor UI · Tailwind CSS v4 · react-markdown ·
-Vitest · Playwright · DeepSeek Chat Completions compatible API
+React · TypeScript · Vite · Vapor UI · Tailwind CSS v4 · Vitest · Playwright ·
+jest-axe · DeepSeek Chat Completions compatible API
 
 ## Getting Started
 
@@ -83,9 +83,8 @@ npm run test:e2e   # Playwright E2E 테스트
 npm run verify     # 기본 static/app quality gate
 ```
 
-`npm run verify:generated` 는 실제 generated artifact validation runner 자리입니다.
-아직 runner 가 구현되지 않았으므로 의도적으로 실패합니다. mock validation 을 real
-validation 처럼 표시하지 않기 위한 안전장치입니다.
+`npm run verify:generated` 는 fixture artifact 를 실제 temp workspace 에 쓰고,
+TypeScript, Vitest, runtime Axe, Vapor token gate, cleanup 을 실행합니다.
 
 실제 DeepSeek 연결:
 

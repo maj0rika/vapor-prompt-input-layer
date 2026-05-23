@@ -21,6 +21,8 @@ Every commit must pass:
 | ESLint | `npm run lint` | error 0 |
 | Unit/integration | `npm test` | all tests pass |
 | Build | `npm run build` | production build succeeds |
+| Bundle budget | `npm run verify:bundle` | initial JS gzip <= 200KB |
+| Lighthouse | `npm run verify:lighthouse` | Performance >= 90, Accessibility >= 95, Best Practices >= 95, SEO >= 90, LCP <= 2.5s, CLS <= 0.1 |
 | E2E | `npm run test:e2e` | all Playwright tests pass |
 | Diff whitespace | `git diff --check` | no whitespace errors |
 | Secret check | manual/CI grep | no API key, `.env.local`, token, or `sk-` in committed files |
@@ -30,6 +32,7 @@ Local aggregate command:
 
 ```bash
 npm run verify
+npm run verify:ci
 ```
 
 ## Coverage Gate
@@ -57,8 +60,8 @@ server/validation/*              90%+
 
 ## Generated Artifact Gate
 
-`npm run verify:generated` must eventually pass the generated artifact pipeline.
-It currently fails intentionally until the real runner is implemented.
+`npm run verify:generated` runs the generated artifact pipeline against the
+fixture artifact in `server/validation/fixtures/primary-button-artifact.md`.
 
 | Gate | Pass criteria |
 | --- | --- |
@@ -71,6 +74,13 @@ It currently fails intentionally until the real runner is implemented.
 | Axe | violations 0 |
 | Token usage | fail 0, warn within threshold |
 | Cleanup | temp workspace removed even after failure |
+
+Current implemented runner:
+
+```txt
+parse -> temp workspace -> file write -> tsc --noEmit
+-> Vitest generated tests -> runtime jest-axe check -> token gate -> cleanup
+```
 
 Passing result:
 
@@ -154,6 +164,7 @@ App:
 | INP | <= 200ms | <= 150ms |
 | CLS | <= 0.1 | <= 0.05 |
 | console errors | 0 | 0 |
+| Initial JS gzip | <= 200KB | <= 150KB |
 
 Agent pipeline:
 

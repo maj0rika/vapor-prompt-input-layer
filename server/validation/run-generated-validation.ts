@@ -1,15 +1,12 @@
-/**
- * Placeholder CLI for the real generated artifact gate.
- *
- * This intentionally fails until server/validation implements:
- * parse -> temp workspace -> file write -> typecheck -> Vitest -> Axe ->
- * token gate -> cleanup.
- */
-console.error(
-  [
-    'Generated artifact validation runner is not implemented yet.',
-    'Required gate: component/story/test parse, temp workspace typecheck, Vitest, Axe, Vapor token check, cleanup.',
-  ].join('\n'),
-);
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { validateGeneratedArtifact } from './validateGeneratedArtifact.ts';
 
-process.exitCode = 1;
+const fixturePath = resolve(
+  process.argv[2] ?? 'server/validation/fixtures/primary-button-artifact.md',
+);
+const markdown = await readFile(fixturePath, 'utf8');
+const result = await validateGeneratedArtifact(markdown);
+
+console.log(JSON.stringify(result, null, 2));
+process.exitCode = result.status === 'fail' ? 1 : 0;
