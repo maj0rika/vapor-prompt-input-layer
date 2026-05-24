@@ -99,13 +99,18 @@ LLM 응답은 자연어 문장과 함께 다음 delimiter 를 사용한다.
 ````
 
 이 포맷은 전체 응답을 JSON 으로 강제하지 않으면서도 preview 와 validation 에
-필요한 부분을 안정적으로 추출한다. Canvas 와 runtime harness 는 `artifact-meta`의
-`primaryExport`, `defaultProps`, `variants`를 우선 사용하고, 누락 시에는 UI에
-heuristic fallback warning 을 표시한다.
+필요한 부분을 안정적으로 추출한다. `artifact-meta`는 모델이 준 힌트가 아니라 validated
+render contract 이다. metadata 가 있으면 `primaryExport`는 실제 component export 와
+정확히 일치해야 하며, Canvas 와 runtime harness 는 strict lookup 을 사용한다.
+metadata primaryExport 가 틀리면 fallback 하지 않고 contract failure 로 표시한다.
+metadata 가 없을 때만 UI에 heuristic fallback warning 을 표시한다.
 
 Preview iframe 은 생성 entry 에서 `vapor-preview-ready` 또는 `vapor-preview-error`
 message 를 parent UI 로 보낸다. 이 신호가 있어야 Canvas 가 단순 iframe 표시가 아니라
-runtime lifecycle 을 가진 preview 로 설명된다.
+runtime lifecycle 을 가진 preview 로 설명된다. Parent 는 iframe `contentWindow`,
+same-origin, `previewRunId`, variant/theme, message type whitelist 를 모두 확인한다.
+iframe 이 ready/error 를 보내지 않으면 timeout 으로 Canvas failed state 를 표시한다.
+Runtime Render 와 Axe harness 는 metadata variants 전체를 순회한다.
 
 ## 컴포넌트 구성
 

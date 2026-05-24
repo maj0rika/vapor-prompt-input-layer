@@ -18,7 +18,7 @@ test.describe('empty workbench', () => {
     await expect(page.getByText('Repair loop available after failure')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Run validation' })).toBeDisabled();
     await expect(page.getByRole('button', { name: 'Fix with Agent' })).toBeDisabled();
-    await expect(page.getByRole('button', { name: 'Approve artifact' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Approve current artifact' })).toBeDisabled();
     await expect(page.locator('iframe[title="Generated artifact canvas"]')).toHaveCount(0);
 
     const overflow = await page.evaluate(

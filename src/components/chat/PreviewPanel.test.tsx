@@ -62,19 +62,27 @@ describe('PreviewPanel', () => {
       'true',
     );
     expect(screen.getByTitle('Generated artifact canvas')).toBeInTheDocument();
-    expect(screen.getByText('Metadata contract')).toBeInTheDocument();
+    expect(screen.getByText('Metadata contract: PASS')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Disabled variant' })).toBeInTheDocument();
     expect(screen.getByLabelText('Canvas runtime: loading')).toBeInTheDocument();
   });
 
   it('Canvas runtime ready/error message 를 parent UI 에 반영한다', async () => {
     render(<PreviewPanel draft={ARTIFACT} artifactSource={ARTIFACT_SOURCE} onClose={vi.fn()} />);
+    const iframe = screen.getByTitle('Generated artifact canvas') as HTMLIFrameElement;
+    const previewRunId = new URL(iframe.src).searchParams.get('previewRunId');
 
     fireEvent(
       window,
       new MessageEvent('message', {
         origin: window.location.origin,
-        data: { type: 'vapor-preview-ready', variant: 'Default', theme: 'light' },
+        source: iframe.contentWindow,
+        data: {
+          type: 'vapor-preview-ready',
+          previewRunId,
+          variant: 'Default',
+          theme: 'light',
+        },
       }),
     );
 
@@ -84,8 +92,10 @@ describe('PreviewPanel', () => {
       window,
       new MessageEvent('message', {
         origin: window.location.origin,
+        source: iframe.contentWindow,
         data: {
           type: 'vapor-preview-error',
+          previewRunId,
           variant: 'Default',
           theme: 'light',
           message: 'preview exploded',
@@ -102,6 +112,19 @@ describe('PreviewPanel', () => {
 
     expect(screen.getByText('Heuristic props')).toBeInTheDocument();
     expect(screen.getByText(/artifact-meta가 없어/)).toBeInTheDocument();
+  });
+
+  it('metadata contract 실패를 Canvas unavailable 로 표시한다', () => {
+    const invalidSource = ARTIFACT_SOURCE.replace(
+      '"primaryExport": "PrimaryButton"',
+      '"primaryExport": "MissingButton"',
+    );
+
+    render(<PreviewPanel draft={ARTIFACT} artifactSource={invalidSource} onClose={vi.fn()} />);
+
+    expect(screen.getByText('Metadata contract: FAIL')).toBeInTheDocument();
+    expect(screen.getByText(/Metadata contract failed/)).toBeInTheDocument();
+    expect(screen.queryByTitle('Generated artifact canvas')).not.toBeInTheDocument();
   });
 
   it('artifactSource 가 없으면 Canvas 를 실제 preview 로 위장하지 않는다', () => {
@@ -148,13 +171,13 @@ describe('PreviewPanel', () => {
     );
     expect(screen.getByText('Same validation runner')).toBeInTheDocument();
     expect(screen.getByText('Validation: waiting for runner output')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Approve artifact' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Approve current artifact' })).toBeDisabled();
   });
 
   it('artifactSource 가 있어도 runner 결과 전에는 승인할 수 없다', () => {
     render(<PreviewPanel draft={ARTIFACT} artifactSource="<artifact />" onClose={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'Approve artifact' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Approve current artifact' })).toBeDisabled();
   });
 
   it('sample validation 실패 시 waiting notice 대신 runner error 를 보여준다', async () => {

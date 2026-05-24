@@ -28,10 +28,10 @@ can be inspected and repaired from the UI.
 | Verified sample run | user-verifiable | Run verified sample loads a deterministic fixture, renders Canvas, keeps validation waiting, and gates approval on `/api/deepseek/validate` output | This proves the pipeline path, not live DeepSeek model quality. |
 | Generated component Canvas | user-verifiable | Canvas tab loads `/api/deepseek/preview`, Vite transforms the generated TSX entry, iframe posts ready/error, and iframe DOM exposes the generated button in E2E | Complex prop controls still need a dedicated Props panel. |
 | Variant and theme switching | user-verifiable | Canvas controls use `<artifact-meta>` variants when present and switch Default/Disabled and Light/Dark in E2E | Complex prop controls still need a dedicated Props panel. |
-| Runtime render result | user-verifiable | Tests tab shows Runtime Render runner detail and Canvas mounts React output through preview runtime | Runtime runner and Canvas runtime still use separate temp workspaces. |
+| Runtime render result | user-verifiable | Tests tab shows Runtime Render runner detail across metadata variants and Canvas mounts React output through preview runtime | Runtime runner and Canvas runtime still use separate temp workspaces. |
 | Failure states | user-verifiable | Broken raw-color artifact E2E shows FAIL and runner detail | More failure fixtures can be added for type/unit/axe-specific failures. |
 | Repair loop | user-verifiable | Fix with Agent sends failed gates and validation result into the next request | Current deterministic mock repairs to a known passing component. |
-| Approval gate | user-verifiable | Approve artifact stays disabled until validation status is pass | Persistence/export of approved artifacts is not implemented. |
+| Approval gate | user-verifiable | Approve current artifact stays disabled until validation status is pass | Persistence/export of approved artifacts is not implemented. |
 
 ## Non-Overclaim Rule
 

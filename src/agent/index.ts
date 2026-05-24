@@ -17,6 +17,10 @@ export type {
   ArtifactVariantMetadata,
   GeneratedArtifact,
 } from './responseParser';
+export type {
+  MetadataValidationResult,
+  MetadataValidationStatus,
+} from './artifactMetadata';
 export type { MachineEvent } from './messageMachine';
 export type {
   AgentEvent,

@@ -104,6 +104,71 @@ Uses @vapor-ui/core Button and colorPalette instead of raw color values.
 </notes>
 `;
 
+const WRONG_PRIMARY_EXPORT_ARTIFACT = `<artifact-meta>
+{
+  "componentName": "PrimaryActionButton",
+  "primaryExport": "MissingActionButton",
+  "defaultProps": { "children": "Deploy component" },
+  "variants": [
+    { "name": "Default", "props": { "children": "Deploy component" } }
+  ]
+}
+</artifact-meta>
+
+<artifact type="component" filename="PrimaryActionButton.tsx">
+\`\`\`tsx
+import { Button } from '@vapor-ui/core';
+
+export function PrimaryActionButton({ children }: { children: string }) {
+  return (
+    <Button type="button" colorPalette="primary">
+      {children}
+    </Button>
+  );
+}
+\`\`\`
+</artifact>
+
+<artifact type="story" filename="PrimaryActionButton.stories.tsx">
+\`\`\`tsx
+import type { Meta, StoryObj } from '@storybook/react';
+import { PrimaryActionButton } from './PrimaryActionButton';
+
+const meta = {
+  title: 'Vapor Automation/PrimaryActionButtonWrongMeta',
+  component: PrimaryActionButton,
+  args: { children: 'Deploy component' },
+} satisfies Meta<typeof PrimaryActionButton>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {};
+\`\`\`
+</artifact>
+
+<artifact type="test" filename="PrimaryActionButton.test.tsx">
+\`\`\`tsx
+import { render, screen } from '@testing-library/react';
+import { expect, it } from 'vitest';
+import { PrimaryActionButton } from './PrimaryActionButton';
+
+it('renders the actual export', () => {
+  render(<PrimaryActionButton>Deploy component</PrimaryActionButton>);
+  expect(screen.getByRole('button', { name: 'Deploy component' })).toBeInTheDocument();
+});
+\`\`\`
+</artifact>
+
+<notes type="a11y">
+Wrong primaryExport fixture. The component is valid; metadata contract is not.
+</notes>
+
+<notes type="token">
+Uses @vapor-ui/core Button and colorPalette instead of raw color values.
+</notes>
+`;
+
 const TOKEN_ARTIFACT = `<artifact type="component" filename="figmaToVaporTokenMap.ts">
 \`\`\`ts
 export const figmaToVaporTokenMap = {
@@ -467,6 +532,12 @@ const ERROR: AgentScript = {
 
 export function selectScript(input: string, mode: AgentMode = 'component'): AgentScript {
   const text = input.toLowerCase();
+  if (/wrong.*primary|primaryexport|metadata mismatch|메타.*불일치/.test(text)) {
+    return {
+      reply: 'primaryExport 가 실제 export 와 다른 metadata contract 실패 fixture 를 생성했습니다.',
+      draft: WRONG_PRIMARY_EXPORT_ARTIFACT,
+    };
+  }
   if (/typecheck|타입/.test(text)) {
     return {
       reply: '의도적으로 Typecheck 실패 artifact 를 생성했습니다. Tests 탭에서 실패 로그를 확인하세요.',

@@ -1,3 +1,5 @@
+import { validateArtifactMetadata, type MetadataValidationResult } from './artifactMetadata.ts';
+
 export type ArtifactType = 'component' | 'story' | 'test';
 
 export type CodeArtifact = {
@@ -21,6 +23,7 @@ export type ArtifactMetadata = {
 
 export type GeneratedArtifact = {
   metadata?: ArtifactMetadata;
+  metadataValidation?: MetadataValidationResult;
   component?: CodeArtifact;
   story?: CodeArtifact;
   test?: CodeArtifact;
@@ -34,8 +37,12 @@ const META_RE = /<artifact-meta>\s*([\s\S]*?)\s*<\/artifact-meta>/;
 const NOTES_RE = /<notes\s+type="(a11y|token)">([\s\S]*?)<\/notes>/g;
 
 export function parseGeneratedArtifact(markdown: string): GeneratedArtifact {
-  const result: GeneratedArtifact = {};
-  const metadata = parseArtifactMetadata(markdown);
+  const metadataParse = parseArtifactMetadata(markdown);
+  const result: GeneratedArtifact = {
+    ...(metadataParse.metadata ? { metadata: metadataParse.metadata } : {}),
+    metadataValidation: { status: 'warn', messages: [], warnings: [], errors: [] },
+  };
+  const metadata = metadataParse.metadata;
   if (metadata) result.metadata = metadata;
 
   for (const match of markdown.matchAll(ARTIFACT_RE)) {
@@ -54,6 +61,13 @@ export function parseGeneratedArtifact(markdown: string): GeneratedArtifact {
     if (type === 'a11y') result.a11yNotes = match[2].trim();
     if (type === 'token') result.tokenNotes = match[2].trim();
   }
+
+  result.metadataValidation = validateArtifactMetadata({
+    metadata,
+    rawMetadata: metadataParse.rawMetadata,
+    parseError: metadataParse.parseError,
+    componentSource: result.component?.content,
+  });
 
   return result;
 }
@@ -88,13 +102,18 @@ export function artifactToMarkdown(artifact: GeneratedArtifact): string {
   return sections.join('\n\n');
 }
 
-function parseArtifactMetadata(markdown: string): ArtifactMetadata | undefined {
+function parseArtifactMetadata(markdown: string): {
+  metadata?: ArtifactMetadata;
+  rawMetadata?: string;
+  parseError?: string;
+} {
   const match = markdown.match(META_RE);
-  if (!match) return undefined;
+  if (!match) return {};
+  const rawMetadata = match[1];
 
   try {
-    const raw = JSON.parse(match[1]) as unknown;
-    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+    const raw = JSON.parse(rawMetadata) as unknown;
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { rawMetadata };
     const value = raw as Record<string, unknown>;
     const metadata: ArtifactMetadata = {};
 
@@ -121,9 +140,15 @@ function parseArtifactMetadata(markdown: string): ArtifactMetadata | undefined {
       });
     }
 
-    return Object.keys(metadata).length > 0 ? metadata : undefined;
-  } catch {
-    return undefined;
+    return {
+      rawMetadata,
+      ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
+    };
+  } catch (error) {
+    return {
+      rawMetadata,
+      parseError: error instanceof Error ? error.message : 'unknown parse error',
+    };
   }
 }
 

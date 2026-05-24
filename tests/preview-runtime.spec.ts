@@ -25,7 +25,7 @@ test.describe('artifact canvas runtime', () => {
     await expect(page.locator('[aria-label="Artifact: pass"]')).toBeVisible();
     await expect(page.locator('[aria-label="Canvas: pass"]')).toBeVisible();
     await expect(page.locator('[aria-label="Validation: waiting"]')).toBeVisible();
-    await expect(page.getByText('Metadata contract')).toBeVisible();
+    await expect(page.getByText('Metadata contract: PASS')).toBeVisible();
     await expect(page.locator('[aria-label="Canvas runtime: ready"]')).toBeVisible();
 
     const canvas = page.frameLocator('iframe[title="Generated artifact canvas"]');
@@ -85,6 +85,11 @@ test.describe('artifact canvas runtime', () => {
     ).toBeVisible({ timeout: 8000 });
     await expect(
       page.getByRole('listitem').filter({ hasText: /^Runtime Render: PASS$/ }),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByRole('listitem')
+        .filter({ hasText: /Runtime Render: PASS.*2 metadata variants \(Default, Disabled\)/ }),
     ).toBeVisible();
     await expect(
       page.getByRole('listitem').filter({ hasText: /^Cleanup: PASS$/ }),
@@ -193,6 +198,34 @@ test.describe('artifact canvas runtime', () => {
     ).toHaveCount(2);
   });
 
+  test('fails wrong primaryExport metadata instead of falling back', async ({ page }) => {
+    await page.goto('/');
+    await page
+      .getByLabel('자동화 프롬프트 입력')
+      .fill('wrong primaryExport metadata mismatch fixture');
+    await page.getByRole('button', { name: '자동화 실행' }).click();
+
+    await expect(page.getByText('Metadata contract: FAIL')).toBeVisible({
+      timeout: 6000,
+    });
+    await expect(page.getByText(/primaryExport "MissingActionButton"/)).toBeVisible();
+    await expect(page.getByText('Canvas unavailable')).toBeVisible();
+    await expect(page.locator('iframe[title="Generated artifact canvas"]')).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Run validation' }).click();
+    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+      timeout: 20000,
+    });
+    await page.getByRole('tab', { name: 'Tests' }).click();
+    await expect(page.getByText(/Metadata contract: FAIL/)).toBeVisible();
+    await expect(
+      page.getByRole('listitem').filter({ hasText: /^Runtime Render: FAIL$/ }),
+    ).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.getByRole('listitem').filter({ hasText: /MissingActionButton/ }),
+    ).toBeVisible();
+  });
+
   test('shows axe failure output from the accessibility runner', async ({ page }) => {
     await page.goto('/');
     await page
@@ -236,7 +269,7 @@ test.describe('artifact canvas runtime', () => {
     await expect(
       page.getByRole('listitem').filter({ hasText: /^Vapor token usage: FAIL$/ }),
     ).toBeVisible({ timeout: 8000 });
-    await expect(page.getByRole('button', { name: 'Approve artifact' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Approve current artifact' })).toBeDisabled();
 
     await page.getByRole('button', { name: 'Fix with Agent' }).click();
     await expect(page.getByText(/실패한 validation 결과를 바탕으로 수정/)).toBeVisible();
@@ -254,9 +287,9 @@ test.describe('artifact canvas runtime', () => {
     await expect(
       page.getByRole('listitem').filter({ hasText: /^Vapor token usage: PASS$/ }),
     ).toBeVisible({ timeout: 8000 });
-    await expect(page.getByRole('button', { name: 'Approve artifact' })).toBeEnabled();
+    await expect(page.getByRole('button', { name: 'Approve current artifact' })).toBeEnabled();
 
-    await page.getByRole('button', { name: 'Approve artifact' }).click();
-    await expect(page.getByText('Artifact approved')).toBeVisible();
+    await page.getByRole('button', { name: 'Approve current artifact' }).click();
+    await expect(page.getByText('Artifact marked reviewed')).toBeVisible();
   });
 });

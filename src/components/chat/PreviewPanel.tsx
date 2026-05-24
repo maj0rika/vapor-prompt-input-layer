@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Badge, Button, IconButton, Text } from '@vapor-ui/core';
 import { CloseOutlineIcon, CopyOutlineIcon } from '@vapor-ui/icons';
 import { parseGeneratedArtifact, type ArtifactProvenance, type GeneratedArtifact } from '../../agent';
+import type { MetadataValidationResult } from '../../agent';
 import { Markdown } from './Markdown';
 
 type ArtifactTab = 'canvas' | 'component' | 'story' | 'test' | 'validation';
@@ -23,6 +24,7 @@ type CanvasModel = {
   variants: CanvasVariant[];
   canRunReactPreview: boolean;
   hasMetadata: boolean;
+  metadataValidation: MetadataValidationResult;
 };
 
 type CanvasTheme = 'light' | 'dark';
@@ -224,7 +226,7 @@ export function PreviewPanel({
               disabled={!canApprove}
               onClick={() => setApproved(true)}
             >
-              Approve artifact
+              Approve current artifact
             </Button>
           )}
           {canClose && (
@@ -321,10 +323,13 @@ export function PreviewPanel({
         </div>
       )}
       {approved && (
-        <div className="border-b border-v-normal px-v-200 py-v-150">
+        <div className="grid gap-1 border-b border-v-normal px-v-200 py-v-150">
           <Badge size="md" colorPalette="success">
-            Artifact approved
+            Artifact marked reviewed
           </Badge>
+          <Text typography="body4" foreground="hint-200">
+            Local review state only. Does not write files.
+          </Text>
         </div>
       )}
 
@@ -385,7 +390,7 @@ export function PreviewPanel({
               </div>
             </div>
             <div className="flex flex-wrap gap-1">
-              {['Run validation', 'Fix with Agent', 'Approve artifact'].map((label) => (
+              {['Run validation', 'Fix with Agent', 'Approve current artifact'].map((label) => (
                 <Button key={label} size="sm" variant="outline" disabled>
                   {label}
                 </Button>
@@ -413,9 +418,14 @@ function ArtifactCanvas({
   theme: CanvasTheme;
   onThemeChange: (next: CanvasTheme) => void;
 }) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const previewRunId = useMemo(
+    () => createPreviewRunId(activeVariantName, artifactSource, theme),
+    [activeVariantName, artifactSource, theme],
+  );
   const previewSrc =
-    artifactSource && model.canRunReactPreview
-      ? `/api/deepseek/preview?artifact=${encodeURIComponent(artifactSource)}&variant=${encodeURIComponent(activeVariantName)}&theme=${theme}`
+    artifactSource && model.canRunReactPreview && model.metadataValidation.status !== 'fail'
+      ? `/api/deepseek/preview?artifact=${encodeURIComponent(artifactSource)}&variant=${encodeURIComponent(activeVariantName)}&theme=${theme}&previewRunId=${encodeURIComponent(previewRunId)}`
       : undefined;
   const [previewState, setPreviewState] = useState<{
     src?: string;
@@ -427,16 +437,24 @@ function ArtifactCanvas({
 
   useEffect(() => {
     if (!previewSrc) return;
+    let settled = false;
+    let timeoutId = 0;
 
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
+      if (event.source !== iframeRef.current?.contentWindow) return;
       if (!isPreviewMessage(event.data)) return;
+      if (event.data.previewRunId !== previewRunId) return;
       if (event.data.variant !== activeVariantName || event.data.theme !== theme) return;
 
       if (event.data.type === 'vapor-preview-ready') {
+        settled = true;
+        window.clearTimeout(timeoutId);
         setPreviewState({ src: previewSrc, status: 'ready' });
       }
       if (event.data.type === 'vapor-preview-error') {
+        settled = true;
+        window.clearTimeout(timeoutId);
         setPreviewState({
           src: previewSrc,
           status: 'failed',
@@ -446,8 +464,33 @@ function ArtifactCanvas({
     };
 
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [activeVariantName, previewSrc, theme]);
+    timeoutId = window.setTimeout(() => {
+      if (settled) return;
+      setPreviewState({
+        src: previewSrc,
+        status: 'failed',
+        error: 'Canvas runtime did not report ready before timeout.',
+      });
+    }, 5_000);
+    return () => {
+      window.clearTimeout(timeoutId);
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [activeVariantName, previewRunId, previewSrc, theme]);
+
+  const handleIframeLoad = () => {
+    if (!previewSrc || previewStatus !== 'loading') return;
+    const iframeDocument = iframeRef.current?.contentDocument;
+    const bodyText = iframeDocument?.body?.innerText.trim();
+    const hasPreviewRoot = Boolean(iframeDocument?.getElementById('root'));
+    if (bodyText && !hasPreviewRoot) {
+      setPreviewState({
+        src: previewSrc,
+        status: 'failed',
+        error: bodyText,
+      });
+    }
+  };
 
   if (!previewSrc) {
     return (
@@ -455,16 +498,33 @@ function ArtifactCanvas({
         <div className="flex min-w-0 flex-col gap-0.5">
           <Text typography="subtitle2">Canvas unavailable</Text>
           <Text typography="body4" foreground="hint-200">
-            runtime preview requires a parsed component artifact and source payload
+            runtime preview requires a parsed component artifact, source payload, and valid metadata contract
           </Text>
+        </div>
+        <div className="flex flex-wrap gap-1">
+          <Badge
+            size="sm"
+            colorPalette={
+              model.metadataValidation.status === 'pass'
+                ? 'success'
+                : model.metadataValidation.status === 'fail'
+                  ? 'danger'
+                  : 'warning'
+            }
+          >
+            {model.hasMetadata
+              ? `Metadata contract: ${model.metadataValidation.status.toUpperCase()}`
+              : 'Heuristic props'}
+          </Badge>
         </div>
         <div
           role="status"
           className="rounded-v-300 border border-dashed border-v-normal bg-v-canvas-200 p-v-300"
         >
           <Text typography="body3">
-            이 artifact는 실제 React preview runtime으로 mount되지 않았습니다. Canvas를
-            성공 상태로 표시하지 않고 Component/Story/Test 탭에서 원본만 검토합니다.
+            {model.metadataValidation.status === 'fail'
+              ? `Metadata contract failed: ${model.metadataValidation.errors.join(' ')}`
+              : '이 artifact는 실제 React preview runtime으로 mount되지 않았습니다. Canvas를 성공 상태로 표시하지 않고 Component/Story/Test 탭에서 원본만 검토합니다.'}
           </Text>
         </div>
       </div>
@@ -484,8 +544,19 @@ function ArtifactCanvas({
           <Badge size="sm" colorPalette="primary">
             Canvas preview
           </Badge>
-          <Badge size="sm" colorPalette={model.hasMetadata ? 'success' : 'warning'}>
-            {model.hasMetadata ? 'Metadata contract' : 'Heuristic props'}
+          <Badge
+            size="sm"
+            colorPalette={
+              model.metadataValidation.status === 'pass'
+                ? 'success'
+                : model.metadataValidation.status === 'fail'
+                  ? 'danger'
+                  : 'warning'
+            }
+          >
+            {model.hasMetadata
+              ? `Metadata contract: ${model.metadataValidation.status.toUpperCase()}`
+              : 'Heuristic props'}
           </Badge>
           <Badge
             size="sm"
@@ -507,6 +578,20 @@ function ArtifactCanvas({
           <Text typography="body4">
             artifact-meta가 없어 Canvas가 component/story 텍스트에서 props를 추정합니다.
           </Text>
+        </div>
+      )}
+      {model.hasMetadata && model.metadataValidation.status !== 'pass' && (
+        <div className="rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-200 py-v-150">
+          <Text typography="body4">
+            {model.metadataValidation.status === 'fail'
+              ? 'Metadata contract failed. Canvas mounted state is unavailable until the contract is fixed.'
+              : 'Metadata contract warning. Canvas may mount, but the contract needs review.'}
+          </Text>
+          {model.metadataValidation.messages.map((message) => (
+            <Text key={message} typography="body4" foreground="hint-200">
+              {message}
+            </Text>
+          ))}
         </div>
       )}
       <div className="flex flex-wrap items-center gap-1">
@@ -537,9 +622,11 @@ function ArtifactCanvas({
         ))}
       </div>
       <iframe
+        ref={iframeRef}
         title="Generated artifact canvas"
         sandbox="allow-scripts allow-same-origin"
         src={previewSrc}
+        onLoad={handleIframeLoad}
         className="min-h-[180px] flex-1 rounded-v-300 border border-v-normal bg-v-canvas-100"
       />
       {previewStatus === 'failed' && previewError && (
@@ -581,6 +668,13 @@ function buildCanvasModel(
   if (!component) return undefined;
 
   const metadata = artifact?.metadata;
+  const metadataValidation =
+    artifact?.metadataValidation ?? {
+      status: 'warn' as const,
+      messages: ['Heuristic props fallback required.'],
+      warnings: ['Heuristic props fallback required.'],
+      errors: [],
+    };
   const componentName =
     metadata?.componentName ??
     metadata?.primaryExport ??
@@ -596,6 +690,7 @@ function buildCanvasModel(
     componentName,
     canRunReactPreview: /export function\s+\w+/.test(component.content),
     hasMetadata: Boolean(metadata),
+    metadataValidation,
     variants:
       metadataVariants.length > 0
         ? metadataVariants
@@ -866,8 +961,20 @@ function capitalize(value: string): string {
   return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
 }
 
+function createPreviewRunId(
+  activeVariantName: string,
+  artifactSource: string | undefined,
+  theme: CanvasTheme,
+): string {
+  const scope = `${activeVariantName.length}-${artifactSource?.length ?? 0}-${theme}`;
+  const entropy =
+    globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return `${scope}-${entropy}`;
+}
+
 function isPreviewMessage(value: unknown): value is {
   type: 'vapor-preview-ready' | 'vapor-preview-error';
+  previewRunId: string;
   variant: string;
   theme: CanvasTheme;
   message?: string;
@@ -876,6 +983,7 @@ function isPreviewMessage(value: unknown): value is {
   const record = value as Record<string, unknown>;
   return (
     (record.type === 'vapor-preview-ready' || record.type === 'vapor-preview-error') &&
+    typeof record.previewRunId === 'string' &&
     typeof record.variant === 'string' &&
     (record.theme === 'light' || record.theme === 'dark') &&
     (record.message === undefined || typeof record.message === 'string')

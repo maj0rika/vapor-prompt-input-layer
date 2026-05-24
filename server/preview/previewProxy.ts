@@ -20,6 +20,7 @@ export async function handleArtifactPreview(
   const markdown = url.searchParams.get('artifact') ?? '';
   const variant = url.searchParams.get('variant') ?? 'Default';
   const theme = url.searchParams.get('theme') === 'dark' ? 'dark' : 'light';
+  const previewRunId = url.searchParams.get('previewRunId') ?? '';
 
   if (!markdown.trim()) {
     send(res, 400, 'Missing artifact source');
@@ -31,6 +32,10 @@ export async function handleArtifactPreview(
     send(res, 422, 'Component artifact is required');
     return;
   }
+  if (artifact.metadataValidation?.status === 'fail') {
+    send(res, 422, `Metadata contract failed: ${artifact.metadataValidation.errors.join(' ')}`);
+    return;
+  }
 
   const runDir = join(tmpdir(), `vapor-preview-${randomUUID()}`);
   const srcDir = join(runDir, 'src');
@@ -38,15 +43,22 @@ export async function handleArtifactPreview(
   await writeFile(join(srcDir, artifact.component.filename), artifact.component.content, 'utf8');
 
   const entryPath = join(srcDir, 'PreviewEntry.tsx');
-  const primaryExport =
-    artifact.metadata?.primaryExport ?? inferPrimaryExport(artifact.component.content);
+  const primaryExport = artifact.metadata
+    ? artifact.metadata.primaryExport
+    : inferPrimaryExport(artifact.component.content);
+  if (!primaryExport) {
+    send(res, 422, 'Metadata contract failed: primaryExport is required.');
+    return;
+  }
   await writeFile(
     entryPath,
     previewEntry({
       componentFilename: artifact.component.filename,
       primaryExport,
+      strictPrimaryExport: Boolean(artifact.metadata),
       variant,
       theme,
+      previewRunId,
       previewProps: buildPreviewProps(markdown, artifact, variant),
     }),
     'utf8',
@@ -84,14 +96,18 @@ export async function handleArtifactPreview(
 function previewEntry({
   componentFilename,
   primaryExport,
+  strictPrimaryExport,
   variant,
   theme,
+  previewRunId,
   previewProps,
 }: {
   componentFilename: string;
   primaryExport: string;
+  strictPrimaryExport: boolean;
   variant: string;
   theme: 'light' | 'dark';
+  previewRunId: string;
   previewProps: Record<string, unknown>;
 }): string {
   const importPath = `./${componentFilename.replace(/\.tsx?$/, '')}`;
@@ -102,14 +118,15 @@ function previewEntry({
     "import '/src/index.css';",
     `import * as ComponentModule from '${importPath}';`,
     '',
-    `const Component = ComponentModule[${JSON.stringify(primaryExport)}] ?? Object.values(ComponentModule).find((value) => typeof value === 'function');`,
-    "if (!Component) throw new Error('No exported React component found.');",
+    `const Component = ${componentLookupExpression(primaryExport, strictPrimaryExport)};`,
+    `if (!Component) throw new Error(${JSON.stringify(`No exported React component found for primaryExport "${primaryExport}".`)});`,
     `const previewProps = ${JSON.stringify(previewProps)};`,
     `const previewVariant = ${JSON.stringify(variant)};`,
     `const previewTheme = ${JSON.stringify(theme)};`,
+    `const previewRunId = ${JSON.stringify(previewRunId)};`,
     '',
     'function notifyPreview(type: "vapor-preview-ready" | "vapor-preview-error", message?: string) {',
-    '  window.parent.postMessage({ type, variant: previewVariant, theme: previewTheme, message }, window.location.origin);',
+    '  window.parent.postMessage({ type, previewRunId, variant: previewVariant, theme: previewTheme, message }, window.location.origin);',
     '}',
     '',
     'class PreviewErrorBoundary extends React.Component<',
@@ -167,6 +184,12 @@ function previewEntry({
 
 function inferPrimaryExport(componentSource: string): string {
   return componentSource.match(/export function\s+(\w+)/)?.[1] ?? 'GeneratedComponent';
+}
+
+function componentLookupExpression(primaryExport: string, strictPrimaryExport: boolean): string {
+  const exact = `ComponentModule[${JSON.stringify(primaryExport)}]`;
+  if (strictPrimaryExport) return exact;
+  return `${exact} ?? Object.values(ComponentModule).find((value) => typeof value === 'function')`;
 }
 
 function inferDefaultLabel(markdown: string): string {

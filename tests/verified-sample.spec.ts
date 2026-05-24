@@ -24,7 +24,7 @@ test.describe('verified sample run', () => {
     await expect(page.getByText('Same validation runner')).toBeVisible();
     await expect(page.locator('[aria-label="Validation: waiting"]')).toBeVisible();
     await expect(page.getByText('Validation: waiting for runner output')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Approve artifact' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Approve current artifact' })).toBeDisabled();
     expect(chatCalls).toBe(0);
     expect(validationCalls).toBe(0);
 
@@ -40,7 +40,7 @@ test.describe('verified sample run', () => {
         .frameLocator('iframe[title="Generated artifact canvas"]')
         .getByRole('button', { name: 'Deploy component' }),
     ).toBeVisible({ timeout: 8000 });
-    await expect(page.getByText('Metadata contract')).toBeVisible();
+    await expect(page.getByText('Metadata contract: PASS')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Disabled variant' })).toBeVisible();
 
     await page.getByRole('button', { name: 'Run validation' }).click();
@@ -58,9 +58,14 @@ test.describe('verified sample run', () => {
       page.getByRole('listitem').filter({ hasText: /^Runtime Render: PASS$/ }),
     ).toBeVisible();
     await expect(
+      page
+        .getByRole('listitem')
+        .filter({ hasText: /Runtime Render: PASS.*2 metadata variants \(Default, Disabled\)/ }),
+    ).toBeVisible();
+    await expect(
       page.getByRole('listitem').filter({ hasText: /^Cleanup: PASS$/ }),
     ).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Approve artifact' })).toBeEnabled();
+    await expect(page.getByRole('button', { name: 'Approve current artifact' })).toBeEnabled();
     expect(chatCalls).toBe(0);
   });
 });

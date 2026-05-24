@@ -9,7 +9,6 @@ export async function writeGeneratedFiles(
   if (!artifact.component || !artifact.story || !artifact.test) {
     throw new Error('component, story, and test artifacts are required.');
   }
-
   const srcDir = join(workspacePath, 'src');
   await mkdir(srcDir, { recursive: true });
   await symlink(resolve('node_modules'), join(workspacePath, 'node_modules'), 'dir');
@@ -22,12 +21,20 @@ export async function writeGeneratedFiles(
   await writeFile(join(srcDir, artifact.test.filename), artifact.test.content, 'utf8');
   await writeFile(
     join(srcDir, 'GeneratedRuntimeRender.test.tsx'),
-    runtimeRenderTest(artifact.component.filename, artifact.metadata?.primaryExport, buildRuntimeProps(artifact)),
+    runtimeRenderTest(
+      artifact.component.filename,
+      resolvePrimaryExportMode(artifact),
+      buildRuntimeCases(artifact),
+    ),
     'utf8',
   );
   await writeFile(
     join(srcDir, 'GeneratedRuntimeAxe.test.tsx'),
-    axeTest(artifact.component.filename, artifact.metadata?.primaryExport, buildRuntimeProps(artifact)),
+    axeTest(
+      artifact.component.filename,
+      resolvePrimaryExportMode(artifact),
+      buildRuntimeCases(artifact),
+    ),
     'utf8',
   );
 }
@@ -82,11 +89,11 @@ function storybookTypes(): string {
 
 function runtimeRenderTest(
   componentFilename: string,
-  primaryExport: string | undefined,
-  previewProps: Record<string, unknown>,
+  exportMode: ComponentExportMode,
+  runtimeCases: RuntimeCase[],
 ): string {
   const importPath = `./${componentFilename.replace(/\.tsx?$/, '')}`;
-  const componentLookup = componentLookupExpression(primaryExport);
+  const componentLookup = componentLookupExpression(exportMode);
   return [
     "import React from 'react';",
     "import { render } from '@testing-library/react';",
@@ -103,12 +110,13 @@ function runtimeRenderTest(
     '  consoleErrorSpy.mockRestore();',
     '});',
     '',
-    "it('mounts the generated component without runtime console errors', () => {",
+    `const runtimeCases = ${JSON.stringify(runtimeCases)};`,
+    '',
+    "it.each(runtimeCases)('mounts $name without runtime console errors', ({ props }) => {",
     `  const maybeComponent = ${componentLookup};`,
     "  if (!maybeComponent) throw new Error('No exported React component found.');",
     '  const Component = maybeComponent as React.ComponentType<Record<string, unknown>>;',
-    `  const previewProps = ${JSON.stringify(previewProps)};`,
-    '  render(React.createElement(Component, previewProps));',
+    '  render(React.createElement(Component, props));',
     '  expect(consoleErrorSpy).not.toHaveBeenCalled();',
     '});',
     '',
@@ -117,11 +125,11 @@ function runtimeRenderTest(
 
 function axeTest(
   componentFilename: string,
-  primaryExport: string | undefined,
-  previewProps: Record<string, unknown>,
+  exportMode: ComponentExportMode,
+  runtimeCases: RuntimeCase[],
 ): string {
   const importPath = `./${componentFilename.replace(/\.tsx?$/, '')}`;
-  const componentLookup = componentLookupExpression(primaryExport);
+  const componentLookup = componentLookupExpression(exportMode);
   return [
     "import React from 'react';",
     "import { render } from '@testing-library/react';",
@@ -129,12 +137,13 @@ function axeTest(
     "import { expect, it } from 'vitest';",
     `import * as ComponentModule from '${importPath}';`,
     '',
-    "it('renders without axe violations', async () => {",
+    `const runtimeCases = ${JSON.stringify(runtimeCases)};`,
+    '',
+    "it.each(runtimeCases)('renders $name without axe violations', async ({ props }) => {",
     `  const maybeComponent = ${componentLookup};`,
     "  if (!maybeComponent) throw new Error('No exported React component found.');",
     '  const Component = maybeComponent as React.ComponentType<Record<string, unknown>>;',
-    `  const previewProps = ${JSON.stringify(previewProps)};`,
-    '  const { container } = render(React.createElement(Component, previewProps));',
+    '  const { container } = render(React.createElement(Component, props));',
     '  const result = await axe(container);',
     '  expect(result.violations).toHaveLength(0);',
     '});',
@@ -142,19 +151,44 @@ function axeTest(
   ].join('\n');
 }
 
-function buildRuntimeProps(artifact: GeneratedArtifact): Record<string, unknown> {
+type RuntimeCase = {
+  name: string;
+  props: Record<string, unknown>;
+};
+
+function buildRuntimeCases(artifact: GeneratedArtifact): RuntimeCase[] {
   const metadata = artifact.metadata;
-  if (!metadata) return { children: 'Generated action' };
-  const defaultVariant = metadata.variants?.find((variant) => variant.name === 'Default');
-  return {
-    ...(metadata.defaultProps ?? {}),
-    ...(defaultVariant?.props ?? {}),
-  };
+  if (!metadata) return [{ name: 'Heuristic', props: { children: 'Generated action' } }];
+  const variants =
+    metadata.variants && metadata.variants.length > 0
+      ? metadata.variants
+      : [{ name: 'Default', props: {} }];
+  return variants.map((variant) => ({
+    name: variant.name,
+    props: {
+      ...(metadata.defaultProps ?? {}),
+      ...(variant.props ?? {}),
+    },
+  }));
 }
 
-function componentLookupExpression(primaryExport: string | undefined): string {
+type ComponentExportMode =
+  | { kind: 'strict'; primaryExport: string }
+  | { kind: 'fallback' };
+
+function resolvePrimaryExportMode(artifact: GeneratedArtifact): ComponentExportMode {
+  if (artifact.metadata) {
+    if (!artifact.metadata.primaryExport) {
+      throw new Error('Metadata contract failed: primaryExport is required.');
+    }
+    return { kind: 'strict', primaryExport: artifact.metadata.primaryExport };
+  }
+  return { kind: 'fallback' };
+}
+
+function componentLookupExpression(exportMode: ComponentExportMode): string {
   const fallback = "Object.values(ComponentModule).find((value) => typeof value === 'function')";
-  return primaryExport
-    ? `ComponentModule[${JSON.stringify(primaryExport)}] ?? ${fallback}`
+  return exportMode.kind === 'strict'
+    ? `ComponentModule[${JSON.stringify(exportMode.primaryExport)}]`
     : fallback;
 }

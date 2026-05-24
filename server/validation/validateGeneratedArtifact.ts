@@ -20,6 +20,14 @@ export async function validateGeneratedArtifact(
       ? 'component, story, and test artifacts extracted.'
       : 'component, story, and test artifacts are required.',
   });
+  details.push({
+    label: 'Metadata contract',
+    status: artifact.metadataValidation?.status ?? 'warn',
+    message:
+      artifact.metadataValidation && artifact.metadataValidation.messages.length > 0
+        ? artifact.metadataValidation.messages.join(' ')
+        : 'artifact-meta is valid for strict render contract lookup.',
+  });
 
   const tokenUsage = checkTokenUsage(artifact);
   details.push({
@@ -86,7 +94,7 @@ export async function validateGeneratedArtifact(
       status: runtimeRender.exitCode === 0 ? 'pass' : 'fail',
       message:
         runtimeRender.exitCode === 0
-          ? 'Generated component mounted without runtime console errors.'
+          ? `Generated component mounted without runtime console errors across ${runtimeVariantSummary(artifact)}.`
           : 'Generated component failed to render or emitted runtime console errors.',
       durationMs: runtimeRender.durationMs,
       output: runtimeRender.output,
@@ -103,7 +111,7 @@ export async function validateGeneratedArtifact(
       status: axe.exitCode === 0 ? 'pass' : 'fail',
       message:
         axe.exitCode === 0
-          ? 'Generated runtime axe test reported violations 0.'
+          ? `Generated runtime axe test reported violations 0 across ${runtimeVariantSummary(artifact)}.`
           : 'Generated runtime axe test failed.',
       durationMs: axe.durationMs,
       output: axe.output,
@@ -124,6 +132,13 @@ export async function validateGeneratedArtifact(
   }
 
   return finish(startedAt, details, tokenUsage.status);
+}
+
+function runtimeVariantSummary(artifact: ReturnType<typeof parseGeneratedArtifact>): string {
+  const variants = artifact.metadata?.variants;
+  if (!variants || variants.length === 0) return 'the heuristic/default variant';
+  const names = variants.map((variant) => variant.name).join(', ');
+  return `${variants.length} metadata variant${variants.length === 1 ? '' : 's'} (${names})`;
 }
 
 function finish(
