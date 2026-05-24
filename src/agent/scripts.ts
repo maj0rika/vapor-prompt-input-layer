@@ -104,7 +104,7 @@ Uses @vapor-ui/core Button and colorPalette instead of raw color values.
 </notes>
 `;
 
-const WRONG_PRIMARY_EXPORT_ARTIFACT = `<artifact-meta>
+export const WRONG_PRIMARY_EXPORT_ARTIFACT = `<artifact-meta>
 {
   "componentName": "PrimaryActionButton",
   "primaryExport": "MissingActionButton",
@@ -277,7 +277,7 @@ No raw color, spacing, or radius values are introduced.
 </notes>
 `;
 
-const BROKEN_ARTIFACT = `<artifact-meta>
+export const BROKEN_ARTIFACT = `<artifact-meta>
 {
   "componentName": "BrokenRawColorButton",
   "primaryExport": "BrokenRawColorButton",
@@ -342,7 +342,7 @@ This artifact intentionally uses raw color values so the token gate fails.
 </notes>
 `;
 
-const TYPECHECK_FAIL_ARTIFACT = `<artifact-meta>
+export const TYPECHECK_FAIL_ARTIFACT = `<artifact-meta>
 {
   "componentName": "TypecheckFailButton",
   "primaryExport": "TypecheckFailButton",
@@ -399,7 +399,7 @@ No token assertion is intended for this fixture.
 </notes>
 `;
 
-const RUNTIME_FAIL_ARTIFACT = `<artifact-meta>
+export const RUNTIME_FAIL_ARTIFACT = `<artifact-meta>
 {
   "componentName": "RuntimeFailButton",
   "primaryExport": "RuntimeFailButton",
@@ -456,7 +456,7 @@ No token assertion is intended for this fixture.
 </notes>
 `;
 
-const AXE_FAIL_ARTIFACT = `<artifact-meta>
+export const AXE_FAIL_ARTIFACT = `<artifact-meta>
 {
   "componentName": "AxeFailImage",
   "primaryExport": "AxeFailImage",
