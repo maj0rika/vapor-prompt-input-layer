@@ -1,6 +1,28 @@
-import { mkdir, symlink, writeFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { access, mkdir, symlink, writeFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import type { GeneratedArtifact } from '../../src/agent/responseParser.ts';
+
+/**
+ * Walk up the directory tree from `startDir` until we find a `node_modules`
+ * directory that contains `.bin/tsc`.  This is needed because git worktrees
+ * share the parent repo's node_modules rather than having their own install.
+ */
+async function findNodeModules(startDir: string): Promise<string> {
+  let dir = startDir;
+  for (let i = 0; i < 10; i++) {
+    const candidate = join(dir, 'node_modules');
+    try {
+      await access(join(candidate, '.bin', 'tsc'));
+      return candidate;
+    } catch {
+      const parent = dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
+    }
+  }
+  throw new Error(`Could not find node_modules/.bin/tsc above ${startDir}`);
+}
 
 export async function writeGeneratedFiles(
   workspacePath: string,
@@ -11,7 +33,8 @@ export async function writeGeneratedFiles(
   }
   const srcDir = join(workspacePath, 'src');
   await mkdir(srcDir, { recursive: true });
-  await symlink(resolve('node_modules'), join(workspacePath, 'node_modules'), 'dir');
+  const nodeModulesPath = await findNodeModules(fileURLToPath(new URL('../../', import.meta.url)));
+  await symlink(nodeModulesPath, join(workspacePath, 'node_modules'), 'dir');
   await writeFile(join(workspacePath, 'package.json'), packageJson(), 'utf8');
   await writeFile(join(workspacePath, 'tsconfig.json'), tsconfigJson(), 'utf8');
   await writeFile(join(workspacePath, 'vitest.config.ts'), vitestConfig(), 'utf8');

@@ -15,14 +15,15 @@ test.describe('Vapor DS automation flow', () => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   });
 
-  test('empty state template fills the automation prompt', async ({ page }) => {
+  test('empty state template loads a deterministic fixture', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByText('무엇을 자동화할까요?')).toBeVisible();
 
     await page.getByRole('button', { name: 'Primary Button' }).click();
-    await expect(page.getByLabel('자동화 프롬프트 입력')).toHaveValue(
-      'primary 버튼 컴포넌트 생성, dark mode 지원, Vapor 토큰 준수',
-    );
+
+    // Template click loads the deterministic fixture — no live DeepSeek call.
+    await expect(page.getByText('Deterministic fixture')).toBeVisible({ timeout: 6000 });
+    await expect(page.getByLabel('생성물 워크스페이스')).toBeVisible();
   });
 
   test('component request streams response and opens artifact workspace', async ({
