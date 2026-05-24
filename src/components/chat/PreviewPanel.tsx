@@ -28,7 +28,7 @@ type CanvasModel = {
 };
 
 type CanvasTheme = 'light' | 'dark';
-type CanvasPreviewStatus = 'loading' | 'ready' | 'failed';
+type CanvasPreviewStatus = 'loading' | 'ready' | 'failed' | 'timeout';
 
 export type PreviewPanelProps = {
   /** 에이전트가 작성 중/완료한 생성 artifact. 스트리밍 중 점진 갱신된다. */
@@ -498,12 +498,13 @@ function ArtifactCanvas({
       });
     timeoutId = window.setTimeout(() => {
       if (settled) return;
+      settled = true;
       setPreviewState({
         src: previewSrc,
-        status: 'failed',
-        error: 'Canvas runtime did not report ready before timeout.',
+        status: 'timeout',
+        error: 'Canvas runtime이 제한 시간 내에 준비 상태를 보고하지 않았습니다.',
       });
-    }, 5_000);
+    }, 8_000);
     return () => {
       abortController.abort();
       window.clearTimeout(timeoutId);
@@ -585,7 +586,9 @@ function ArtifactCanvas({
                 ? 'success'
                 : previewStatus === 'failed'
                   ? 'danger'
-                  : 'warning'
+                  : previewStatus === 'timeout'
+                    ? 'warning'
+                    : 'warning'
             }
           >
             Runtime {previewStatus}
@@ -650,6 +653,18 @@ function ArtifactCanvas({
       {previewStatus === 'failed' && previewError && (
         <div className="rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-200 py-v-150">
           <Text typography="body4">{previewError}</Text>
+        </div>
+      )}
+      {previewStatus === 'timeout' && (
+        <div className="rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-200 py-v-150">
+          <Text typography="body4">
+            Canvas runtime이 응답하지 않습니다. 페이지를 새로고침하거나 잠시 후 다시 시도해 주세요.
+          </Text>
+          {previewError && (
+            <Text typography="body4" foreground="hint-200">
+              {previewError}
+            </Text>
+          )}
         </div>
       )}
     </div>

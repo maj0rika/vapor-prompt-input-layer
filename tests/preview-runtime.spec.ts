@@ -298,4 +298,57 @@ test.describe('artifact canvas runtime', () => {
     await page.getByRole('button', { name: 'Approve current artifact' }).click();
     await expect(page.getByText('Artifact marked reviewed')).toBeVisible();
   });
+
+  test('Canvas timeout 은 failed 와 구별되는 별도 상태로 표시된다', async ({ page }) => {
+    // Intercept the preview endpoint so the iframe loads but never fires ready.
+    await page.route('**/api/deepseek/preview**', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<!doctype html><html><body><p>silence</p></body></html>',
+      });
+    });
+
+    await page.clock.install();
+
+    await page.goto('/');
+    await page.getByLabel('자동화 프롬프트 입력').fill('primary 버튼 컴포넌트 생성, dark mode 지원, Vapor 토큰 준수');
+    await page.getByRole('button', { name: '자동화 실행' }).click();
+
+    await expect(page.getByRole('tab', { name: 'Canvas' })).toBeVisible({ timeout: 6000 });
+
+    // Advance clock past the 8-second timeout
+    await page.clock.fastForward(8500);
+
+    await expect(page.locator('[aria-label="Canvas runtime: timeout"]')).toBeVisible({
+      timeout: 3000,
+    });
+    await expect(
+      page.getByText('Canvas runtime이 응답하지 않습니다. 페이지를 새로고침하거나 잠시 후 다시 시도해 주세요.'),
+    ).toBeVisible();
+    // Must NOT appear as failed
+    await expect(page.locator('[aria-label="Canvas runtime: failed"]')).not.toBeVisible();
+  });
+
+  test('preview endpoint 500 응답은 Canvas failed 상태로 표시된다', async ({ page }) => {
+    await page.route('**/api/deepseek/preview**', (route) => {
+      route.fulfill({
+        status: 500,
+        contentType: 'text/plain',
+        body: '서버 오류',
+      });
+    });
+
+    await page.goto('/');
+    await page.getByLabel('자동화 프롬프트 입력').fill('primary 버튼 컴포넌트 생성, dark mode 지원, Vapor 토큰 준수');
+    await page.getByRole('button', { name: '자동화 실행' }).click();
+
+    await expect(page.getByRole('tab', { name: 'Canvas' })).toBeVisible({ timeout: 6000 });
+    await expect(page.locator('[aria-label="Canvas runtime: failed"]')).toBeVisible({
+      timeout: 3000,
+    });
+    await expect(page.getByText(/Preview endpoint failed \(500\)/)).toBeVisible();
+    // Must NOT appear as timeout
+    await expect(page.locator('[aria-label="Canvas runtime: timeout"]')).not.toBeVisible();
+  });
 });

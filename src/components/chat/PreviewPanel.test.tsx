@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { PreviewPanel } from './PreviewPanel';
 
 const ARTIFACT = `## Component
@@ -333,5 +333,27 @@ describe('PreviewPanel', () => {
     render(<PreviewPanel draft={ARTIFACT} onClose={onClose} />);
     fireEvent.click(screen.getByRole('button', { name: '워크스페이스 닫기' }));
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('Canvas runtime timeout 은 failed 와 구별되는 4번째 상태다', async () => {
+    vi.useFakeTimers();
+    vi.mocked(fetch).mockResolvedValue(new Response('', { status: 200 }));
+
+    render(<PreviewPanel draft={ARTIFACT} artifactSource={ARTIFACT_SOURCE} onClose={vi.fn()} />);
+
+    expect(screen.getByLabelText('Canvas runtime: loading')).toBeInTheDocument();
+
+    await act(async () => {
+      vi.advanceTimersByTime(8_000);
+    });
+
+    expect(screen.getByLabelText('Canvas runtime: timeout')).toBeInTheDocument();
+    expect(
+      screen.getByText('Canvas runtime이 응답하지 않습니다. 페이지를 새로고침하거나 잠시 후 다시 시도해 주세요.'),
+    ).toBeInTheDocument();
+    // Must NOT show as 'failed'
+    expect(screen.queryByLabelText('Canvas runtime: failed')).not.toBeInTheDocument();
+
+    vi.useRealTimers();
   });
 });
