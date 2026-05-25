@@ -275,6 +275,16 @@ async function run(): Promise<void> {
     '누락',
   );
 
+  // S02: preview iframe 의 cross-origin 격리. parent (localhost) 와 iframe
+  // (127.0.0.1) 가 SOP 상 별도 origin 임을 보장하는 createIsolatedPreviewOrigin
+  // 함수가 호출되어야 한다. 미정 시 trust boundary 무력화 가능.
+  record(
+    /createIsolatedPreviewOrigin/.test(previewPanelSrc),
+    'S02',
+    'preview iframe cross-origin 격리 함수 호출',
+    'createIsolatedPreviewOrigin 호출 누락 (parent storage 접근 위험)',
+  );
+
   // Summary
   const passed = verdicts.filter((v) => v.status === 'pass').length;
   const failed = verdicts.filter((v) => v.status === 'fail');
