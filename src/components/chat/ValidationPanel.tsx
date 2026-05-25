@@ -27,7 +27,7 @@ export type ValidationPanelProps = {
 const OUTPUT_LIMIT = 4096;
 
 /** Gate label → 안정적 selector slug. 예: "Runtime Render" → "runtime-render". */
-export function gateSlug(label: string): string {
+function gateSlug(label: string): string {
   return label
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -128,7 +128,7 @@ export function ValidationPanel({
       </div>
 
       {/* Summary list: each item is "Label: STATUS" for E2E selector compatibility */}
-      <ul className="flex flex-col gap-v-050" role="list">
+      <ul className="flex flex-col gap-v-050">
         {result.details.map((detail) => {
           const statusLabel =
             detail.status === 'pass' ? 'PASS' : detail.status === 'fail' ? 'FAIL' : 'WARN';
@@ -141,7 +141,7 @@ export function ValidationPanel({
       </ul>
 
       {/* Gate card list with detail + disclosure */}
-      <ul className="flex flex-col gap-v-150" role="list">
+      <ul className="flex flex-col gap-v-150">
         {result.details.map((detail) => (
           <GateCard
             key={detail.label}

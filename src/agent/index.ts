@@ -34,3 +34,21 @@ export type {
   Role,
 } from './types';
 export type { VerifiedSampleRun } from './verifiedSample';
+export {
+  createArtifactRunFromMessage,
+  withValidation,
+  withApproval,
+  markSuperseded,
+  isApprovable,
+} from './artifactRun';
+export type {
+  ApprovalState,
+  ArtifactRun,
+  ArtifactRunSource,
+  ArtifactRunStatus,
+  CanvasPreviewStatus,
+  PreviewState,
+  RemoteValidationDetail,
+  RemoteValidationResult,
+  RepairAttempt,
+} from './artifactRun';

@@ -60,6 +60,8 @@ export type AgentRequest = {
   repairIntent?: {
     failedGates: Array<'typecheck' | 'unit' | 'runtime' | 'axe' | 'token' | 'cleanup'>;
     maxAttempts: number;
+    /** G011: 어느 ArtifactRun 의 실패를 수정하는 요청인지 lineage 추적용. */
+    parentRunId?: string;
   };
 };
 

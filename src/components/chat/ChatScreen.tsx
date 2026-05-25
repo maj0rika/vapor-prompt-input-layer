@@ -3,6 +3,7 @@ import { Button, Text } from '@vapor-ui/core';
 import {
   DeepSeekAgentClient,
   MockAgentClient,
+  createArtifactRunFromMessage,
   createVerifiedSampleRun,
   createTemplateSampleRun,
   type AgentClient,
@@ -102,14 +103,18 @@ export function ChatScreen({
     () => [...messages].reverse().find((m) => m.role === 'assistant' && m.draft),
     [messages],
   );
+  // G011: ChatMessage → ArtifactRun adapter. PreviewPanel/validation/approval
+  // 은 message 가 아니라 ArtifactRun lifecycle 에 묶인다 (도메인 모델 1차 분리).
+  const currentArtifactRun = useMemo(
+    () => (draftMessage ? createArtifactRunFromMessage(draftMessage) : undefined),
+    [draftMessage],
+  );
   const latestDraft = draftMessage?.draft ?? '';
   const latestArtifactSource = draftMessage?.artifactSource;
   const latestArtifactProvenance = draftMessage?.artifactProvenance;
-  const latestArtifactMode = draftMessage?.request?.mode;
+  const latestArtifactMode = currentArtifactRun?.mode ?? draftMessage?.request?.mode;
   const draftId = draftMessage?.id;
-  const artifactRunId = draftMessage
-    ? `${draftMessage.id}:${draftMessage.createdAt}`
-    : undefined;
+  const artifactRunId = currentArtifactRun?.id;
 
   const isEmpty = messages.length === 0;
   const showPreview = draftId ? draftId !== closedDraftId : true;
@@ -215,12 +220,14 @@ export function ChatScreen({
                   send({
                     text:
                       '실패한 validation 결과를 바탕으로 수정해줘. 실패한 게이트만 고치고 전체 artifact를 다시 반환해.',
-                    mode: 'component',
+                    mode: latestArtifactMode ?? 'component',
                     previousArtifactSource: payload.artifactSource,
                     validationResult: payload.validationResult,
                     repairIntent: {
                       failedGates: payload.failedGates,
                       maxAttempts: 1,
+                      // G011: 실패한 ArtifactRun 의 id 를 보존해 repair lineage 추적.
+                      parentRunId: currentArtifactRun?.id,
                     },
                   })
                 }
