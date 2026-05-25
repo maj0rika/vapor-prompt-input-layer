@@ -121,7 +121,11 @@ export function PreviewPanel({
     ? {
         id: 'canvas' as const,
         label: 'Canvas',
-        content: canvasHtml({
+        // Canvas 탭의 "Copy" 가 가져갈 텍스트. raw HTML/CSS 대신 Vapor 토큰
+        // 친화적인 상태 요약을 제공한다 — 실제 시각 preview 는 별도 iframe
+        // (ArtifactCanvas) 가 렌더하므로 이 content 는 사용자가 외부에 공유
+        // 할 때만 쓰인다.
+        content: canvasStateSummary({
           componentName: canvas.componentName,
           variant:
             canvas.variants.find((variant) => variant.name === activeVariantName) ??
@@ -930,7 +934,16 @@ function buildMetadataVariants(
   });
 }
 
-function canvasHtml({
+/**
+ * Canvas 탭의 "Copy" 가 가져갈 텍스트 요약. 실제 시각 preview 는 별도
+ * iframe (`ArtifactCanvas`) 이 렌더하므로 이 텍스트는 사용자가 외부 도구
+ * (티켓, 채팅) 로 공유할 때만 쓰인다.
+ *
+ * 이전 구현은 raw hex literal 이 박힌 HTML/CSS 스니펫을 반환해 Vapor
+ * 토큰 규칙을 도구 본체가 위반했었다 (V01). 대신 컴포넌트/variant/theme
+ * 상태만 요약한 plain text 를 emit 한다.
+ */
+function canvasStateSummary({
   componentName,
   variant,
   theme,
@@ -939,85 +952,13 @@ function canvasHtml({
   variant: CanvasVariant;
   theme: CanvasTheme;
 }): string {
-  return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <style>
-      :root {
-        color-scheme: light;
-        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        --canvas-bg: #f8fafc;
-        --surface: #ffffff;
-        --border: #d9dee8;
-        --primary: #2563eb;
-        --primary-hover: #1d4ed8;
-        --text: #111827;
-        --muted: #64748b;
-      }
-      body[data-theme="dark"] {
-        color-scheme: dark;
-        --canvas-bg: #111827;
-        --surface: #1f2937;
-        --border: #475569;
-        --primary: #60a5fa;
-        --primary-hover: #93c5fd;
-        --text: #f8fafc;
-        --muted: #cbd5e1;
-      }
-      html, body {
-        margin: 0;
-        min-height: 100%;
-        background: var(--canvas-bg);
-        color: var(--text);
-      }
-      body {
-        display: grid;
-        place-items: center;
-        padding: 32px;
-        box-sizing: border-box;
-      }
-      [data-testid="artifact-canvas"] {
-        display: grid;
-        gap: 14px;
-        min-width: min(100%, 320px);
-        padding: 28px;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        background: var(--surface);
-      }
-      .eyebrow {
-        margin: 0;
-        color: var(--muted);
-        font-size: 12px;
-      }
-      button {
-        min-height: 40px;
-        border: 0;
-        border-radius: 8px;
-        padding: 0 16px;
-        background: var(--primary);
-        color: white;
-        font: inherit;
-        font-weight: 600;
-        cursor: pointer;
-      }
-      button:hover {
-        background: var(--primary-hover);
-      }
-      button:focus-visible {
-        outline: 3px solid color-mix(in srgb, var(--primary) 35%, transparent);
-        outline-offset: 2px;
-      }
-    </style>
-  </head>
-  <body data-theme="${theme}">
-    <main data-testid="artifact-canvas" aria-label="${escapeHtml(componentName)} preview">
-      <p class="eyebrow">${escapeHtml(componentName)}</p>
-      <button type="button"${variant.disabled ? ' disabled' : ''}>${escapeHtml(variant.label)}</button>
-    </main>
-  </body>
-</html>`;
+  return [
+    'Canvas preview state',
+    `- Component: ${componentName}`,
+    `- Variant: ${variant.name}${variant.disabled ? ' (disabled)' : ''}`,
+    `- Label: ${variant.label}`,
+    `- Theme: ${theme}`,
+  ].join('\n');
 }
 
 async function runValidation(markdown: string): Promise<RemoteValidationResult> {
@@ -1100,15 +1041,6 @@ function readValidationStatus(content: string, label: string): 'pass' | 'fail' |
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
 }
 
 function capitalize(value: string): string {
