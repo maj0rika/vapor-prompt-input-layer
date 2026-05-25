@@ -199,6 +199,7 @@ DEEPSEEK_API_KEY=... npm run smoke:live-deepseek  # 선택, CI hard gate 아님
 ## Documentation
 
 - [Architecture](docs/architecture.md) — 레이어 구조, DeepSeek proxy, artifact flow
+- [Operations & Deployment Boundaries](docs/operations.md) — local 워크벤치 vs production server, temp workspace 정책, API key 정책 (G016)
 - [Component API](docs/component-api.md) — 공개 컴포넌트 props 명세
 - [Vapor Mapping](docs/vapor-mapping.md) — Vapor primitive 매핑과 래핑 이유
 - [Accessibility Checklist](docs/accessibility-checklist.md) — 접근성 점검 항목
