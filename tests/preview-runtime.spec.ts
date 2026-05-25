@@ -70,12 +70,12 @@ test.describe('artifact canvas runtime', () => {
       .fill('primary 버튼 컴포넌트 생성, dark mode 지원, Vapor 토큰 준수');
     await page.getByRole('button', { name: '자동화 실행' }).click();
 
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 6000,
     });
-    await page.getByRole('button', { name: 'Run validation' }).click();
+    await page.getByRole('button', { name: '검증 실행' }).click();
     await expect(page.locator('[aria-label="Validation: active"]')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 20000,
     });
     await page.getByRole('tab', { name: 'Tests' }).click();
@@ -111,10 +111,10 @@ test.describe('artifact canvas runtime', () => {
       .fill('primary 버튼 컴포넌트 생성, dark mode 지원, Vapor 토큰 준수');
     await page.getByRole('button', { name: '자동화 실행' }).click();
 
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 6000,
     });
-    await page.getByRole('button', { name: 'Run validation' }).click();
+    await page.getByRole('button', { name: '검증 실행' }).click();
     await expect(page.locator('[aria-label="Validation: pass"]')).toBeVisible({
       timeout: 20000,
     });
@@ -133,11 +133,11 @@ test.describe('artifact canvas runtime', () => {
       .fill('broken raw color component 생성');
     await page.getByRole('button', { name: '자동화 실행' }).click();
 
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 6000,
     });
-    await page.getByRole('button', { name: 'Run validation' }).click();
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await page.getByRole('button', { name: '검증 실행' }).click();
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 20000,
     });
     await page.getByRole('tab', { name: 'Tests' }).click();
@@ -156,11 +156,11 @@ test.describe('artifact canvas runtime', () => {
       .fill('typecheck fail component fixture');
     await page.getByRole('button', { name: '자동화 실행' }).click();
 
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 6000,
     });
-    await page.getByRole('button', { name: 'Run validation' }).click();
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await page.getByRole('button', { name: '검증 실행' }).click();
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 20000,
     });
     await page.getByRole('tab', { name: 'Tests' }).click();
@@ -170,7 +170,7 @@ test.describe('artifact canvas runtime', () => {
     ).toBeVisible({ timeout: 10000 });
     await expect(page.getByText('Typecheck output')).toBeVisible();
     await expect(page.getByText(/TypecheckFailButton\.tsx/)).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Copy failing output' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '실패 로그 복사' })).toBeVisible();
   });
 
   test('shows runtime render failure independently from unit output', async ({ page }) => {
@@ -183,11 +183,11 @@ test.describe('artifact canvas runtime', () => {
       timeout: 8000,
     });
 
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 6000,
     });
-    await page.getByRole('button', { name: 'Run validation' }).click();
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await page.getByRole('button', { name: '검증 실행' }).click();
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 20000,
     });
     await page.getByRole('tab', { name: 'Tests' }).click();
@@ -215,11 +215,11 @@ test.describe('artifact canvas runtime', () => {
       timeout: 6000,
     });
     await expect(page.getByText(/primaryExport "MissingActionButton"/)).toBeVisible();
-    await expect(page.getByText('Canvas unavailable')).toBeVisible();
+    await expect(page.getByText('Canvas 사용 불가')).toBeVisible();
     await expect(page.locator('iframe[title="Generated artifact canvas"]')).toHaveCount(0);
 
-    await page.getByRole('button', { name: 'Run validation' }).click();
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await page.getByRole('button', { name: '검증 실행' }).click();
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 20000,
     });
     await page.getByRole('tab', { name: 'Tests' }).click();
@@ -239,11 +239,11 @@ test.describe('artifact canvas runtime', () => {
       .fill('axe alt image failure fixture');
     await page.getByRole('button', { name: '자동화 실행' }).click();
 
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 6000,
     });
-    await page.getByRole('button', { name: 'Run validation' }).click();
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await page.getByRole('button', { name: '검증 실행' }).click();
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 20000,
     });
     await page.getByRole('tab', { name: 'Tests' }).click();
@@ -267,8 +267,8 @@ test.describe('artifact canvas runtime', () => {
       .fill('broken raw color component 생성');
     await page.getByRole('button', { name: '자동화 실행' }).click();
 
-    await page.getByRole('button', { name: 'Run validation' }).click();
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await page.getByRole('button', { name: '검증 실행' }).click();
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 20000,
     });
     await page.getByRole('tab', { name: 'Tests' }).click();
@@ -277,7 +277,7 @@ test.describe('artifact canvas runtime', () => {
     ).toBeVisible({ timeout: 8000 });
     await expect(page.getByRole('button', { name: '현재 artifact 로컬 승인' })).toBeDisabled();
 
-    await page.getByRole('button', { name: 'Fix with Agent' }).click();
+    await page.getByRole('button', { name: '실패 수정 (Fix with Agent)' }).click();
     await expect(page.getByText(/실패한 validation 결과를 바탕으로 수정/)).toBeVisible();
     await expect(
       page
@@ -285,8 +285,8 @@ test.describe('artifact canvas runtime', () => {
         .getByRole('button', { name: 'Deploy component' }),
     ).toBeVisible({ timeout: 6000 });
 
-    await page.getByRole('button', { name: 'Run validation' }).click();
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await page.getByRole('button', { name: '검증 실행' }).click();
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 20000,
     });
     await page.getByRole('tab', { name: 'Tests' }).click();

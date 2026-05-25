@@ -47,7 +47,7 @@ test.describe('Approve gating (G005)', () => {
       .fill('primary 버튼 컴포넌트 생성, dark mode 지원, Vapor 토큰 준수');
     await page.getByRole('button', { name: '자동화 실행' }).click();
 
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 6000,
     });
 
@@ -55,8 +55,8 @@ test.describe('Approve gating (G005)', () => {
     await expect(page.getByRole('button', { name: '현재 artifact 로컬 승인' })).toBeDisabled();
 
     // Run validation → fail
-    await page.getByRole('button', { name: 'Run validation' }).click();
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await page.getByRole('button', { name: '검증 실행' }).click();
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 6000,
     });
 
@@ -64,8 +64,8 @@ test.describe('Approve gating (G005)', () => {
     await expect(page.getByRole('button', { name: '현재 artifact 로컬 승인' })).toBeDisabled();
 
     // Run validation → pass
-    await page.getByRole('button', { name: 'Run validation' }).click();
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await page.getByRole('button', { name: '검증 실행' }).click();
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 6000,
     });
 
@@ -99,13 +99,13 @@ test.describe('Approve gating (G005)', () => {
       .fill('primary 버튼 컴포넌트 생성, dark mode 지원, Vapor 토큰 준수');
     await page.getByRole('button', { name: '자동화 실행' }).click();
 
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 6000,
     });
 
     // Validate and approve first run
-    await page.getByRole('button', { name: 'Run validation' }).click();
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await page.getByRole('button', { name: '검증 실행' }).click();
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 6000,
     });
     await expect(page.getByRole('button', { name: '현재 artifact 로컬 승인' })).toBeEnabled();
@@ -119,7 +119,7 @@ test.describe('Approve gating (G005)', () => {
     await page.getByRole('button', { name: '자동화 실행' }).click();
 
     // New artifactRun: Approve must be disabled again (carry-over blocked)
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 6000,
     });
     await expect(page.getByRole('button', { name: '현재 artifact 로컬 승인' })).toBeDisabled();
@@ -145,13 +145,13 @@ test.describe('Approve gating (G005)', () => {
       .fill('broken raw color component 생성');
     await page.getByRole('button', { name: '자동화 실행' }).click();
 
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 6000,
     });
 
     // Validate → fail
-    await page.getByRole('button', { name: 'Run validation' }).click();
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await page.getByRole('button', { name: '검증 실행' }).click();
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 6000,
     });
 
@@ -159,8 +159,8 @@ test.describe('Approve gating (G005)', () => {
     await expect(page.getByRole('button', { name: '현재 artifact 로컬 승인' })).toBeDisabled();
 
     // Trigger repair → new artifactRun
-    await page.getByRole('button', { name: 'Fix with Agent' }).click();
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await page.getByRole('button', { name: '실패 수정 (Fix with Agent)' }).click();
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 6000,
     });
 

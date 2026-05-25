@@ -20,26 +20,26 @@ test.describe('repair-context', () => {
     await page.getByLabel('자동화 프롬프트 입력').fill('broken raw color component 생성');
     await page.getByRole('button', { name: '자동화 실행' }).click();
 
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 6000,
     });
 
     // "Fix with Agent" should be absent/disabled before validation result arrives.
     // (The button only renders after a validationResult is set.)
-    await expect(page.getByRole('button', { name: 'Fix with Agent' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '실패 수정 (Fix with Agent)' })).toHaveCount(0);
 
     // Run validation — the broken token artifact will produce a FAIL.
-    await page.getByRole('button', { name: 'Run validation' }).click();
+    await page.getByRole('button', { name: '검증 실행' }).click();
     await expect(page.locator('[aria-label="Validation: fail"]')).toBeVisible({
       timeout: 20000,
     });
 
     // Now "Fix with Agent" must be enabled.
-    await expect(page.getByRole('button', { name: 'Fix with Agent' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Fix with Agent' })).toBeEnabled();
+    await expect(page.getByRole('button', { name: '실패 수정 (Fix with Agent)' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '실패 수정 (Fix with Agent)' })).toBeEnabled();
 
     // Click it — a new user message with the repair prompt must appear.
-    await page.getByRole('button', { name: 'Fix with Agent' }).click();
+    await page.getByRole('button', { name: '실패 수정 (Fix with Agent)' }).click();
 
     // The new user bubble contains Korean repair context.
     const userBubbles = page.locator('[data-role="user"]');
@@ -64,16 +64,16 @@ test.describe('repair-context', () => {
       .fill('primary 버튼 컴포넌트 생성, dark mode 지원, Vapor 토큰 준수');
     await page.getByRole('button', { name: '자동화 실행' }).click();
 
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeVisible({
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 6000,
     });
-    await page.getByRole('button', { name: 'Run validation' }).click();
+    await page.getByRole('button', { name: '검증 실행' }).click();
     await expect(page.locator('[aria-label="Validation: pass"]')).toBeVisible({
       timeout: 20000,
     });
 
     // After a pass there are no failed gates → button must be disabled.
-    await expect(page.getByRole('button', { name: 'Fix with Agent' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Fix with Agent' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: '실패 수정 (Fix with Agent)' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '실패 수정 (Fix with Agent)' })).toBeDisabled();
   });
 });

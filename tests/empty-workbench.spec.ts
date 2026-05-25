@@ -16,8 +16,8 @@ test.describe('empty workbench', () => {
     await expect(page.getByText('Canvas waiting')).toBeVisible();
     await expect(page.getByText('Validation gates ready')).toBeVisible();
     await expect(page.getByText('Repair loop available after failure')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Run validation' })).toBeDisabled();
-    await expect(page.getByRole('button', { name: 'Fix with Agent' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: '검증 실행' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: '실패 수정 (Fix with Agent)' })).toBeDisabled();
     await expect(page.getByRole('button', { name: '로컬 승인' })).toBeDisabled();
     await expect(page.locator('iframe[title="Generated artifact canvas"]')).toHaveCount(0);
 

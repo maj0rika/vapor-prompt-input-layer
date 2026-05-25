@@ -84,7 +84,7 @@ export function ValidationPanel({
     return (
       <div className="flex flex-col gap-v-200 p-v-200">
         <Text typography="body3" foreground="hint-200">
-          검증 결과가 없습니다. Run validation을 클릭하세요.
+          검증 결과가 없습니다. "검증 실행" 버튼을 눌러 시작하세요.
         </Text>
       </div>
     );

@@ -246,7 +246,7 @@ describe('PreviewPanel', () => {
     render(<PreviewPanel draft={ARTIFACT} onClose={vi.fn()} />);
 
     expect(screen.queryByTitle('Generated artifact canvas')).not.toBeInTheDocument();
-    expect(screen.getByText('Canvas unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Canvas 사용 불가')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('실제 React preview runtime');
   });
 
@@ -309,7 +309,7 @@ describe('PreviewPanel', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Run validation' }));
+    fireEvent.click(screen.getByRole('button', { name: '검증 실행' }));
 
     await screen.findByText('Validation request failed (500).');
     await waitFor(() =>
@@ -391,7 +391,7 @@ describe('PreviewPanel', () => {
       mockFetchWithValidationPass();
 
       render(<PreviewPanel draft={ARTIFACT} artifactSource={ARTIFACT_SOURCE} onClose={vi.fn()} />);
-      fireEvent.click(screen.getByRole('button', { name: 'Run validation' }));
+      fireEvent.click(screen.getByRole('button', { name: '검증 실행' }));
 
       await waitFor(() =>
         expect(screen.getByRole('button', { name: '현재 artifact 로컬 승인' })).toBeEnabled(),
@@ -410,7 +410,7 @@ describe('PreviewPanel', () => {
           onClose={vi.fn()}
         />,
       );
-      fireEvent.click(screen.getByRole('button', { name: 'Run validation' }));
+      fireEvent.click(screen.getByRole('button', { name: '검증 실행' }));
 
       await waitFor(() =>
         expect(screen.getByRole('button', { name: '현재 artifact 로컬 승인' })).toBeEnabled(),
@@ -433,7 +433,7 @@ describe('PreviewPanel', () => {
           onClose={vi.fn()}
         />,
       );
-      fireEvent.click(screen.getByRole('button', { name: 'Run validation' }));
+      fireEvent.click(screen.getByRole('button', { name: '검증 실행' }));
       await waitFor(() =>
         expect(screen.getByRole('button', { name: '현재 artifact 로컬 승인' })).toBeEnabled(),
       );

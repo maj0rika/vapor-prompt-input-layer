@@ -198,7 +198,7 @@ export function PreviewPanel({
               disabled={validationStatus === 'running'}
               onClick={handleRunValidation}
             >
-              {validationStatus === 'running' ? 'Running' : 'Run validation'}
+              {validationStatus === 'running' ? '진행 중…' : '검증 실행'}
             </Button>
           )}
           {artifactSource && validationResult && (
@@ -216,7 +216,7 @@ export function PreviewPanel({
                 })
               }
             >
-              Fix with Agent
+              실패 수정 (Fix with Agent)
             </Button>
           )}
           {validationResult && failedGates.length > 0 && (
@@ -226,7 +226,7 @@ export function PreviewPanel({
               colorPalette="danger"
               onClick={handleCopyFailureOutput}
             >
-              Copy failing output
+              실패 로그 복사
             </Button>
           )}
           {artifactSource && (
@@ -283,8 +283,8 @@ export function PreviewPanel({
             </Badge>
           </div>
           <Text typography="body4" foreground="hint-200">
-            Validation remains waiting until Run validation returns real
-            /api/deepseek/validate output.
+            검증은 대기 상태입니다. "검증 실행" 을 눌러야 실제
+            /api/deepseek/validate runner 의 결과가 반영됩니다.
           </Text>
         </div>
       )}
@@ -457,7 +457,7 @@ export function PreviewPanel({
               </div>
             </div>
             <div className="flex flex-wrap gap-1">
-              {['Run validation', 'Fix with Agent', '로컬 승인'].map((label) => (
+              {['검증 실행', '실패 수정 (Fix with Agent)', '로컬 승인'].map((label) => (
                 <Button key={label} size="sm" variant="outline" disabled>
                   {label}
                 </Button>
@@ -579,7 +579,7 @@ function ArtifactCanvas({
     return (
       <div className="flex h-full min-h-[260px] flex-col gap-v-150">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <Text typography="subtitle2">Canvas unavailable</Text>
+          <Text typography="subtitle2">Canvas 사용 불가</Text>
           <Text typography="body4" foreground="hint-200">
             runtime preview requires a parsed component artifact, source payload, and valid metadata contract
           </Text>
@@ -669,8 +669,8 @@ function ArtifactCanvas({
         <div className="rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-200 py-v-150">
           <Text typography="body4">
             {model.metadataValidation.status === 'fail'
-              ? 'Metadata contract failed. Canvas mounted state is unavailable until the contract is fixed.'
-              : 'Metadata contract warning. Canvas may mount, but the contract needs review.'}
+              ? '메타데이터 계약(contract) 실패. 계약을 수정하기 전까지는 Canvas 마운트 상태를 사용할 수 없습니다.'
+              : '메타데이터 계약(contract) 경고. Canvas 가 마운트될 수 있지만 계약 검토가 필요합니다.'}
           </Text>
           {model.metadataValidation.messages.map((message) => (
             <Text key={message} typography="body4" foreground="hint-200">

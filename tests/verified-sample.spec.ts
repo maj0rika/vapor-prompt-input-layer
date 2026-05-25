@@ -43,7 +43,7 @@ test.describe('verified sample run', () => {
     await expect(page.getByText('Metadata contract: PASS')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Disabled variant' })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Run validation' }).click();
+    await page.getByRole('button', { name: '검증 실행' }).click();
     await expect(page.locator('[aria-label="Validation: active"]')).toBeVisible();
     await expect.poll(() => validationCalls).toBeGreaterThan(0);
 

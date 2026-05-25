@@ -106,7 +106,7 @@ test.describe('visual regression', () => {
     await page.goto('/');
     await page.getByRole('button', { name: 'Primary Button' }).click();
     await expect(page.getByLabel('생성물 워크스페이스')).toBeVisible();
-    await page.getByRole('button', { name: 'Run validation' }).click();
+    await page.getByRole('button', { name: '검증 실행' }).click();
     await expect(
       page.getByRole('button', { name: '현재 artifact 로컬 승인' }),
     ).toBeEnabled({ timeout: 10_000 });
@@ -126,7 +126,7 @@ test.describe('visual regression', () => {
     await expect(page.getByText('Metadata contract: FAIL').first()).toBeVisible({
       timeout: 6000,
     });
-    await expect(page.getByText('Canvas unavailable')).toBeVisible();
+    await expect(page.getByText('Canvas 사용 불가')).toBeVisible();
     await page.waitForTimeout(500);
     await expect(page).toHaveScreenshot('metadata-fail-1280.png', snapshotOptions);
   });
@@ -140,7 +140,7 @@ test.describe('visual regression', () => {
     await page.getByRole('button', { name: '자동화 실행' }).click();
 
     await expect(page.getByLabel('생성물 워크스페이스')).toBeVisible();
-    await page.getByRole('button', { name: 'Run validation' }).click();
+    await page.getByRole('button', { name: '검증 실행' }).click();
     await page.getByRole('tab', { name: 'Tests' }).click();
     // Wait for validation to settle
     await page.waitForTimeout(3000);

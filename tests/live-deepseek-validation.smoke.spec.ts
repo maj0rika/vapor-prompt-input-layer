@@ -53,7 +53,7 @@ test.describe('Live DeepSeek validation smoke', () => {
     await expect(workspace).toBeVisible();
 
     // Run validation 클릭 — live validation runner 실행
-    const runValidation = page.getByRole('button', { name: 'Run validation' });
+    const runValidation = page.getByRole('button', { name: '검증 실행' });
     await expect(runValidation).toBeVisible({ timeout: 30_000 });
     await runValidation.click();
 
