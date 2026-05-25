@@ -134,22 +134,31 @@ Live DeepSeek smoke 는 CI hard gate 가 아닙니다.
 되고 exit 0 으로 종료됩니다.
 
 ```bash
+# generation/canvas 까지만 (빠른 smoke)
 DEEPSEEK_API_KEY=... npm run smoke:live-deepseek
+
+# 위 + Run validation 까지 포함 (느린 smoke, G012)
+DEEPSEEK_API_KEY=... npm run smoke:live-deepseek:validation
 ```
 
-### smoke scope (의도적으로 좁힘)
+### smoke scope 분할 (G012)
 
-| 확인 | smoke 포함 |
-|-----|----------|
-| 자연어 prompt → assistant 응답 done | ✓ |
-| assistant 본문에 raw `<artifact>` / `<artifact-meta>` / ` ```tsx ` 누출 없음 | ✓ |
-| artifact workspace 노출 + Component / Story / Test 탭 | ✓ |
-| Canvas iframe mount + runtime status (ready / failed / timeout) settled | ✓ |
-| Run validation 까지 자동 실행 | **✗** — 모델/네트워크 변동성으로 flaky |
+두 smoke 모두 CI hard gate 가 아니며 별도 Playwright config 로 격리됩니다.
 
-Run validation 은 사용자가 UI 에서 직접 클릭해 확인하세요. 자동 검증이 필요하면
-`approve-gating.spec.ts` 와 `templates-deterministic.spec.ts` 처럼 결정적인 fixture
-경로를 사용합니다 (smoke 와 별도, CI hard gate 에 포함).
+| 확인 | `smoke:live-deepseek` | `smoke:live-deepseek:validation` |
+|-----|:--:|:--:|
+| 자연어 prompt → assistant 응답 done | ✓ | ✓ |
+| raw `<artifact>` / `<artifact-meta>` / ` ```tsx ` leakage 절대 금지 | ✓ | ✓ |
+| Component / Story / Test 탭 노출 | ✓ | — |
+| Canvas iframe mount + runtime status settled | ✓ | — |
+| Run validation 클릭 → ValidationPanel 노출 | — | ✓ |
+| 전체 상태 badge (Pass/Fail/Warn) settled | — | ✓ |
+| Fail 시 failure reason UI 노출 (validation-output-*) | — | ✓ |
+| Approve 버튼 invariant 확인 (Pass=enabled, Fail=disabled) | — | ✓ |
+
+validation smoke 는 모델/네트워크 변동성으로 더 flaky 하므로 별도 명령으로
+분리됩니다. validation 결과가 Fail 이어도 failure reason 이 UI 에 보이면 smoke
+자체는 통과합니다. 단 raw artifact leakage 는 둘 다 hard fail.
 
 ### live 경로를 우회하지 않으려면
 
