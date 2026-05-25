@@ -454,4 +454,116 @@ describe('PreviewPanel', () => {
       expect(screen.getByRole('button', { name: '현재 artifact 로컬 승인' })).toBeDisabled();
     });
   });
+
+  describe('Repair attempts limit (U06)', () => {
+    const FAIL_VALIDATION_RESULT = JSON.stringify({
+      status: 'fail',
+      durationMs: 100,
+      details: [
+        {
+          label: 'Typecheck',
+          status: 'fail',
+          message: 'fail',
+          output: 'TS2322: Type error',
+        },
+        { label: 'Unit', status: 'pass', message: 'ok' },
+        { label: 'Runtime Render', status: 'pass', message: 'ok' },
+        { label: 'Axe', status: 'pass', message: 'ok' },
+        { label: 'Vapor token usage', status: 'pass', message: 'ok' },
+        { label: 'Cleanup', status: 'pass', message: 'ok' },
+      ],
+    });
+
+    beforeEach(() => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => new Response(FAIL_VALIDATION_RESULT, { status: 200 })),
+      );
+    });
+
+    it('attempts 가 max 미만이면 "실패 수정" 버튼이 활성화되고 카운터를 표시한다', async () => {
+      const onRepair = vi.fn();
+      render(
+        <PreviewPanel
+          draft={ARTIFACT}
+          artifactSource={ARTIFACT_SOURCE}
+          onRepair={onRepair}
+          repairChainAttempts={1}
+          maxRepairAttemptsPerChain={3}
+          onClose={vi.fn()}
+        />,
+      );
+      fireEvent.click(screen.getByRole('button', { name: '검증 실행' }));
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: /실패 수정/ })).toBeEnabled(),
+      );
+      expect(screen.getByTestId('repair-attempts-status')).toHaveTextContent('수정 1/3');
+      fireEvent.click(screen.getByRole('button', { name: /실패 수정/ }));
+      expect(onRepair).toHaveBeenCalledTimes(1);
+    });
+
+    it('attempts 가 max 와 같으면 버튼 disabled + "최대 수정 횟수 초과" 표시', async () => {
+      const onRepair = vi.fn();
+      render(
+        <PreviewPanel
+          draft={ARTIFACT}
+          artifactSource={ARTIFACT_SOURCE}
+          onRepair={onRepair}
+          repairChainAttempts={3}
+          maxRepairAttemptsPerChain={3}
+          onClose={vi.fn()}
+        />,
+      );
+      fireEvent.click(screen.getByRole('button', { name: '검증 실행' }));
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: /실패 수정/ })).toBeDisabled(),
+      );
+      expect(screen.getByTestId('repair-attempts-status')).toHaveTextContent(
+        '최대 수정 횟수 초과 (3/3)',
+      );
+      fireEvent.click(screen.getByRole('button', { name: /실패 수정/ }));
+      // disabled 버튼 클릭은 콜백을 발사하지 않음
+      expect(onRepair).not.toHaveBeenCalled();
+    });
+
+    it('한도 도달 시 ValidationPanel gate 단위 수정 CTA 도 비활성화된다', async () => {
+      const onRepair = vi.fn();
+      render(
+        <PreviewPanel
+          draft={ARTIFACT}
+          artifactSource={ARTIFACT_SOURCE}
+          onRepair={onRepair}
+          repairChainAttempts={3}
+          maxRepairAttemptsPerChain={3}
+          onClose={vi.fn()}
+        />,
+      );
+      fireEvent.click(screen.getByRole('button', { name: '검증 실행' }));
+      // validation 탭 클릭
+      await waitFor(() =>
+        expect(screen.getByRole('tab', { name: '검증' })).toBeInTheDocument(),
+      );
+      fireEvent.click(screen.getByRole('tab', { name: '검증' }));
+      // gate 카드의 "이 gate 수정" 버튼은 onRepairGate 가 undefined 일 때 렌더되지 않음
+      expect(screen.queryByRole('button', { name: /이 gate 수정/ })).not.toBeInTheDocument();
+    });
+
+    it('한도 prop 이 없으면 (기존 호출자 호환) 항상 enabled', async () => {
+      const onRepair = vi.fn();
+      render(
+        <PreviewPanel
+          draft={ARTIFACT}
+          artifactSource={ARTIFACT_SOURCE}
+          onRepair={onRepair}
+          onClose={vi.fn()}
+        />,
+      );
+      fireEvent.click(screen.getByRole('button', { name: '검증 실행' }));
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: /실패 수정/ })).toBeEnabled(),
+      );
+      // 한도 카운터 표시 자체가 없어야 함 (default = Infinity)
+      expect(screen.queryByTestId('repair-attempts-status')).not.toBeInTheDocument();
+    });
+  });
 });

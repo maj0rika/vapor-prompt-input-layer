@@ -22,6 +22,15 @@ import {
 import { ThemeToggle } from './ThemeToggle';
 import { useAgentStream } from './useAgentStream';
 
+/**
+ * 한 repair chain 안에서 허용되는 최대 "Fix with Agent" / gate 수정 클릭 수.
+ *
+ * 도달 시 PreviewPanel 의 repair 버튼이 disabled 되어 (1) 무한 retry 로 인한
+ * API 비용 및 자원 leak 을 차단하고, (2) 사용자에게 새 prompt 또는 새
+ * sample 로 chain 을 reset 하도록 유도한다.
+ */
+export const MAX_REPAIR_ATTEMPTS_PER_CHAIN = 3;
+
 export type ChatScreenProps = {
   /** 자동화 mode 선택 옵션 (도메인 데이터 — 앱 레이어가 주입). */
   modeOptions: PromptModeOption[];
@@ -64,6 +73,21 @@ export function ChatScreen({
     artifactRunId?: string;
     state: ValidationPipelineState;
   }>({ state: 'idle' });
+  /**
+   * 한 repair chain 안에서 user 가 "실패 수정 (Fix with Agent)" 또는 gate
+   * 단위 수정 버튼을 누른 횟수. 한도(MAX_REPAIR_ATTEMPTS_PER_CHAIN)에 도달
+   * 하면 PreviewPanel 에서 repair 버튼이 disabled 된다.
+   *
+   * 카운터는 다음 시점에 reset 된다:
+   *   - 사용자가 PromptBar 로 새 prompt 를 보낼 때
+   *   - sample / template / regenerate 로 새 ArtifactRun 이 시작될 때
+   *   - 새 validation 결과가 pass 인 경우 (한도 회복; 다음 fail 까지)
+   *
+   * 1회 send 자체는 advisory `maxAttempts: 1` 을 LLM 에 알려주지만, client
+   * 측에서 hard cap 으로 강제하지 않으면 user 가 무한 retry 할 수 있어
+   * API 비용 + 자원이 leak 된다.
+   */
+  const [repairChainAttempts, setRepairChainAttempts] = useState(0);
   const splitRef = useRef<HTMLDivElement>(null);
 
 
@@ -142,12 +166,14 @@ export function ChatScreen({
   const handlePickSuggestion = (templateKey: TemplateKey) => {
     setClosedDraftId(undefined);
     setValidationPipeline({ state: 'idle' });
+    setRepairChainAttempts(0);
     loadSampleRun(createTemplateSampleRun(templateKey));
   };
 
   const handleRunVerifiedSample = () => {
     setClosedDraftId(undefined);
     setValidationPipeline({ state: 'idle' });
+    setRepairChainAttempts(0);
     loadSampleRun(createVerifiedSampleRun());
   };
 
@@ -223,10 +249,16 @@ export function ChatScreen({
                 artifactSource={latestArtifactSource}
                 artifactProvenance={latestArtifactProvenance}
                 artifactMode={latestArtifactMode}
-                onValidationStateChange={(state) =>
-                  setValidationPipeline({ artifactRunId, state })
-                }
+                onValidationStateChange={(state) => {
+                  setValidationPipeline({ artifactRunId, state });
+                  // pass 면 repair chain 종료 — 카운터 reset 후 새 chain 재개
+                  // 가능. fail 은 사용자가 수정 버튼을 누를 수 있게 유지.
+                  if (state === 'pass') setRepairChainAttempts(0);
+                }}
+                repairChainAttempts={repairChainAttempts}
+                maxRepairAttemptsPerChain={MAX_REPAIR_ATTEMPTS_PER_CHAIN}
                 onRepair={(payload) => {
+                  if (repairChainAttempts >= MAX_REPAIR_ATTEMPTS_PER_CHAIN) return;
                   const repairRequest = {
                     text:
                       '실패한 validation 결과를 바탕으로 수정해줘. 실패한 게이트만 고치고 전체 artifact를 다시 반환해.',
@@ -242,6 +274,7 @@ export function ChatScreen({
                   };
                   // G011.1: parentRunId 누락 시 즉시 throw — repair lineage 회귀 차단.
                   assertRepairIntentHasParentRunId(repairRequest);
+                  setRepairChainAttempts((value) => value + 1);
                   send(repairRequest);
                 }}
                 canClose={Boolean(draftId)}
@@ -262,7 +295,10 @@ export function ChatScreen({
           maxFiles={maxFiles}
           disabled={isStreaming}
           placeholder="예: primary 버튼 컴포넌트 생성, dark mode 지원, Vapor 토큰 준수"
-          onSubmit={(payload) =>
+          onSubmit={(payload) => {
+            // 새 prompt 는 새 repair chain 의 시작이므로 counter reset. 직전
+            // chain 이 max 에 도달했어도 다음 chain 에서 다시 3번 시도 가능.
+            setRepairChainAttempts(0);
             send({
               text: payload.text,
               mode: payload.mode,
@@ -274,8 +310,8 @@ export function ChatScreen({
                 contentText: attachment.contentText,
                 truncated: attachment.truncated,
               })),
-            })
-          }
+            });
+          }}
         />
       </div>
     </div>

@@ -55,6 +55,14 @@ export type PreviewPanelProps = {
     validationResult: RemoteValidationResult;
     failedGates: Array<'typecheck' | 'unit' | 'runtime' | 'axe' | 'token' | 'cleanup'>;
   }) => void;
+  /**
+   * 현 repair chain 에서 사용자가 누른 "실패 수정" 또는 gate 수정 클릭 수.
+   * 한도 도달 시 repair 버튼이 disabled 되며, 사용자에게 한도 초과 안내가
+   * 노출된다.
+   */
+  repairChainAttempts?: number;
+  /** 한 chain 안에서 허용되는 최대 repair 시도 수. */
+  maxRepairAttemptsPerChain?: number;
   /** 현재 artifactRun 의 로컬 승인 상태 변화를 상위로 전달한다. */
   onApprovalChange?: (approved: boolean) => void;
   onClose: () => void;
@@ -85,6 +93,8 @@ export function PreviewPanel({
   artifactMode,
   onValidationStateChange,
   onRepair,
+  repairChainAttempts = 0,
+  maxRepairAttemptsPerChain = Number.POSITIVE_INFINITY,
   onApprovalChange,
   onClose,
   canClose = true,
@@ -183,7 +193,11 @@ export function PreviewPanel({
   };
   const failedGates = validationResult ? extractFailedGates(validationResult) : [];
   const canApprove = validationResult?.status === 'pass';
-  const canRepair = Boolean(artifactSource && validationResult && failedGates.length > 0 && onRepair);
+  const repairChainExhausted = repairChainAttempts >= maxRepairAttemptsPerChain;
+  const hasFailedGates = Boolean(
+    artifactSource && validationResult && failedGates.length > 0 && onRepair,
+  );
+  const canRepair = hasFailedGates && !repairChainExhausted;
   const isVerifiedSample = artifactProvenance === 'deterministic-sample';
   const showCompactValidationWaiting =
     isVerifiedSample &&
@@ -225,22 +239,43 @@ export function PreviewPanel({
             </Button>
           )}
           {artifactSource && validationResult && (
-            <Button
-              size="sm"
-              variant="outline"
-              colorPalette="primary"
-              disabled={!canRepair}
-              onClick={() =>
-                canRepair &&
-                onRepair?.({
-                  artifactSource,
-                  validationResult,
-                  failedGates,
-                })
-              }
-            >
-              실패 수정 (Fix with Agent)
-            </Button>
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                colorPalette="primary"
+                disabled={!canRepair}
+                title={
+                  repairChainExhausted && hasFailedGates
+                    ? `최대 수정 횟수 초과 (${repairChainAttempts}/${maxRepairAttemptsPerChain}). 새 prompt 로 다시 시도하세요.`
+                    : undefined
+                }
+                onClick={() =>
+                  canRepair &&
+                  onRepair?.({
+                    artifactSource,
+                    validationResult,
+                    failedGates,
+                  })
+                }
+              >
+                실패 수정 (Fix with Agent)
+              </Button>
+              {hasFailedGates &&
+                Number.isFinite(maxRepairAttemptsPerChain) &&
+                maxRepairAttemptsPerChain > 0 && (
+                  <Text
+                    typography="body4"
+                    foreground={repairChainExhausted ? 'danger-200' : 'hint-200'}
+                    aria-live="polite"
+                    data-testid="repair-attempts-status"
+                  >
+                    {repairChainExhausted
+                      ? `최대 수정 횟수 초과 (${repairChainAttempts}/${maxRepairAttemptsPerChain})`
+                      : `수정 ${repairChainAttempts}/${maxRepairAttemptsPerChain}`}
+                  </Text>
+                )}
+            </>
           )}
           {validationResult && failedGates.length > 0 && (
             <Button
@@ -431,8 +466,9 @@ export function PreviewPanel({
               const detail = validationResult?.details.find((d) => d.label === label);
               if (detail?.output) void navigator.clipboard?.writeText(detail.output);
             }}
-            onRepairGate={onRepair && artifactSource && validationResult
+            onRepairGate={onRepair && artifactSource && validationResult && !repairChainExhausted
               ? (gate) => {
+                  if (repairChainExhausted) return;
                   const gateKey = labelToGateKey(gate);
                   if (gateKey) {
                     onRepair({
