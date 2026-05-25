@@ -4,6 +4,7 @@ import { CloseOutlineIcon, CopyOutlineIcon } from '@vapor-ui/icons';
 import { parseGeneratedArtifact, type AgentMode, type ArtifactProvenance, type GeneratedArtifact } from '../../agent';
 import type { MetadataValidationResult } from '../../agent';
 import { Markdown } from './Markdown';
+import { ValidationPanel, type RemoteValidationResult } from './ValidationPanel';
 
 type ArtifactTab = 'canvas' | 'component' | 'story' | 'test' | 'validation';
 
@@ -84,9 +85,10 @@ export function PreviewPanel({
     () => (artifactSource ? parseGeneratedArtifact(artifactSource) : undefined),
     [artifactSource],
   );
-  const [validationOverride, setValidationOverride] = useState<string | undefined>();
   const [validationStatus, setValidationStatus] = useState<'idle' | 'running' | 'error'>('idle');
   const [validationResult, setValidationResult] = useState<RemoteValidationResult | undefined>();
+  const [validationRunAt, setValidationRunAt] = useState<number | undefined>();
+  const [validationErrorMessage, setValidationErrorMessage] = useState<string | undefined>();
   const [approved, setApproved] = useState(false);
   const canvas = useMemo(
     () => buildCanvasModel(sections, parsedArtifact),
@@ -108,20 +110,20 @@ export function PreviewPanel({
         }),
       }
     : undefined;
-  const validationSection = validationOverride
-    ? { id: 'validation' as const, label: TAB_LABELS.validation, content: validationOverride }
-    : undefined;
-  const codeSections = validationSection
-    ? [
-        ...sections.filter((section) => section.id !== 'validation'),
-        validationSection,
-      ]
-    : sections.map((section) =>
-        section.id === 'validation' ? { ...section, label: TAB_LABELS.validation } : section,
-      );
-  const visibleSections = canvasSection ? [canvasSection, ...codeSections] : codeSections;
+  const codeSections = sections.map((section) =>
+    section.id === 'validation' ? { ...section, label: TAB_LABELS.validation } : section,
+  );
+  // validation 탭: artifact에 ## Validation 섹션이 없어도 결과가 있으면 탭을 추가한다.
+  const hasValidationSection = codeSections.some((s) => s.id === 'validation');
+  const validationTabSection =
+    !hasValidationSection && (validationResult || validationStatus !== 'idle')
+      ? { id: 'validation' as const, label: TAB_LABELS.validation, content: '' }
+      : undefined;
+  const allCodeSections = validationTabSection
+    ? [...codeSections, validationTabSection]
+    : codeSections;
+  const visibleSections = canvasSection ? [canvasSection, ...allCodeSections] : allCodeSections;
   const active = visibleSections.find((section) => section.id === activeTab) ?? visibleSections[0];
-  const validation = visibleSections.find((section) => section.id === 'validation');
 
   const handleCopy = () => {
     if (!active) return;
@@ -138,18 +140,21 @@ export function PreviewPanel({
     void runValidation(artifactSource)
       .then((result) => {
         setValidationResult(result);
-        setValidationOverride(formatValidationResult(result));
+        setValidationRunAt(Date.now());
         setActiveTab('validation');
         setApproved(false);
         setValidationStatus('idle');
         onValidationStateChange?.(result.status === 'pass' ? 'pass' : 'fail');
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         setValidationResult(undefined);
-        setValidationOverride(formatValidationError(error));
+        setValidationRunAt(Date.now());
         setActiveTab('validation');
         setApproved(false);
         setValidationStatus('error');
+        setValidationErrorMessage(
+          error instanceof Error ? error.message : 'Validation request failed.',
+        );
         onValidationStateChange?.('error');
       });
   };
@@ -160,8 +165,7 @@ export function PreviewPanel({
   const showCompactValidationWaiting =
     isVerifiedSample &&
     !validationResult &&
-    validationStatus === 'idle' &&
-    !validationOverride;
+    validationStatus === 'idle';
 
   return (
     <aside
@@ -307,26 +311,54 @@ export function PreviewPanel({
         </div>
       )}
 
-      {validation && !showCompactValidationWaiting && (
-        <div className="flex flex-wrap gap-1 border-b border-v-normal px-v-200 py-v-150">
-          {extractValidationBadges(validation.content).map((item) => (
-            <Badge
-              key={item.label}
-              size="sm"
-              colorPalette={
-                item.status === 'pass'
-                  ? 'success'
-                  : item.status === 'fail'
-                    ? 'danger'
-                    : 'warning'
-              }
-            >
-              {item.label}: {item.status.toUpperCase()}
-            </Badge>
-          ))}
-        </div>
-      )}
-      {validation && showCompactValidationWaiting && (
+      {!showCompactValidationWaiting && (() => {
+        if (validationResult) {
+          return (
+            <div className="flex flex-wrap gap-1 border-b border-v-normal px-v-200 py-v-150">
+              {validationResult.details.map((detail) => (
+                <Badge
+                  key={detail.label}
+                  size="sm"
+                  colorPalette={
+                    detail.status === 'pass'
+                      ? 'success'
+                      : detail.status === 'fail'
+                        ? 'danger'
+                        : 'warning'
+                  }
+                >
+                  {detail.label}: {detail.status.toUpperCase()}
+                </Badge>
+              ))}
+            </div>
+          );
+        }
+        const artifactValidationSection = codeSections.find((s) => s.id === 'validation');
+        if (artifactValidationSection) {
+          const badges = extractValidationBadges(artifactValidationSection.content);
+          return (
+            <div className="flex flex-wrap gap-1 border-b border-v-normal px-v-200 py-v-150">
+              {badges.map((item) => (
+                <Badge
+                  key={item.label}
+                  size="sm"
+                  colorPalette={
+                    item.status === 'pass'
+                      ? 'success'
+                      : item.status === 'fail'
+                        ? 'danger'
+                        : 'warning'
+                  }
+                >
+                  {item.label}: {item.status.toUpperCase()}
+                </Badge>
+              ))}
+            </div>
+          );
+        }
+        return null;
+      })()}
+      {showCompactValidationWaiting && (
         <div className="flex flex-wrap gap-1 border-b border-v-normal px-v-200 py-v-100">
           <Badge size="sm" colorPalette="warning">
             Validation: waiting for runner output
@@ -353,6 +385,30 @@ export function PreviewPanel({
             onVariantChange={setActiveVariantName}
             theme={canvasTheme}
             onThemeChange={setCanvasTheme}
+          />
+        ) : active?.id === 'validation' ? (
+          <ValidationPanel
+            result={validationResult}
+            status={validationStatus}
+            errorMessage={validationErrorMessage}
+            runAt={validationRunAt}
+            onCopyOutput={(label) => {
+              const detail = validationResult?.details.find((d) => d.label === label);
+              if (detail?.output) void navigator.clipboard?.writeText(detail.output);
+            }}
+            onRepairGate={onRepair && artifactSource && validationResult
+              ? (gate) => {
+                  const gateKey = labelToGateKey(gate);
+                  if (gateKey) {
+                    onRepair({
+                      artifactSource,
+                      validationResult,
+                      failedGates: [gateKey],
+                    });
+                  }
+                }
+              : undefined
+            }
           />
         ) : active ? (
           <div aria-live="polite">
@@ -882,34 +938,6 @@ function canvasHtml({
 </html>`;
 }
 
-function extractValidationBadges(
-  content: string,
-): Array<{ label: string; status: 'pass' | 'fail' | 'check' }> {
-  const labels = ['Typecheck', 'Unit', 'Runtime Render', 'Axe', 'Vapor token usage', 'Cleanup'];
-  return labels.map((label) => ({
-    label,
-    status: readValidationStatus(content, label),
-  }));
-}
-
-function readValidationStatus(content: string, label: string): 'pass' | 'fail' | 'check' {
-  const match = content.match(new RegExp(`${escapeRegExp(label)}\\s*:\\s*(PASS|FAIL|CHECK)`, 'i'));
-  const status = match?.[1]?.toLowerCase();
-  return status === 'pass' || status === 'fail' ? status : 'check';
-}
-
-type RemoteValidationResult = {
-  status: 'pass' | 'warn' | 'fail';
-  durationMs: number;
-  details: Array<{
-    label: string;
-    status: 'pass' | 'warn' | 'fail';
-    message: string;
-    durationMs?: number;
-    output?: string;
-  }>;
-};
-
 async function runValidation(markdown: string): Promise<RemoteValidationResult> {
   const response = await fetch('/api/deepseek/validate', {
     method: 'POST',
@@ -922,55 +950,18 @@ async function runValidation(markdown: string): Promise<RemoteValidationResult> 
   return (await response.json()) as RemoteValidationResult;
 }
 
-function formatValidationResult(result: RemoteValidationResult): string {
-  const details = new Map(result.details.map((detail) => [detail.label, detail]));
-  const labels = ['Typecheck', 'Unit', 'Runtime Render', 'Axe', 'Vapor token usage', 'Cleanup'];
-  const outputBlocks = result.details.flatMap((detail) => {
-    const output = detail.output?.trim();
-    if (!output) return [];
-    return [
-      '',
-      `#### ${detail.label} output`,
-      '',
-      '```txt',
-      trimRunnerOutput(output),
-      '```',
-    ];
-  });
-  return [
-    '## Tests',
-    '',
-    ...labels.map((label) => {
-      const detail = details.get(label);
-      const status =
-        detail?.status === 'pass' ? 'PASS' : detail?.status === 'fail' ? 'FAIL' : 'CHECK';
-      return `- ${label}: ${status}`;
-    }),
-    '',
-    '### Runner details',
-    ...result.details.map((detail) => {
-      const duration = detail.durationMs ? ` (${detail.durationMs}ms)` : '';
-      return `- ${detail.label}: ${detail.status.toUpperCase()}${duration} - ${detail.message}`;
-    }),
-    ...outputBlocks,
-    `- Duration: ${result.durationMs}ms`,
-  ].join('\n');
-}
-
-function formatValidationError(error: unknown): string {
-  return [
-    '## Tests',
-    '',
-    '- Typecheck: CHECK',
-    '- Unit: CHECK',
-    '- Runtime Render: CHECK',
-    '- Axe: CHECK',
-    '- Vapor token usage: CHECK',
-    '- Cleanup: CHECK',
-    '',
-    '### Runner details',
-    error instanceof Error ? error.message : 'Validation request failed.',
-  ].join('\n');
+function labelToGateKey(
+  label: string,
+): 'typecheck' | 'unit' | 'runtime' | 'axe' | 'token' | 'cleanup' | undefined {
+  switch (label) {
+    case 'Typecheck': return 'typecheck';
+    case 'Unit': return 'unit';
+    case 'Runtime Render': return 'runtime';
+    case 'Axe': return 'axe';
+    case 'Vapor token usage': return 'token';
+    case 'Cleanup': return 'cleanup';
+    default: return undefined;
+  }
 }
 
 function extractFailedGates(
@@ -1008,11 +999,21 @@ function formatFailureOutput(result: RemoteValidationResult): string {
     .join('\n\n');
 }
 
-function trimRunnerOutput(output: string): string {
-  const maxLength = 6_000;
-  return output.length > maxLength
-    ? `${output.slice(0, maxLength)}\n... output truncated ...`
-    : output;
+
+function extractValidationBadges(
+  content: string,
+): Array<{ label: string; status: 'pass' | 'fail' | 'check' }> {
+  const labels = ['Typecheck', 'Unit', 'Runtime Render', 'Axe', 'Vapor token usage', 'Cleanup'];
+  return labels.map((label) => ({
+    label,
+    status: readValidationStatus(content, label),
+  }));
+}
+
+function readValidationStatus(content: string, label: string): 'pass' | 'fail' | 'check' {
+  const match = content.match(new RegExp(`${escapeRegExp(label)}\\s*:\\s*(PASS|FAIL|CHECK)`, 'i'));
+  const status = match?.[1]?.toLowerCase();
+  return status === 'pass' || status === 'fail' ? status : 'check';
 }
 
 function escapeRegExp(value: string): string {

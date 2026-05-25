@@ -223,12 +223,12 @@ test.describe('artifact canvas runtime', () => {
       timeout: 20000,
     });
     await page.getByRole('tab', { name: 'Tests' }).click();
-    await expect(page.getByText(/Metadata contract: FAIL/)).toBeVisible();
+    await expect(page.getByText(/Metadata contract: FAIL/).first()).toBeVisible();
     await expect(
       page.getByRole('listitem').filter({ hasText: /^Runtime Render: FAIL$/ }),
     ).toBeVisible({ timeout: 10000 });
     await expect(
-      page.getByRole('listitem').filter({ hasText: /MissingActionButton/ }),
+      page.getByText(/MissingActionButton/).first(),
     ).toBeVisible();
   });
 
