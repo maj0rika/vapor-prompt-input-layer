@@ -67,4 +67,83 @@ test.describe('visual regression', () => {
     await expect(page.getByText('무엇을 자동화할까요?')).toBeVisible();
     await expect(page).toHaveScreenshot('empty-workbench-390.png', snapshotOptions);
   });
+
+  test('(5) Verified sample loaded — pre-validation', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Run verified sample' }).click();
+    await expect(page.getByText('Deterministic fixture', { exact: true })).toBeVisible({
+      timeout: 6000,
+    });
+    await expect(page.getByLabel('생성물 워크스페이스')).toBeVisible();
+    await page.waitForTimeout(1500);
+    await expect(page).toHaveScreenshot('verified-sample-loaded-1280.png', snapshotOptions);
+  });
+
+  test('(6) Validation pass — structured ValidationPanel + Approve enabled', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.route('**/api/deepseek/validate', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          status: 'pass',
+          durationMs: 50,
+          details: [
+            { label: 'Typecheck', status: 'pass', message: 'ok', durationMs: 12 },
+            { label: 'Unit', status: 'pass', message: 'ok', durationMs: 18 },
+            { label: 'Runtime Render', status: 'pass', message: 'ok', durationMs: 14 },
+            { label: 'Axe', status: 'pass', message: 'ok', durationMs: 6 },
+            { label: 'Vapor token usage', status: 'pass', message: 'ok', durationMs: 1 },
+            { label: 'Cleanup', status: 'pass', message: 'ok' },
+          ],
+        }),
+      });
+    });
+
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Primary Button' }).click();
+    await expect(page.getByLabel('생성물 워크스페이스')).toBeVisible();
+    await page.getByRole('button', { name: 'Run validation' }).click();
+    await expect(
+      page.getByRole('button', { name: '현재 artifact 로컬 승인' }),
+    ).toBeEnabled({ timeout: 10_000 });
+
+    await page.waitForTimeout(500);
+    await expect(page).toHaveScreenshot('validation-pass-approve-1280.png', snapshotOptions);
+  });
+
+  test('(7) Metadata contract FAIL state', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    await page
+      .getByLabel('자동화 프롬프트 입력')
+      .fill('wrong primaryExport metadata mismatch fixture');
+    await page.getByRole('button', { name: '자동화 실행' }).click();
+
+    await expect(page.getByText('Metadata contract: FAIL').first()).toBeVisible({
+      timeout: 6000,
+    });
+    await expect(page.getByText('Canvas unavailable')).toBeVisible();
+    await page.waitForTimeout(500);
+    await expect(page).toHaveScreenshot('metadata-fail-1280.png', snapshotOptions);
+  });
+
+  test('(8) Canvas runtime failure state', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    await page
+      .getByLabel('자동화 프롬프트 입력')
+      .fill('runtime render fixture failure');
+    await page.getByRole('button', { name: '자동화 실행' }).click();
+
+    await expect(page.getByLabel('생성물 워크스페이스')).toBeVisible();
+    await page.getByRole('button', { name: 'Run validation' }).click();
+    await page.getByRole('tab', { name: 'Tests' }).click();
+    // Wait for validation to settle
+    await page.waitForTimeout(3000);
+    await expect(page).toHaveScreenshot('runtime-fail-validation-1280.png', snapshotOptions);
+  });
 });
