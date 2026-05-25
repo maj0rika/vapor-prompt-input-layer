@@ -364,7 +364,9 @@ export function PreviewPanel({
               variant={section.id === active?.id ? 'outline' : 'ghost'}
               colorPalette="primary"
               role="tab"
+              id={`artifact-tab-${section.id}`}
               aria-selected={section.id === active?.id ? 'true' : 'false'}
+              aria-controls={`artifact-tabpanel-${section.id}`}
               onClick={() => setActiveTab(section.id)}
             >
               {section.label}
@@ -438,7 +440,20 @@ export function PreviewPanel({
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-v-300">
+      <div
+        // A04: tab/tabpanel ARIA 페어. 스크린리더가 현재 active tab 과 본문을
+        // 연결하도록 role + aria-labelledby + id 를 명시한다. active 가
+        // 없으면 본문 자체가 안내 영역이므로 role 을 생략한다.
+        {...(active
+          ? {
+              role: 'tabpanel' as const,
+              id: `artifact-tabpanel-${active.id}`,
+              'aria-labelledby': `artifact-tab-${active.id}`,
+              tabIndex: 0,
+            }
+          : {})}
+        className="min-h-0 flex-1 overflow-y-auto p-v-300"
+      >
         {active?.id === 'canvas' && canvas && !isTokenSync ? (
           <ArtifactCanvas
             model={canvas}

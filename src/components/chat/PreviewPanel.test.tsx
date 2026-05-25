@@ -455,6 +455,22 @@ describe('PreviewPanel', () => {
     });
   });
 
+  // A04: tab role 과 tabpanel role 이 id/aria-labelledby/aria-controls 로
+  // 연결되어 스크린리더 사용자가 active 탭과 본문 관계를 인식할 수 있어야 한다.
+  it('탭 본문에 role="tabpanel" + aria-labelledby + id 가 연결된다', () => {
+    render(<PreviewPanel draft={ARTIFACT} artifactSource={ARTIFACT_SOURCE} onClose={vi.fn()} />);
+
+    const canvasTab = screen.getByRole('tab', { name: 'Canvas' });
+    expect(canvasTab).toHaveAttribute('id', 'artifact-tab-canvas');
+    expect(canvasTab).toHaveAttribute('aria-controls', 'artifact-tabpanel-canvas');
+
+    const tabpanel = screen.getByRole('tabpanel');
+    expect(tabpanel).toHaveAttribute('id', 'artifact-tabpanel-canvas');
+    expect(tabpanel).toHaveAttribute('aria-labelledby', 'artifact-tab-canvas');
+    // 키보드로 본문에 fokus 이동 가능
+    expect(tabpanel).toHaveAttribute('tabindex', '0');
+  });
+
   describe('Repair attempts limit (U06)', () => {
     const FAIL_VALIDATION_RESULT = JSON.stringify({
       status: 'fail',
