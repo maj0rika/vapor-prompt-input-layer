@@ -126,17 +126,36 @@ npm run dev -- --host 127.0.0.1
 
 ## Live DeepSeek Smoke
 
-Live DeepSeek smoke는 CI hard gate가 아닙니다.
+Live DeepSeek smoke 는 CI hard gate 가 아닙니다.
 
-응답 변동성으로 flaky할 수 있으며, `verify:ci` / `test:e2e` 에 포함되지 않습니다.
-API key가 없으면 테스트가 skip되고 suite는 exit code 0으로 정상 종료합니다.
+응답 변동성으로 flaky 할 수 있으며 `verify:ci` / `test:e2e` 에 포함되지 않습니다.
+별도 `playwright.smoke.config.ts` + `testIgnore: '**/*.smoke.spec.ts'` 로 격리되어
+기본 E2E 실행에 절대 포함되지 않습니다. API key 가 없으면 suite 전체가 skip
+되고 exit 0 으로 종료됩니다.
 
 ```bash
 DEEPSEEK_API_KEY=... npm run smoke:live-deepseek
 ```
 
-smoke는 별도 `playwright.smoke.config.ts` 로 격리되어 있어 기본 E2E 실행에
-절대 포함되지 않습니다.
+### smoke scope (의도적으로 좁힘)
+
+| 확인 | smoke 포함 |
+|-----|----------|
+| 자연어 prompt → assistant 응답 done | ✓ |
+| assistant 본문에 raw `<artifact>` / `<artifact-meta>` / ` ```tsx ` 누출 없음 | ✓ |
+| artifact workspace 노출 + Component / Story / Test 탭 | ✓ |
+| Canvas iframe mount + runtime status (ready / failed / timeout) settled | ✓ |
+| Run validation 까지 자동 실행 | **✗** — 모델/네트워크 변동성으로 flaky |
+
+Run validation 은 사용자가 UI 에서 직접 클릭해 확인하세요. 자동 검증이 필요하면
+`approve-gating.spec.ts` 와 `templates-deterministic.spec.ts` 처럼 결정적인 fixture
+경로를 사용합니다 (smoke 와 별도, CI hard gate 에 포함).
+
+### live 경로를 우회하지 않으려면
+
+Starter 템플릿 (Primary Button 등) 클릭은 deterministic fixture 를 로드하므로
+live DeepSeek 호출이 발생하지 않습니다. smoke 는 PromptBar 에 직접 텍스트를
+입력해 live 경로를 강제합니다.
 
 ## Ultragoal Acceptance (G001–G010)
 
