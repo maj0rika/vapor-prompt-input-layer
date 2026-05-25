@@ -42,7 +42,7 @@ test.describe('Live DeepSeek smoke', () => {
     // assistant 메시지 done (live 는 느릴 수 있어 90초 허용)
     await expect
       .poll(() => page.locator('[data-role="assistant"][data-status="done"]').count(), {
-        timeout: 90_000,
+        timeout: 150_000,
         intervals: [1500, 2500, 3500],
       })
       .toBeGreaterThanOrEqual(1);

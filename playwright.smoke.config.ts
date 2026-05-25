@@ -14,6 +14,7 @@ export default defineConfig({
   fullyParallel: false,
   retries: 0,
   reporter: 'list',
+  timeout: 240_000,
   use: {
     baseURL: BASE_URL,
     trace: 'on-first-retry',

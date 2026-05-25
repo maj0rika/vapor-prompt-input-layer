@@ -181,7 +181,14 @@ function visibleConversationText(responseText: string): string {
     .replace(/```[\s\S]*?```/g, '');
   const openBlock = withoutCompleteBlocks.search(/<(artifact|notes)\b|```/i);
   const visible = openBlock >= 0 ? withoutCompleteBlocks.slice(0, openBlock) : withoutCompleteBlocks;
-  return visible.replace(/\n{3,}/g, '\n\n').trimStart();
+  // Strip 부분 open token (스트리밍 도중 `<` 단독, `<arti...`, 미닫힌 ``/```/```tsx
+  // 등) 가 conversation prose 끝에 잠시 노출되는 회귀를 차단한다.
+  return visible
+    .replace(/<\s*[a-z][\w-]*\s*$/i, '')
+    .replace(/<\s*$/, '')
+    .replace(/`{1,3}[a-z]*\s*$/i, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trimStart();
 }
 
 function buildPreviewArtifact(responseText: string): string {
