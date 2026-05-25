@@ -26,6 +26,24 @@ export type ValidationPanelProps = {
 
 const OUTPUT_LIMIT = 4096;
 
+/** Gate label → 안정적 selector slug. 예: "Runtime Render" → "runtime-render". */
+export function gateSlug(label: string): string {
+  return label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/** Runner message 에서 "across N ... variants (A, B)" 패턴을 affected variants 로 추출. */
+function extractAffectedVariants(message: string): string[] {
+  const match = message.match(/variants?\s*\(([^)]+)\)/i);
+  if (!match) return [];
+  return match[1]
+    .split(',')
+    .map((name) => name.trim())
+    .filter(Boolean);
+}
+
 /**
  * Gate card 단위 구조화 ValidationPanel.
  *
@@ -167,8 +185,15 @@ function GateCard({
     }
   };
 
+  const slug = gateSlug(detail.label);
+  const affectedVariants = extractAffectedVariants(detail.message);
+
   return (
-    <li className="flex flex-col gap-v-100 rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-200 py-v-150">
+    <li
+      data-testid={`validation-gate-${slug}`}
+      data-gate-status={detail.status}
+      className="flex flex-col gap-v-100 rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-200 py-v-150"
+    >
       {/* Card header: label (left) + duration (right) */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
@@ -188,6 +213,17 @@ function GateCard({
       {/* Message */}
       <Text typography="body4">{detail.message}</Text>
 
+      {/* Affected variants (runner message 에서 추출) */}
+      {affectedVariants.length > 0 && (
+        <Text
+          typography="body4"
+          foreground="hint-200"
+          data-testid={`validation-variants-${slug}`}
+        >
+          영향받은 variant: {affectedVariants.join(', ')}
+        </Text>
+      )}
+
       {/* Output disclosure */}
       {trimmedOutput && (
         <div className="flex flex-col gap-v-100">
@@ -201,7 +237,12 @@ function GateCard({
             >
               {detail.label} output
             </Button>
-            <Button size="sm" variant="ghost" onClick={handleCopyOutput}>
+            <Button
+              size="sm"
+              variant="ghost"
+              data-testid={`validation-copy-${slug}`}
+              onClick={handleCopyOutput}
+            >
               출력 복사
             </Button>
           </div>
@@ -209,6 +250,7 @@ function GateCard({
             <pre
               className="max-h-64 overflow-y-auto rounded-v-200 border border-v-normal bg-v-canvas-100 p-v-150 font-mono text-xs"
               aria-label={`${detail.label} 출력`}
+              data-testid={`validation-output-${slug}`}
             >
               <code>{trimmedOutput}</code>
             </pre>
@@ -222,6 +264,7 @@ function GateCard({
           size="sm"
           variant="outline"
           colorPalette="danger"
+          data-testid={`validation-repair-${slug}`}
           onClick={() => onRepairGate(detail.label)}
         >
           이 gate 수정

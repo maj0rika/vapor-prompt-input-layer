@@ -126,4 +126,43 @@ describe('ValidationPanel', () => {
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith('axe output text');
   });
+
+  it('각 gate card 에 data-testid 가 slug 로 부여된다 (selector 안정성)', () => {
+    render(
+      <ValidationPanel
+        result={makeResult({ status: 'pass', details: SIX_PASS_DETAILS })}
+        status="idle"
+      />,
+    );
+
+    expect(screen.getByTestId('validation-gate-typecheck')).toBeInTheDocument();
+    expect(screen.getByTestId('validation-gate-unit')).toBeInTheDocument();
+    expect(screen.getByTestId('validation-gate-runtime-render')).toBeInTheDocument();
+    expect(screen.getByTestId('validation-gate-axe')).toBeInTheDocument();
+    expect(screen.getByTestId('validation-gate-vapor-token-usage')).toBeInTheDocument();
+    expect(screen.getByTestId('validation-gate-cleanup')).toBeInTheDocument();
+  });
+
+  it('runner message 에 variants 가 있으면 affected variants 가 표시된다', () => {
+    render(
+      <ValidationPanel
+        result={makeResult({
+          status: 'fail',
+          details: [
+            makeDetail(
+              'Runtime Render',
+              'fail',
+              'Generated component threw across 2 metadata variants (Default, Disabled).',
+              'runtime output',
+            ),
+          ],
+        })}
+        status="idle"
+      />,
+    );
+
+    expect(screen.getByTestId('validation-variants-runtime-render')).toHaveTextContent(
+      '영향받은 variant: Default, Disabled',
+    );
+  });
 });
