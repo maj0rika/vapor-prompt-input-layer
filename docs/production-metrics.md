@@ -44,7 +44,7 @@
 | C05 | Generated artifact end-to-end | `npm run verify:generated` | 6/6 gates pass | PASS |
 | C06 | E2E (smoke 제외) | `npm run test:e2e` | 100% pass | PASS |
 | C07 | Bundle budget | `npm run verify:bundle` | initial gzip <= 200KB | PASS (199.63KB) |
-| C08 | Lighthouse budget | `npm run verify:lighthouse` | Perf>=90 a11y>=95 BP>=95 SEO>=90 LCP<=2.5s CLS<=0.1 | (측정 필요) |
+| C08 | Lighthouse budget | `npm run verify:lighthouse` | Perf>=90 a11y>=95 BP>=95 SEO>=90 LCP<=2.5s CLS<=0.1 | PASS (Perf=100/A11y=100/BP=100/SEO=91, LCP=484ms, CLS=0) |
 
 ### Trust Boundary
 
@@ -52,7 +52,7 @@
 |----|------|-----------|--------|------|
 | T01 | preview iframe 격리 | S02 + isolated loopback origin 분기 존재 | `createIsolatedPreviewOrigin` 호출 1건 이상 | PASS (S02 PASS) |
 | T02 | 동시 validation 격리 | `grep -nE 'activeRuns?\\\|maxConcurrentRuns\\\|429' server/validation/validationProxy.ts` | 카운터 + 초과 시 429 응답 | PASS (G021) |
-| T03 | temp workspace 누수 차단 | 동시 run 5회 + crash 1회 시뮬레이션 후 `ls /tmp/vapor-* \| wc -l` | 0개 (60분 경과) | TODO (수동 검증; cleanup gate 가 happy/error path 모두 항상 실행됨은 verify:generated 로 증명) |
+| T03 | temp workspace 누수 차단 | `npm test -- createTempWorkspace` 가 TTL sweep 동작을 검증 + `createTempWorkspace` 호출 시 자동 sweep | sweep 함수 export + happy/crash path 모두 cleanup 보장 | PASS (G028; lazy TTL sweep, default 60분) |
 | T04 | 자식 프로세스 강제 종료 | `grep -n 'SIGKILL' server/validation/runCommand.ts` | SIGTERM 이후 escalation 존재 | PASS (G020) |
 
 ### UX Coherence
@@ -103,7 +103,7 @@
 | ID | 지표 | 측정 명령 | 임계값 | 현재 |
 |----|------|-----------|--------|------|
 | A01 | 생성물 axe violations | `verify:generated` Axe gate | 0 | PASS |
-| A02 | 도구 자체 a11y | `npm run verify:lighthouse` | Lighthouse a11y >= 95 | (측정 필요) |
+| A02 | 도구 자체 a11y | `npm run verify:lighthouse` | Lighthouse a11y >= 95 | PASS (100) |
 | A03 | iframe title | `grep -n 'title=' src/components/chat/PreviewPanel.tsx \| grep iframe` | 1건 이상 | PASS ("Generated artifact canvas") |
 | A04 | tab/tabpanel ARIA 페어 | `grep -nE 'role=\"tablist\\\|tab\\\|tabpanel\"' src/components/chat/PreviewPanel.tsx` + aria-labelledby/aria-controls 페어 | tab, tabpanel 모두 존재 + id/aria-labelledby/aria-controls 연결 | PASS (G026) |
 | A05 | reduced motion 대응 | `grep -rn 'prefers-reduced-motion' src/` | 1건 이상 | PASS (G024) |
@@ -111,23 +111,20 @@
 ## 3. 게이트 매트릭스 (현재 상태, G017–G027 적용 후)
 
 ```
-PASS  : C01 C02 C03 C04 C05 C06 C07
+PASS  : C01 C02 C03 C04 C05 C06 C07 C08
         S01 S02 S03 S04 S05
-        T01 T02 T04
+        T01 T02 T03 T04
         U01 U02 U03 U04 U05 U06 U07
         V01 V02 V04 V05 V06
         O01 O02 O03 O04 O05
         P03 P05
-        A01 A03 A04 A05
+        A01 A02 A03 A04 A05
 FAIL  : (없음)
-TODO  : C08 (Lighthouse 측정)
-        T03 (TTL sweep cron — 운영 정책)
-        V03 (raw gap-N 정리 — 다수, 시각 회귀 검증 필요)
-        P01 P02 P04 (성능 마이크로벤치)
-        A02 (Lighthouse a11y 측정)
+TODO  : V03 (raw gap-N 정리 — 다수, 시각 회귀 검증 필요한 cosmetic 항목)
+        P01 P02 P04 (성능 마이크로벤치 — first token / parse / runner timeout)
 ```
 
-총 PASS: 35 / FAIL: 0 / 측정 보류: 8
+총 PASS: 38 / FAIL: 0 / 측정 보류: 4
 
 ## 4. FAIL → PASS 전환 이력 (G017–G027)
 

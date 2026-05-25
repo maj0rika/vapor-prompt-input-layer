@@ -67,8 +67,11 @@ deterministic 동작은 시연 가능하지만, **live generation / live validat
 - **Quota**: 디스크 사용량 cap + concurrent run limit.
 - **Cleanup**:
   - Happy path: Cleanup gate 가 항상 마지막에 실행 (현재 구현 동일).
-  - Crash path: TTL 기반 sweep cron (예: 1시간 이상 된 leftover 강제 제거).
-  - Process restart: lock file 확인 후 fresh 시작 시 stale dir 정리.
+  - Crash path: `sweepStaleTempWorkspaces` 가 `createTempWorkspace` 호출
+    직전에 실행되어, 1시간 (`VAPOR_TEMP_WORKSPACE_TTL_MS` 환경변수로 override
+    가능) 이 지난 `vapor-generated-*` / `vapor-preview-*` 디렉터리를 비동기
+    sweep 한다 (G028). cron 대신 lazy sweep 패턴.
+  - Process restart: sweep 동일 정책으로 동작. lock file 불필요.
 - **`node_modules`**: 현재는 호출 시점에 npm 의존성 hoisting 기대. production
   은 pre-warmed cache 또는 base image bake 권장 (validation 응답 시간 단축).
 
