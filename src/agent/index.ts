@@ -35,6 +35,19 @@ export type {
 } from './types';
 export type { VerifiedSampleRun } from './verifiedSample';
 export {
+  buildTokenMap,
+  mapVariable,
+  parseFigmaVariables,
+} from './tokenMapping';
+export type {
+  FigmaVariable,
+  FigmaVariableType,
+  TokenMapResult,
+  UnknownTokenReport,
+  VaporCategory,
+  VaporTokenCandidate,
+} from './tokenMapping';
+export {
   createArtifactRunFromMessage,
   withValidation,
   withApproval,
