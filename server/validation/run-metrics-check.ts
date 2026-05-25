@@ -120,6 +120,27 @@ async function run(): Promise<void> {
     inlinePxHits.join(', '),
   );
 
+  // V03: 도구 자체의 Tailwind raw spacing 0건 (gap-N/p-N/m-N/mt-N 등이 v-*
+  // 토큰 형태가 아니라 Tailwind 기본 scale 로 들어가 있으면 Vapor spacing
+  // 스케일과 어긋난다). border-N / outline-N / w-N 같은 width 속성은 spacing
+  // 토큰이 아니므로 제외한다.
+  const v03Pattern =
+    /(?:^|[^a-zA-Z0-9_-])(?:gap|p|m|px|py|mx|my|mt|mr|mb|ml|pt|pr|pb|pl)-[0-9](?:\.[0-9]+)?(?:[^a-zA-Z0-9_-]|$)/;
+  const v03Hits: string[] = [];
+  for (const file of componentFiles) {
+    const lines = file.content.split('\n');
+    for (const [idx, line] of lines.entries()) {
+      if (/^\s*\/\/|^\s*\*|\*\s/.test(line)) continue;
+      if (v03Pattern.test(line)) v03Hits.push(`${rel(file.path)}:${idx + 1}`);
+    }
+  }
+  record(
+    v03Hits.length === 0,
+    'V03',
+    'Vapor v-* spacing tokens (raw gap-N/p-N/m-N 등 0건)',
+    `${v03Hits.length}건 발견: ${v03Hits.slice(0, 5).join(', ')}`,
+  );
+
   // S01: filename sanitize 함수가 parser + writeGen 양쪽에서 호출되는지
   const parserSrc = await readFile(join(ROOT, 'src/agent/responseParser.ts'), 'utf8');
   const writeGenSrc = await readFile(join(ROOT, 'server/validation/writeGeneratedFiles.ts'), 'utf8');

@@ -181,13 +181,13 @@ export function ChatScreen({
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-v-400 border border-v-normal bg-v-canvas-100 shadow-sm">
       {/* 헤더 바 */}
       <div className="flex items-center justify-between border-b border-v-normal px-v-300 py-v-150">
-        <div className="flex min-w-0 flex-col gap-0.5">
+        <div className="flex min-w-0 flex-col gap-v-25">
           <Text typography="subtitle2">Run pipeline</Text>
           <Text typography="body4" foreground="hint-200">
             Generate → Canvas → Validate → Repair → Approve
           </Text>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-v-50">
           {Boolean(draftId) && !showPreview && (
             <Button
               size="sm"
@@ -221,7 +221,7 @@ export function ChatScreen({
             <button
               type="button"
               aria-label={`Artifact workspace width ${Math.round(previewWidth)} percent`}
-              className="hidden w-2 cursor-col-resize appearance-none items-stretch justify-center border-0 bg-v-canvas-100 p-0 hover:bg-v-primary-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-v-primary md:flex"
+              className="hidden w-2 cursor-col-resize appearance-none items-stretch justify-center border-0 bg-v-canvas-100 p-v-0 hover:bg-v-primary-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-v-primary md:flex"
               onPointerDown={(event) => {
                 event.preventDefault();
                 setIsResizing(true);
@@ -329,14 +329,14 @@ function RunPipelineBar({
   return (
     <div
       aria-label="Prompt to Artifact to Canvas to Validation to Repair to Approve"
-      className="flex flex-wrap items-center gap-1 border-b border-v-normal px-v-200 py-v-150"
+      className="flex flex-wrap items-center gap-v-50 border-b border-v-normal px-v-200 py-v-150"
     >
       {steps.map((step, index) => (
-        <div key={step.label} className="flex items-center gap-1">
+        <div key={step.label} className="flex items-center gap-v-50">
           <span
             aria-label={`${step.label}: ${step.status}`}
             className={[
-              'rounded-v-200 border px-v-150 py-v-075 text-xs font-medium',
+              'rounded-v-200 border px-v-150 py-v-75 text-xs font-medium',
               step.status === 'pass'
                 ? 'border-v-success bg-v-success-100 text-v-success'
                 : step.status === 'fail'

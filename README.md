@@ -262,8 +262,8 @@ Performance, Accessibility) 의 절대 지표를 모두 자동 측정한다.
 | 번들 + 성능 | `verify:bundle`, `verify:lighthouse` | <200KB gzip, Perf>=90 A11y>=95 BP>=95 LCP<=2.5s CLS<=0.1 |
 | E2E + 다크모드 | `test:e2e` (51+ tests) | generate → validate → repair → approve 전 흐름 + Vapor 다크모드 실측 |
 
-현 상태 (G030 기준): **38 PASS / 0 FAIL / 4 TODO** (cosmetic gap-N 정리 +
-성능 마이크로벤치). 자세한 매트릭스는 [docs/production-metrics.md](docs/production-metrics.md).
+현 상태 (G032 기준): **39 PASS / 0 FAIL / 3 TODO** (성능 마이크로벤치만 SLA
+정의 후 측정). 자세한 매트릭스는 [docs/production-metrics.md](docs/production-metrics.md).
 
 ## Documentation
 

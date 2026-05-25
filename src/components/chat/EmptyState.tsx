@@ -65,7 +65,7 @@ export type EmptyStateProps = {
 
 export function EmptyState({ onPick, onRunVerifiedSample }: EmptyStateProps) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col justify-start gap-4 overflow-y-auto p-v-400 pb-v-700 pt-v-500">
+    <div className="flex min-h-0 flex-1 flex-col justify-start gap-v-200 overflow-y-auto p-v-400 pb-v-700 pt-v-500">
       <div className="grid max-w-[820px] gap-v-300">
         <div className="grid gap-v-100 rounded-v-300 border border-v-normal bg-v-canvas-100 p-v-300">
           <Text typography="subtitle2">Workbench ready</Text>
@@ -73,7 +73,7 @@ export function EmptyState({ onPick, onRunVerifiedSample }: EmptyStateProps) {
             {WORKFLOW_STEPS.map((step, index) => (
               <div
                 key={step}
-                className="flex min-h-[72px] flex-col gap-1 rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-150 py-v-100"
+                className="flex min-h-[72px] flex-col gap-v-50 rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-150 py-v-100"
               >
                 <Text typography="body4" foreground="hint-200">
                   {index + 1}
@@ -84,13 +84,13 @@ export function EmptyState({ onPick, onRunVerifiedSample }: EmptyStateProps) {
           </div>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-v-150">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-v-300 bg-v-primary-100 text-v-primary">
             <AiSmartieOutlineIcon size={20} aria-hidden="true" />
           </div>
 
-          <div className="flex min-w-0 flex-col gap-3 rounded-v-400 border border-v-normal bg-v-canvas-100 p-v-300 shadow-sm">
-            <div className="flex flex-col gap-1">
+          <div className="flex min-w-0 flex-col gap-v-150 rounded-v-400 border border-v-normal bg-v-canvas-100 p-v-300 shadow-sm">
+            <div className="flex flex-col gap-v-50">
               <Text typography="subtitle1">무엇을 자동화할까요?</Text>
               <Text typography="body3" foreground="hint-200">
                 Vapor 토큰을 지키는 컴포넌트, Storybook story, Vitest 테스트,
@@ -99,7 +99,7 @@ export function EmptyState({ onPick, onRunVerifiedSample }: EmptyStateProps) {
             </div>
 
             <div className="grid gap-v-150 rounded-v-300 border border-v-primary bg-v-primary-100 p-v-200">
-              <div className="flex min-w-0 flex-col gap-1">
+              <div className="flex min-w-0 flex-col gap-v-50">
                 <Text typography="subtitle2">Verified sample run</Text>
                 <Text typography="body4" foreground="hint-200">
                   deterministic fixture · no DeepSeek call · same parser, Canvas
@@ -115,7 +115,7 @@ export function EmptyState({ onPick, onRunVerifiedSample }: EmptyStateProps) {
               </Button>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-v-100 sm:grid-cols-2">
               {TEMPLATES.map((template) => (
                 <Button
                   key={template.label}
@@ -123,7 +123,7 @@ export function EmptyState({ onPick, onRunVerifiedSample }: EmptyStateProps) {
                   variant="outline"
                   onClick={() => onPick(template.templateKey)}
                 >
-                  <span className="flex min-w-0 flex-col items-start gap-1 text-left">
+                  <span className="flex min-w-0 flex-col items-start gap-v-50 text-left">
                     <span>{template.label}</span>
                     <span className="text-xs font-normal text-v-hint">{template.output}</span>
                     <span className="text-xs font-normal text-v-hint">{template.gates}</span>

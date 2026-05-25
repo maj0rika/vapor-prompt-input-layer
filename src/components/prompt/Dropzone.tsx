@@ -68,14 +68,14 @@ export function Dropzone({
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-v-100">
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         data-state={disabled ? 'disabled' : isDragOver ? 'dragover' : 'idle'}
         className={[
-          'flex items-center gap-2 rounded-v-300 border border-dashed transition-colors',
+          'flex items-center gap-v-100 rounded-v-300 border border-dashed transition-colors',
           compact
             ? 'justify-between p-v-150'
             : 'min-h-[96px] flex-col justify-center p-v-300 text-center',

@@ -46,7 +46,7 @@ export function MessageActions({ onCopy, onRegenerate }: MessageActionsProps) {
   };
 
   return (
-    <div className="mt-1 flex items-center gap-0.5">
+    <div className="mt-v-50 flex items-center gap-v-25">
       <IconButton
         size="sm"
         variant="ghost"

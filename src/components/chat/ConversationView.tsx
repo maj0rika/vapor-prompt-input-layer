@@ -69,7 +69,7 @@ export function ConversationView({
         aria-label="대화 내용"
         aria-live="polite"
         onScroll={handleScroll}
-        className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto overflow-x-hidden p-v-200"
+        className="flex h-full min-h-0 flex-col gap-v-150 overflow-y-auto overflow-x-hidden p-v-200"
       >
         {messages.map((message) => (
           <MessageBubble

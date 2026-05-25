@@ -29,7 +29,7 @@ export function DataSourceSelector({
       : '선택된 데이터소스 없음';
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-v-50">
       <Text typography="body3" foreground="hint-200">
         데이터소스
       </Text>

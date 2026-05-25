@@ -33,7 +33,7 @@ export function AttachmentItem({ attachment, onRemove }: AttachmentItemProps) {
   return (
     <li
       aria-busy={isUploading}
-      className="flex flex-wrap items-center gap-2 rounded-v-200 border border-v-normal p-v-200"
+      className="flex flex-wrap items-center gap-v-100 rounded-v-200 border border-v-normal p-v-200"
     >
       {isUploading && <Spinner size="md" />}
       <Badge colorPalette={meta.colorPalette} size="sm">

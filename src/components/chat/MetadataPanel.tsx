@@ -48,7 +48,7 @@ export function MetadataPanel({ metadata, validation, activeVariantName }: Metad
       {/* Validation messages */}
       {validation && validation.status !== 'pass' && (
         <section className="flex flex-col gap-v-100" data-testid="metadata-validation">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-v-100">
             <Text typography="subtitle2">계약 검증</Text>
             <Badge
               size="sm"
@@ -58,7 +58,7 @@ export function MetadataPanel({ metadata, validation, activeVariantName }: Metad
             </Badge>
           </div>
           {validation.errors.length > 0 && (
-            <ul className="flex flex-col gap-v-050">
+            <ul className="flex flex-col gap-v-50">
               {validation.errors.map((e, i) => (
                 <li key={`err-${i}`} className="text-sm text-v-danger">
                   • {e}
@@ -67,7 +67,7 @@ export function MetadataPanel({ metadata, validation, activeVariantName }: Metad
             </ul>
           )}
           {validation.warnings.length > 0 && (
-            <ul className="flex flex-col gap-v-050">
+            <ul className="flex flex-col gap-v-50">
               {validation.warnings.map((w, i) => (
                 <li key={`warn-${i}`} className="text-sm text-v-warning">
                   • {w}
@@ -110,7 +110,7 @@ export function MetadataPanel({ metadata, validation, activeVariantName }: Metad
           className="flex flex-col gap-v-100 rounded-v-200 border border-v-primary bg-v-primary-100 px-v-200 py-v-150"
           data-testid="metadata-selected-variant"
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-v-100">
             <Text typography="subtitle2">선택된 variant</Text>
             <Badge size="sm" colorPalette="primary">
               {selectedVariant.name}
@@ -139,7 +139,7 @@ function DataRow({
     <div className="grid grid-cols-[140px_1fr] items-center gap-v-150 text-sm">
       <span className="text-v-hint">{label}</span>
       <code
-        className="rounded-v-100 bg-v-canvas-200 px-v-100 py-v-050 font-mono text-xs"
+        className="rounded-v-100 bg-v-canvas-200 px-v-100 py-v-50 font-mono text-xs"
         data-testid={testId}
       >
         {value}
@@ -163,7 +163,7 @@ function VariantCard({
         active ? 'border-v-primary bg-v-primary-100' : 'border-v-normal bg-v-canvas-200',
       ].join(' ')}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-v-100">
         <Text typography="body3">{variant.name}</Text>
         {active && (
           <Badge size="sm" colorPalette="primary">
@@ -196,7 +196,7 @@ function PropsTable({
       {entries.map(([key, value]) => (
         <div key={key} className="contents">
           <code className="text-xs text-v-hint">{key}</code>
-          <code className="rounded-v-100 bg-v-canvas-100 px-v-100 py-v-050 font-mono text-xs">
+          <code className="rounded-v-100 bg-v-canvas-100 px-v-100 py-v-50 font-mono text-xs">
             {formatValue(value)}
           </code>
         </div>

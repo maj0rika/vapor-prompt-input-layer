@@ -108,7 +108,7 @@ export function ValidationPanel({
   return (
     <div className="flex flex-col gap-v-200">
       {/* Header summary */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-v-normal pb-v-150">
+      <div className="flex flex-wrap items-center gap-v-100 border-b border-v-normal pb-v-150">
         <Badge size="sm" colorPalette={overallColorPalette} aria-label={`전체 상태: ${overallLabel}`}>
           {overallLabel}
         </Badge>
@@ -128,7 +128,7 @@ export function ValidationPanel({
       </div>
 
       {/* Summary list: each item is "Label: STATUS" for E2E selector compatibility */}
-      <ul className="flex flex-col gap-v-050">
+      <ul className="flex flex-col gap-v-50">
         {result.details.map((detail) => {
           const statusLabel =
             detail.status === 'pass' ? 'PASS' : detail.status === 'fail' ? 'FAIL' : 'WARN';
@@ -195,8 +195,8 @@ function GateCard({
       className="flex flex-col gap-v-100 rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-200 py-v-150"
     >
       {/* Card header: label (left) + duration (right) */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-v-100">
+        <div className="flex items-center gap-v-100">
           <Badge size="sm" colorPalette={statusColorPalette}>
             {statusLabel}
           </Badge>
@@ -227,7 +227,7 @@ function GateCard({
       {/* Output disclosure */}
       {trimmedOutput && (
         <div className="flex flex-col gap-v-100">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-v-50">
             <Button
               size="sm"
               variant="ghost"

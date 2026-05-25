@@ -6,7 +6,7 @@
 > 가 통과되지 않는다.
 
 베이스라인 측정일: 2026-05-26 (main @ 379a6f9)
-최근 갱신: 2026-05-26 (G017–G027 hardening 적용 후)
+최근 갱신: 2026-05-26 (G017–G032 hardening 적용 후, **39/0/3 → 39 PASS / 0 FAIL / 3 TODO**)
 
 ## 1. 평가 축
 
@@ -73,7 +73,7 @@
 |----|------|-----------|--------|------|
 | V01 | 도구 자체의 raw hex | `grep -rEn '#[0-9a-fA-F]{3,6}\\b' src/components/ --include='*.tsx' \| grep -v '.test.'` | 0건 (실제 시각 출력 기준) | PASS (G025; canvasHtml 제거) |
 | V02 | 도구 자체의 raw px in inline style | `grep -rEn 'style=.*\\d+px' src/components/` | 0건 | PASS |
-| V03 | 도구 자체의 Tailwind gap-N(v-* 비사용) | `grep -rEn '\\b(gap\\|p\\|m)-[0-9]\\b' src/components/ \| grep -v -- '-v-'` | 0건 (또는 documented exception) | TODO (다수; 시각 회귀 검증 필요해 별도 wave 에서 정리) |
+| V03 | 도구 자체의 Tailwind gap-N(v-* 비사용) | `npm run verify:metrics` 의 V03 항목 또는 `grep -rEn '\\b(gap\\|p\\|m\\|mt\\|mb\\|...)-[0-9]\\b' src/components/` (width/border/outline 제외) | 0건 | PASS (G032; raw Tailwind spacing 클래스 전부 Vapor v-*로 변환, leading-zero `v-0XX` 형태도 정리) |
 | V04 | 생성물 token gate (raw color) | `npm run verify:generated` 결과 token detail | rawColorCount 0 | PASS (fixture) |
 | V05 | 생성물 token gate (hsl/oklch/named) | `npm test -- tokenUsage` | hsl/oklch/named color 감지, false negative 0 | PASS (G019) |
 | V06 | ESLint 경계 위반 | `npm run lint` | 0건 (Vapor/agent boundary 강제) | PASS |
@@ -115,16 +115,16 @@ PASS  : C01 C02 C03 C04 C05 C06 C07 C08
         S01 S02 S03 S04 S05
         T01 T02 T03 T04
         U01 U02 U03 U04 U05 U06 U07
-        V01 V02 V04 V05 V06
+        V01 V02 V03 V04 V05 V06
         O01 O02 O03 O04 O05
         P03 P05
         A01 A02 A03 A04 A05
 FAIL  : (없음)
-TODO  : V03 (raw gap-N 정리 — 다수, 시각 회귀 검증 필요한 cosmetic 항목)
-        P01 P02 P04 (성능 마이크로벤치 — first token / parse / runner timeout)
+TODO  : P01 P02 P04 (성능 마이크로벤치 — first token / parse / runner timeout;
+        production-grade SLA 가 정해진 뒤 별도 measurement 가능)
 ```
 
-총 PASS: 38 / FAIL: 0 / 측정 보류: 4
+총 PASS: 39 / FAIL: 0 / 측정 보류: 3
 
 ## 4. FAIL → PASS 전환 이력 (G017–G027)
 

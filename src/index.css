@@ -8,6 +8,17 @@
 @import 'tailwindcss/theme.css' layer(tw-theme);
 @import 'tailwindcss/utilities.css' layer(tw-utilities);
 
+/* Vapor `--vapor-size-space-*` 와 `--vapor-size-dimension-*` 가
+ * `calc(var(--vapor-scale-factor) * Npx)` 로 정의되지만 Vapor 자체는 이 값을
+ * 어디서도 SET 하지 않는다. 미정의 var() 가 calc() 안에 들어가면 전체 expression
+ * 이 invalid 가 되어 `gap-v-*`/`p-v-*`/`m-v-*` 같은 spacing 토큰이 모두 0 으로
+ * 평가되는 silent 회귀가 있었다. `:root` 에서 1 로 초기화해 토큰 픽셀 값이
+ * 실제로 적용되게 한다. 디바이스 dpi 적응이 필요할 경우 이 값을 동적으로
+ * 조정할 수 있다 (e.g. media query 기반 scale). */
+:root {
+  --vapor-scale-factor: 1;
+}
+
 * {
   box-sizing: border-box;
 }

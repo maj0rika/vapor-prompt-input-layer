@@ -50,7 +50,7 @@ export function TokenSyncPanel({ figmaJson }: TokenSyncPanelProps) {
   return (
     <div className="flex flex-col gap-v-300" data-testid="token-sync-panel">
       {/* Header summary */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-v-normal pb-v-150">
+      <div className="flex flex-wrap items-center gap-v-100 border-b border-v-normal pb-v-150">
         <Badge size="sm" colorPalette={result.unknowns.length === 0 ? 'success' : 'warning'}>
           Token Sync
         </Badge>
@@ -116,13 +116,13 @@ export function TokenSyncPanel({ figmaJson }: TokenSyncPanelProps) {
       {/* Unknown report */}
       {result.unknowns.length > 0 && (
         <section className="flex flex-col gap-v-100" data-testid="token-sync-unknowns">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-v-100">
             <Text typography="subtitle2">Unknown variables</Text>
             <Badge size="sm" colorPalette="warning">
               {result.unknowns.length}
             </Badge>
           </div>
-          <ul className="flex flex-col gap-v-050">
+          <ul className="flex flex-col gap-v-50">
             {result.unknowns.map((u) => (
               <li key={u.figmaName} className="text-sm">
                 <code className="font-mono text-v-hint">{u.figmaName}</code>
@@ -136,7 +136,7 @@ export function TokenSyncPanel({ figmaJson }: TokenSyncPanelProps) {
 
       {/* Generated source */}
       <section className="flex flex-col gap-v-100">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-v-100">
           <Text typography="subtitle2">생성된 token-map.ts</Text>
           <Button
             size="sm"

@@ -214,13 +214,13 @@ export function PreviewPanel({
       className="flex min-h-0 flex-col overflow-hidden border-t border-v-normal bg-v-canvas-100 md:border-t-0 md:border-l"
     >
       <header className="flex items-center justify-between border-b border-v-normal px-v-200 py-v-150">
-        <div className="flex min-w-0 flex-col gap-0.5">
+        <div className="flex min-w-0 flex-col gap-v-25">
           <Text typography="subtitle2">Artifact workspace</Text>
           <Text typography="body4" foreground="hint-200">
             generated Vapor component package
           </Text>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-v-50">
           {active && (
             <IconButton
               size="sm"
@@ -324,7 +324,7 @@ export function PreviewPanel({
           aria-label="Verified sample provenance"
           className="grid gap-v-100 border-b border-v-normal bg-v-primary-100 px-v-200 py-v-150"
         >
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-v-50">
             <Badge size="sm" colorPalette="primary">
               Verified sample run
             </Badge>
@@ -355,7 +355,7 @@ export function PreviewPanel({
         <div
           role="tablist"
           aria-label="Artifact workspace tabs"
-          className="flex flex-wrap gap-1 border-b border-v-normal px-v-200 py-v-150"
+          className="flex flex-wrap gap-v-50 border-b border-v-normal px-v-200 py-v-150"
         >
           {visibleSections.map((section) => (
             <Button
@@ -378,7 +378,7 @@ export function PreviewPanel({
       {!showCompactValidationWaiting && (() => {
         if (validationResult) {
           return (
-            <div className="flex flex-wrap gap-1 border-b border-v-normal px-v-200 py-v-150">
+            <div className="flex flex-wrap gap-v-50 border-b border-v-normal px-v-200 py-v-150">
               {validationResult.details.map((detail) => (
                 <Badge
                   key={detail.label}
@@ -401,7 +401,7 @@ export function PreviewPanel({
         if (artifactValidationSection) {
           const badges = extractValidationBadges(artifactValidationSection.content);
           return (
-            <div className="flex flex-wrap gap-1 border-b border-v-normal px-v-200 py-v-150">
+            <div className="flex flex-wrap gap-v-50 border-b border-v-normal px-v-200 py-v-150">
               {badges.map((item) => (
                 <Badge
                   key={item.label}
@@ -423,14 +423,14 @@ export function PreviewPanel({
         return null;
       })()}
       {showCompactValidationWaiting && (
-        <div className="flex flex-wrap gap-1 border-b border-v-normal px-v-200 py-v-100">
+        <div className="flex flex-wrap gap-v-50 border-b border-v-normal px-v-200 py-v-100">
           <Badge size="sm" colorPalette="warning">
             Validation: waiting for runner output
           </Badge>
         </div>
       )}
       {approved && (
-        <div className="grid gap-1 border-b border-v-normal px-v-200 py-v-150">
+        <div className="grid gap-v-50 border-b border-v-normal px-v-200 py-v-150">
           <Badge size="md" colorPalette="success">
             로컬 리뷰 승인 완료
           </Badge>
@@ -522,7 +522,7 @@ export function PreviewPanel({
               ].map(([title, description]) => (
                 <div
                   key={title}
-                  className="flex min-h-[96px] flex-col gap-1 rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-200 py-v-150"
+                  className="flex min-h-[96px] flex-col gap-v-50 rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-200 py-v-150"
                 >
                   <Text typography="subtitle2">{title}</Text>
                   <Text typography="body4" foreground="hint-200">
@@ -546,7 +546,7 @@ export function PreviewPanel({
                 )}
               </div>
             </div>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-v-50">
               {['검증 실행', '실패 수정 (Fix with Agent)', '로컬 승인'].map((label) => (
                 <Button key={label} size="sm" variant="outline" disabled>
                   {label}
@@ -668,13 +668,13 @@ function ArtifactCanvas({
   if (!previewSrc) {
     return (
       <div className="flex h-full min-h-[260px] flex-col gap-v-150">
-        <div className="flex min-w-0 flex-col gap-0.5">
+        <div className="flex min-w-0 flex-col gap-v-25">
           <Text typography="subtitle2">Canvas 사용 불가</Text>
           <Text typography="body4" foreground="hint-200">
             runtime preview requires a parsed component artifact, source payload, and valid metadata contract
           </Text>
         </div>
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-v-50">
           <Badge
             size="sm"
             colorPalette={
@@ -707,13 +707,13 @@ function ArtifactCanvas({
   return (
     <div className="flex h-full min-h-[360px] flex-col gap-v-200">
         <div className="flex items-center justify-between">
-          <div className="flex min-w-0 flex-col gap-0.5">
+          <div className="flex min-w-0 flex-col gap-v-25">
             <Text typography="subtitle2">Canvas</Text>
             <Text typography="body4" foreground="hint-200">
               sandboxed generated component preview
             </Text>
           </div>
-        <div className="flex flex-wrap justify-end gap-1">
+        <div className="flex flex-wrap justify-end gap-v-50">
           <Badge size="sm" colorPalette="primary">
             Canvas preview
           </Badge>
@@ -769,7 +769,7 @@ function ArtifactCanvas({
           ))}
         </div>
       )}
-      <div className="flex flex-wrap items-center gap-1">
+      <div className="flex flex-wrap items-center gap-v-50">
         {model.variants.map((variant) => (
           <Button
             key={variant.name}

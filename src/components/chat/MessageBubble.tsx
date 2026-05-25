@@ -45,7 +45,7 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
   return (
     <div
       className={[
-        'flex gap-2.5',
+        'flex gap-v-100',
         isUser ? 'flex-row-reverse' : 'flex-row',
       ].join(' ')}
     >
@@ -53,11 +53,11 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
 
       <div
         className={[
-          'flex min-w-0 max-w-[min(82%,100%)] flex-col gap-1',
+          'flex min-w-0 max-w-[min(82%,100%)] flex-col gap-v-50',
           isUser ? 'items-end' : 'items-start',
         ].join(' ')}
       >
-        <div className="flex items-baseline gap-1.5 px-1">
+        <div className="flex items-baseline gap-v-75 px-v-50">
           <Text typography="body4" foreground="normal-200">
             {SENDER_NAME[message.role]}
           </Text>
@@ -77,7 +77,7 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
           ].join(' ')}
         >
           {hasAttachments && (
-            <div className="mb-1.5 flex flex-wrap gap-1.5">
+            <div className="mb-v-75 flex flex-wrap gap-v-75">
               {message.attachments!.map((attachment, index) => (
                 <AttachmentChip key={index} attachment={attachment} />
               ))}
@@ -107,14 +107,14 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
               typography="body3"
               foreground="danger-200"
               role="alert"
-              className="mt-1 block"
+              className="mt-v-50 block"
             >
               {message.errorMessage}
             </Text>
           )}
 
           {message.status === 'cancelled' && (
-            <Text typography="body3" foreground="hint-200" className="mt-1 block">
+            <Text typography="body3" foreground="hint-200" className="mt-v-50 block">
               응답이 중단되었습니다.
             </Text>
           )}

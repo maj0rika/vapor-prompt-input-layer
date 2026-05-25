@@ -36,8 +36,8 @@ export function PromptBox({
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-end gap-2">
+    <div className="flex flex-col gap-v-100">
+      <div className="flex items-end gap-v-100">
         <Textarea
           className="flex-1 min-w-0"
           value={value}

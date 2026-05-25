@@ -25,8 +25,8 @@ export function PromptInputDemo() {
   const [lastSubmit, setLastSubmit] = useState<PromptSubmitPayload | null>(null);
 
   return (
-    <div className="flex flex-col gap-4">
-      <header className="flex flex-col gap-1">
+    <div className="flex flex-col gap-v-200">
+      <header className="flex flex-col gap-v-50">
         <h1 className="m-0 text-xl font-semibold">Automation Prompt Layer</h1>
         <p className="m-0 text-sm text-gray-500">
           Vapor DS 자동화 에이전트용 입력 컴포넌트 레이어 데모

@@ -4,7 +4,7 @@ export function StreamingIndicator() {
     <span
       role="status"
       aria-label="응답 생성 중"
-      className="inline-flex items-center gap-1 py-1"
+      className="inline-flex items-center gap-v-50 py-v-50"
     >
       {[0, 1, 2].map((index) => (
         <span

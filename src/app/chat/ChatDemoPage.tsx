@@ -19,8 +19,8 @@ const MAX_REFERENCE_FILES = 5;
  */
 export function ChatDemoPage() {
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <header className="flex flex-col gap-1">
+    <div className="flex min-h-0 flex-1 flex-col gap-v-200">
+      <header className="flex flex-col gap-v-50">
         <h1 className="m-0 text-xl font-semibold">Vapor DS Automation Workbench</h1>
         <p
           className="m-0 text-sm"

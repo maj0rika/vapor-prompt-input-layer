@@ -10,7 +10,7 @@ export type AttachmentChipProps = {
 /** 대화 메시지에 함께 표시되는 첨부 파일 칩. */
 export function AttachmentChip({ attachment }: AttachmentChipProps) {
   return (
-    <div className="flex items-center gap-1.5 rounded-v-200 border border-v-normal bg-v-canvas-100 px-v-150 py-v-100">
+    <div className="flex items-center gap-v-75 rounded-v-200 border border-v-normal bg-v-canvas-100 px-v-150 py-v-100">
       <FileIcon size={14} aria-hidden="true" />
       <Text typography="body3" className="max-w-[180px] truncate">
         {attachment.fileName}

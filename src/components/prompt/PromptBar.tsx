@@ -84,7 +84,7 @@ export function PromptBar({
   const hasUploading = attachments.some((attachment) => attachment.status === 'uploading');
   const canSubmit = !disabled && !isEmpty && !overLimit && !hasUploading;
   const composerClassName = [
-    'relative flex flex-col gap-2 rounded-v-400 border bg-v-canvas-100 p-v-200 transition-colors',
+    'relative flex flex-col gap-v-100 rounded-v-400 border bg-v-canvas-100 p-v-200 transition-colors',
     isDragOver ? 'border-v-primary bg-v-primary-100' : 'border-v-normal',
     bare ? '' : 'shadow-sm',
   ].join(' ');
@@ -182,7 +182,7 @@ export function PromptBar({
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-v-100">
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -200,8 +200,8 @@ export function PromptBar({
 
         <AttachmentList attachments={attachments} onRemove={handleRemoveAttachment} />
 
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-v-100">
+          <div className="flex min-w-0 flex-wrap items-center gap-v-100">
             <PromptModeSelector
               options={options}
               value={mode}
@@ -253,7 +253,7 @@ export function PromptBar({
           rows={3}
         />
 
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-v-100">
           {maxLength != null ? (
             <Text
               typography="body3"
