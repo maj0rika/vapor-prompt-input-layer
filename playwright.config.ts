@@ -8,7 +8,11 @@ export default defineConfig({
   testIgnore: ['**/*.smoke.spec.ts'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 2 : 1,
+  // Validation runner (tsc/vitest) 가 자식 프로세스를 spawn 하므로 worker
+  // 수가 너무 많으면 CPU/disk 가 saturate 되어 flake 가 발생한다. 4 worker
+  // 가 안정성과 속도의 sweet spot.
+  workers: 4,
   reporter: 'list',
   use: {
     baseURL: BASE_URL,
