@@ -1,4 +1,4 @@
-import { Badge, Text } from '@vapor-ui/core';
+import { Badge, Button, Text } from '@vapor-ui/core';
 import type { ComplianceGate, GateStatus } from './mockReport';
 
 interface ComplianceChecklistProps {
@@ -43,18 +43,15 @@ export function ComplianceChecklist({
           const isSelected = gate.id === selectedGateId;
           return (
             <li key={gate.id} role="option" aria-selected={isSelected}>
-              <button
-                type="button"
+              <Button
+                variant={isSelected ? 'fill' : 'ghost'}
+                color="secondary"
+                size="md"
                 onClick={() => onSelectGate(gate.id)}
                 aria-label={`${gate.name} — ${STATUS_LABEL[gate.status]}${gate.issueCount > 0 ? `, 이슈 ${gate.issueCount}건` : ''}`}
-                className={[
-                  'flex w-full items-center justify-between rounded-v-200 px-v-150 py-v-100 text-left transition-colors',
-                  isSelected
-                    ? 'bg-v-primary-100'
-                    : 'hover:bg-v-canvas-200',
-                ].join(' ')}
+                className="w-full !justify-between"
               >
-                <div className="flex min-w-0 flex-col gap-v-25">
+                <div className="flex min-w-0 flex-col items-start gap-v-25">
                   <Text
                     typography="body3"
                     foreground={isSelected ? 'primary-200' : 'normal-100'}
@@ -74,7 +71,7 @@ export function ComplianceChecklist({
                 >
                   {STATUS_LABEL[gate.status]}
                 </Badge>
-              </button>
+              </Button>
             </li>
           );
         })}
