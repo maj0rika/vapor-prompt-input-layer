@@ -284,13 +284,13 @@ describe('PreviewPanel', () => {
     );
     expect(screen.getByText('동일 검증 러너')).toBeInTheDocument();
     expect(screen.getByText('검증 대기: 실행 전')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '승인' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '로컬 승인' })).not.toBeInTheDocument();
   });
 
   it('artifactSource 가 있어도 runner 결과 전에는 승인할 수 없다', () => {
     render(<PreviewPanel draft={ARTIFACT} artifactSource="<artifact />" onClose={vi.fn()} />);
 
-    expect(screen.queryByRole('button', { name: '승인' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '로컬 승인' })).not.toBeInTheDocument();
   });
 
   it('sample validation 실패 시 waiting notice 대신 runner error 를 보여준다', async () => {
@@ -382,7 +382,7 @@ describe('PreviewPanel', () => {
 
     it('validation pass 전에는 로컬 승인 버튼이 보이지 않는다', () => {
       render(<PreviewPanel draft={ARTIFACT} artifactSource={ARTIFACT_SOURCE} onClose={vi.fn()} />);
-      expect(screen.queryByRole('button', { name: '승인' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '로컬 승인' })).not.toBeInTheDocument();
     });
 
     it('validation pass 후 로컬 승인 버튼이 나타난다', async () => {
@@ -392,7 +392,7 @@ describe('PreviewPanel', () => {
       fireEvent.click(screen.getByRole('button', { name: '검증 실행' }));
 
       await waitFor(() =>
-        expect(screen.getByRole('button', { name: '승인' })).toBeEnabled(),
+        expect(screen.getByRole('button', { name: '로컬 승인' })).toBeEnabled(),
       );
     });
 
@@ -411,13 +411,13 @@ describe('PreviewPanel', () => {
       fireEvent.click(screen.getByRole('button', { name: '검증 실행' }));
 
       await waitFor(() =>
-        expect(screen.getByRole('button', { name: '승인' })).toBeEnabled(),
+        expect(screen.getByRole('button', { name: '로컬 승인' })).toBeEnabled(),
       );
 
-      fireEvent.click(screen.getByRole('button', { name: '승인' }));
+      fireEvent.click(screen.getByRole('button', { name: '로컬 승인' }));
       expect(onApprovalChange).toHaveBeenCalledWith(true);
-      await screen.findByText('승인 완료');
-      await screen.findByText(/저장소 반영은 별도 커밋\/PR 단계/);
+      await screen.findByText('로컬 리뷰 승인 완료');
+      await screen.findByText(/저장소 변경이나 PR은 생성되지 않습니다/);
     });
 
     it('새 artifactSource 로 remount 되면 승인 상태가 초기화된다', async () => {
@@ -433,10 +433,10 @@ describe('PreviewPanel', () => {
       );
       fireEvent.click(screen.getByRole('button', { name: '검증 실행' }));
       await waitFor(() =>
-        expect(screen.getByRole('button', { name: '승인' })).toBeEnabled(),
+        expect(screen.getByRole('button', { name: '로컬 승인' })).toBeEnabled(),
       );
-      fireEvent.click(screen.getByRole('button', { name: '승인' }));
-      await screen.findByText('승인 완료');
+      fireEvent.click(screen.getByRole('button', { name: '로컬 승인' }));
+      await screen.findByText('로컬 리뷰 승인 완료');
 
       // 새 artifactRun — key 변경으로 remount
       rerender(
@@ -448,8 +448,8 @@ describe('PreviewPanel', () => {
         />,
       );
 
-      expect(screen.queryByText('승인 완료')).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: '승인' })).not.toBeInTheDocument();
+      expect(screen.queryByText('로컬 리뷰 승인 완료')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: '로컬 승인' })).not.toBeInTheDocument();
     });
   });
 

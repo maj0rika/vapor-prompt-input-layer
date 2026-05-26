@@ -72,8 +72,7 @@ test.describe('repair-context', () => {
       timeout: process.env.CI ? 60_000 : 20_000,
     });
 
-    // After a pass there are no failed gates → button must be disabled.
-    await expect(page.getByRole('button', { name: '실패 수정' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '실패 수정' })).toBeDisabled();
+    // After a pass there are no failed gates → button must be hidden.
+    await expect(page.getByRole('button', { name: '실패 수정' })).toHaveCount(0);
   });
 });

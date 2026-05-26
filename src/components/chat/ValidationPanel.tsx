@@ -34,6 +34,22 @@ function gateSlug(label: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+const GATE_LABELS: Record<string, string> = {
+  'Artifact parse': '산출물 파싱',
+  'Metadata contract': '메타데이터 계약',
+  'Vapor token usage': 'Vapor 토큰',
+  'File write': '파일 생성',
+  Typecheck: '타입 검사',
+  Unit: '단위 테스트',
+  'Runtime Render': '런타임 렌더',
+  Axe: '접근성',
+  Cleanup: '정리',
+};
+
+function gateLabel(label: string): string {
+  return GATE_LABELS[label] ?? label;
+}
+
 /** Runner message 에서 "across N ... variants (A, B)" 패턴을 affected variants 로 추출. */
 function extractAffectedVariants(message: string): string[] {
   const match = message.match(/variants?\s*\(([^)]+)\)/i);
@@ -94,12 +110,14 @@ export function ValidationPanel({
   const failCount = result.details.filter((d) => d.status === 'fail').length;
   const warnCount = result.details.filter((d) => d.status === 'warn').length;
   const totalCount = result.details.length;
-  const summary = `${totalCount} gates · ${passCount} pass · ${failCount} fail${warnCount > 0 ? ` · ${warnCount} warn` : ''}`;
+  const summary = `${totalCount}개 항목 중 ${passCount}개 통과 · ${failCount}개 실패${warnCount > 0 ? ` · ${warnCount}개 경고` : ''}`;
 
   const overallColorPalette =
     result.status === 'pass' ? 'success' : result.status === 'fail' ? 'danger' : 'warning';
   const overallLabel =
-    result.status === 'pass' ? 'Pass' : result.status === 'fail' ? 'Fail' : 'Warn';
+    result.status === 'pass' ? '사용 가능' : result.status === 'fail' ? '수정 필요' : '검토 필요';
+  const overallSemanticLabel =
+    result.status === 'pass' ? '통과' : result.status === 'fail' ? '실패' : '경고';
 
   const timestamp = runAt
     ? new Date(runAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -109,7 +127,7 @@ export function ValidationPanel({
     <div className="flex flex-col gap-v-200">
       {/* Header summary */}
       <div className="flex flex-wrap items-center gap-v-100 border-b border-v-normal pb-v-150">
-        <Badge size="sm" colorPalette={overallColorPalette} aria-label={`전체 상태: ${overallLabel}`}>
+        <Badge size="sm" colorPalette={overallColorPalette} aria-label={`전체 상태: ${overallSemanticLabel}`}>
           {overallLabel}
         </Badge>
         <Text typography="body4" foreground="hint-200">
@@ -142,7 +160,7 @@ export function ValidationPanel({
           {result.status === 'pass'
             ? '모든 게이트 통과 — 이 artifact 는 빌드 / 단위 / 런타임 / 접근성 / 토큰 / 정리 검사를 모두 거쳤습니다. 그대로 사용해도 안전.'
             : result.status === 'fail'
-              ? '실패한 게이트가 있습니다 — 아래 카드에서 출력을 확인하고 "Fix with Agent" 로 자동 보수 요청을 보낼 수 있어요.'
+              ? '실패한 게이트가 있습니다 — 아래 카드에서 출력을 확인하고 "실패 수정" 으로 자동 보수 요청을 보낼 수 있어요.'
               : '경고가 있습니다 — 빌드는 통과하지만 토큰·접근성 등 규칙 일부를 어겼습니다. 검토 권장.'}
         </Text>
       </div>
@@ -221,7 +239,7 @@ function GateCard({
             {statusLabel}
           </Badge>
           {/* "Label: STATUS" text for E2E listitem selector compatibility */}
-          <Text typography="subtitle2">{detail.label}: {statusLabel}</Text>
+          <Text typography="subtitle2">{gateLabel(detail.label)}: {statusLabel}</Text>
         </div>
         {detail.durationMs !== undefined && (
           <Text typography="body4" foreground="hint-200">
@@ -255,7 +273,7 @@ function GateCard({
               aria-expanded={outputOpen}
               onClick={() => setOutputOpen((prev) => !prev)}
             >
-              {detail.label} output
+              {gateLabel(detail.label)} 출력
             </Button>
             <Button
               size="sm"
@@ -268,8 +286,8 @@ function GateCard({
           </div>
           {outputOpen && (
             <pre
-              className="max-h-64 overflow-y-auto rounded-v-200 border border-v-normal bg-v-canvas-100 p-v-150 font-mono text-xs"
-              aria-label={`${detail.label} 출력`}
+              className="max-h-64 min-w-0 max-w-full overflow-x-auto overflow-y-auto rounded-v-200 border border-v-normal bg-v-canvas-100 p-v-150 font-mono text-xs"
+              aria-label={`${gateLabel(detail.label)} 출력`}
               data-testid={`validation-output-${slug}`}
             >
               <code>{trimmedOutput}</code>

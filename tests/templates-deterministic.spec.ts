@@ -40,8 +40,8 @@ test.describe('templates-deterministic', () => {
     // Test tab present
     await expect(page.getByRole('tab', { name: '테스트', exact: true })).toBeVisible();
 
-    // Approve button disabled until validation passes
-    await expect(page.getByRole('button', { name: '로컬 승인' })).toBeDisabled();
+    // Approve button hidden until validation passes
+    await expect(page.getByRole('button', { name: '로컬 승인' })).toHaveCount(0);
 
     expect(chatCalls).toBe(0);
   });

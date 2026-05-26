@@ -292,7 +292,7 @@ export function PreviewPanel({
               disabled={validationStatus === 'running'}
               onClick={handleRunValidation}
             >
-              {validationStatus === 'running' ? '진행 중…' : '검증 실행'}
+              {validationStatus === 'running' ? '검증 중' : '검증 실행'}
             </Button>
           )}
           {artifactSource && validationResult && hasFailedGates && (
@@ -329,7 +329,7 @@ export function PreviewPanel({
               colorPalette="danger"
               onClick={handleCopyFailureOutput}
             >
-              로그 복사
+              실패 로그 복사
             </Button>
           )}
           {canApprove && !approved && (
@@ -342,7 +342,7 @@ export function PreviewPanel({
                 onApprovalChange?.(true);
               }}
             >
-              승인
+              로컬 승인
             </Button>
           )}
           {canClose && (
@@ -447,10 +447,10 @@ export function PreviewPanel({
       {approved && (
         <div className="grid gap-v-50 border-b border-v-normal px-v-200 py-v-150">
           <Badge size="md" colorPalette="success">
-            승인 완료
+            로컬 리뷰 승인 완료
           </Badge>
           <Text typography="body4" foreground="hint-200">
-            이 생성물을 사용해도 된다는 로컬 확인입니다. 저장소 반영은 별도 커밋/PR 단계에서 진행합니다.
+            로컬 리뷰 승인만 기록되었습니다. 저장소 변경이나 PR은 생성되지 않습니다.
           </Text>
         </div>
       )}

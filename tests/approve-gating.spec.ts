@@ -27,7 +27,7 @@ const FAIL_RESULT = {
 };
 
 test.describe('Approve gating (G005)', () => {
-  test('(A) Approve disabled before pass, enabled after pass, shows Korean confirm on click', async ({
+  test('(A) Approve hidden before pass, visible after pass, shows Korean confirm on click', async ({
     page,
   }) => {
     // First call returns fail, second returns pass
@@ -51,8 +51,8 @@ test.describe('Approve gating (G005)', () => {
       timeout: 6000,
     });
 
-    // Before any validation: Approve disabled
-    await expect(page.getByRole('button', { name: '로컬 승인' })).toBeDisabled();
+    // Before any validation: Approve hidden
+    await expect(page.getByRole('button', { name: '로컬 승인' })).toHaveCount(0);
 
     // Run validation → fail
     await page.getByRole('button', { name: '검증 실행' }).click();
@@ -60,24 +60,25 @@ test.describe('Approve gating (G005)', () => {
       timeout: 6000,
     });
 
-    // After fail: still disabled
-    await expect(page.getByRole('button', { name: '로컬 승인' })).toBeDisabled();
+    // After fail: still hidden
+    await expect(page.getByRole('button', { name: '로컬 승인' })).toHaveCount(0);
 
     // Run validation → pass
     await page.getByRole('button', { name: '검증 실행' }).click();
-    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
+    await expect(page.getByRole('button', { name: '로컬 승인' })).toBeVisible({
       timeout: 6000,
     });
 
-    // After pass: enabled
+    // After pass: visible/enabled
     await expect(page.getByRole('button', { name: '로컬 승인' })).toBeEnabled();
 
-    // Click approve → Korean confirmation visible
+    // Click approve → Korean confirmation visible, button disappears
     await page.getByRole('button', { name: '로컬 승인' }).click();
     await expect(page.getByText('로컬 리뷰 승인 완료')).toBeVisible();
     await expect(
       page.getByText('로컬 리뷰 승인만 기록되었습니다. 저장소 변경이나 PR은 생성되지 않습니다.'),
     ).toBeVisible();
+    await expect(page.getByRole('button', { name: '로컬 승인' })).toHaveCount(0);
   });
 
   test('(B) Cross-run carryover blocked: Approve resets to disabled after template switch', async ({
@@ -105,10 +106,9 @@ test.describe('Approve gating (G005)', () => {
 
     // Validate and approve first run
     await page.getByRole('button', { name: '검증 실행' }).click();
-    await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
+    await expect(page.getByRole('button', { name: '로컬 승인' })).toBeVisible({
       timeout: 6000,
     });
-    await expect(page.getByRole('button', { name: '로컬 승인' })).toBeEnabled();
 
     // Switch to a different template (토큰 동기화 mode → new artifactRun)
     await page.getByLabel('자동화 모드 선택').click();
@@ -118,11 +118,11 @@ test.describe('Approve gating (G005)', () => {
       .fill('token sync 요청');
     await page.getByRole('button', { name: '자동화 실행' }).click();
 
-    // New artifactRun: Approve must be disabled again (carry-over blocked)
+    // New artifactRun: Approve must be hidden again (carry-over blocked)
     await expect(page.getByRole('button', { name: '검증 실행' })).toBeVisible({
       timeout: 6000,
     });
-    await expect(page.getByRole('button', { name: '로컬 승인' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: '로컬 승인' })).toHaveCount(0);
   });
 
   test('(C) Repair carryover blocked: new artifactRun after Fix with Agent keeps Approve disabled', async ({
@@ -155,8 +155,8 @@ test.describe('Approve gating (G005)', () => {
       timeout: 6000,
     });
 
-    // Approve still disabled after fail
-    await expect(page.getByRole('button', { name: '로컬 승인' })).toBeDisabled();
+    // Approve still hidden after fail
+    await expect(page.getByRole('button', { name: '로컬 승인' })).toHaveCount(0);
 
     // Trigger repair → new artifactRun
     await page.getByRole('button', { name: '실패 수정' }).click();
@@ -164,7 +164,7 @@ test.describe('Approve gating (G005)', () => {
       timeout: 6000,
     });
 
-    // New artifactRun: Approve disabled (carry-over from old run blocked)
-    await expect(page.getByRole('button', { name: '로컬 승인' })).toBeDisabled();
+    // New artifactRun: Approve hidden (carry-over from old run blocked)
+    await expect(page.getByRole('button', { name: '로컬 승인' })).toHaveCount(0);
   });
 });

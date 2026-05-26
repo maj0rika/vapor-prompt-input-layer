@@ -109,7 +109,7 @@ test.describe('visual regression', () => {
     await page.getByRole('button', { name: '검증 실행' }).click();
     await expect(
       page.getByRole('button', { name: '로컬 승인' }),
-    ).toBeEnabled({ timeout: 10_000 });
+    ).toBeVisible({ timeout: 10_000 });
 
     await page.waitForTimeout(500);
     await expect(page).toHaveScreenshot('validation-pass-approve-1280.png', snapshotOptions);

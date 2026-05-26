@@ -24,7 +24,7 @@ test.describe('verified sample run', () => {
     await expect(page.getByText('동일 검증 러너')).toBeVisible();
     await expect(page.locator('[aria-label="검증: 대기"]')).toBeVisible();
     await expect(page.getByText('검증 대기: 실행 전')).toBeVisible();
-    await expect(page.getByRole('button', { name: '로컬 승인' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: '로컬 승인' })).toHaveCount(0);
     expect(chatCalls).toBe(0);
     expect(validationCalls).toBe(0);
 
@@ -63,7 +63,7 @@ test.describe('verified sample run', () => {
     await expect(
       page.getByText('정리: 통과').first(),
     ).toBeVisible();
-    await expect(page.getByRole('button', { name: '로컬 승인' })).toBeEnabled();
+    await expect(page.getByRole('button', { name: '로컬 승인' })).toBeVisible();
     expect(chatCalls).toBe(0);
   });
 });

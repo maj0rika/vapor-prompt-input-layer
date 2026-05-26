@@ -11,7 +11,6 @@ test.describe('empty workbench', () => {
     await expect(
       page.getByText('자연어로 요청하면 Vapor 컴포넌트 코드'),
     ).toBeVisible();
-    await expect(page.getByText('현재: 요청')).toBeVisible();
     await expect(page.locator('[aria-label="검증: 대기"]')).toBeVisible();
     await expect(page.getByText('Canvas 대기')).toBeVisible();
     await expect(page.getByText('검증 게이트 준비됨')).toBeVisible();

@@ -275,7 +275,7 @@ test.describe('artifact canvas runtime', () => {
     await expect(
       page.getByRole('listitem').filter({ hasText: /^Vapor token usage: FAIL$/ }),
     ).toBeVisible({ timeout: 8000 });
-    await expect(page.getByRole('button', { name: '로컬 승인' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: '로컬 승인' })).toHaveCount(0);
 
     await page.getByRole('button', { name: '실패 수정' }).click();
     await expect(page.getByText(/실패한 validation 결과를 바탕으로 수정/)).toBeVisible();
@@ -293,7 +293,7 @@ test.describe('artifact canvas runtime', () => {
     await expect(
       page.getByRole('listitem').filter({ hasText: /^Vapor token usage: PASS$/ }),
     ).toBeVisible({ timeout: 8000 });
-    await expect(page.getByRole('button', { name: '로컬 승인' })).toBeEnabled();
+    await expect(page.getByRole('button', { name: '로컬 승인' })).toBeVisible();
 
     await page.getByRole('button', { name: '로컬 승인' }).click();
     await expect(page.getByText('로컬 리뷰 승인 완료')).toBeVisible();

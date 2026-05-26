@@ -364,20 +364,11 @@ function RunPipelineBar({
     status: PipelineStepStatus;
   }>;
 }) {
-  const currentStep =
-    [...steps].reverse().find((step) => step.status === 'active') ??
-    [...steps].reverse().find((step) => step.status === 'pass') ??
-    steps[0];
-  const currentLabel = currentStep ? PIPELINE_LABELS[currentStep.label] : '';
-
   return (
     <div
       aria-label="요청에서 승인까지 진행 상태"
-      className="flex flex-wrap items-center gap-v-100 border-b border-v-normal px-v-200 py-v-150"
+      className="flex min-w-0 flex-wrap items-center gap-v-100 border-b border-v-normal px-v-200 py-v-150"
     >
-      <span className="rounded-v-999 bg-v-primary-100 px-v-100 py-v-50 text-xs font-semibold text-v-primary">
-        현재: {currentLabel}
-      </span>
       {steps.map((step, index) => (
         <div key={step.label} className="flex items-center gap-v-50">
           <span
@@ -408,7 +399,7 @@ function RunPipelineBar({
 
 const PIPELINE_LABELS: Record<string, string> = {
   Prompt: '요청',
-  Artifact: '생성',
+  Artifact: '산출물',
   Canvas: '미리보기',
   Validation: '검증',
   Repair: '수정',

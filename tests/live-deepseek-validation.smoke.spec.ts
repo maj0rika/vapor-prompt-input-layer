@@ -61,28 +61,28 @@ test.describe('Live DeepSeek validation smoke', () => {
     const testsTab = page.getByRole('tab', { name: '검증' });
     await testsTab.click();
 
-    // 전체 상태 badge 노출 (Pass / Fail / Warn) — 어느 결과든 60초 내 settled
+    // 전체 상태 badge 노출 (통과 / 실패 / 경고) — 어느 결과든 60초 내 settled
     const statusBadge = page.locator('[aria-label^="전체 상태:"]');
     await expect(statusBadge).toBeVisible({ timeout: 60_000 });
     const stateLabel = await statusBadge.first().getAttribute('aria-label');
-    expect(stateLabel).toMatch(/전체 상태: (Pass|Fail|Warn)/);
+    expect(stateLabel).toMatch(/전체 상태: (통과|실패|경고)/);
 
     // gate count summary 노출 (예: "6 gates · ...")
     await expect(page.getByText(/\d+ gates · /)).toBeVisible();
 
     // 실패한 gate 가 있다면 failure reason 이 UI 에 보여야 함 (validation-output-*
     // testid 가 최소 한 개 존재 — 실패 gate output disclosure 가 기본 펼쳐짐)
-    if (stateLabel?.includes('Fail')) {
+    if (stateLabel?.includes('실패')) {
       const failedOutputs = page.locator('[data-testid^="validation-output-"]');
       await expect(failedOutputs.first()).toBeVisible();
     }
 
-    // 통과 시 Approve 버튼 enabled, 실패 시 disabled (G005 invariant 회귀 가드)
+    // 통과 시 Approve 버튼 visible, 실패 시 hidden (G005 invariant 회귀 가드)
     const approveBtn = page.getByRole('button', { name: '로컬 승인' });
-    if (stateLabel?.includes('Pass')) {
-      await expect(approveBtn).toBeEnabled();
+    if (stateLabel?.includes('통과')) {
+      await expect(approveBtn).toBeVisible();
     } else {
-      await expect(approveBtn).toBeDisabled();
+      await expect(approveBtn).toHaveCount(0);
     }
   });
 });
