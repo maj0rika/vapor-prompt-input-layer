@@ -28,13 +28,23 @@ describe('MessageBubble', () => {
     expect(screen.getByRole('status', { name: '응답 생성 중' })).toBeInTheDocument();
   });
 
-  it('스트리밍 중 본문이 들어오면 텍스트를 렌더링한다', () => {
+  it('스트리밍 중 본문이 들어오면 텍스트와 진행 인디케이터를 함께 보여준다', () => {
     render(
       <MessageBubble
         message={makeMessage({ text: '생성 중인 답변', status: 'streaming' })}
       />,
     );
     expect(screen.getByText('생성 중인 답변')).toBeInTheDocument();
+    // 텍스트가 흘러도 인디케이터는 유지되어 사용자가 진행 상태를 인지한다.
+    expect(screen.getByRole('status', { name: '응답 생성 중' })).toBeInTheDocument();
+  });
+
+  it('done 상태에서는 진행 인디케이터가 사라진다', () => {
+    render(
+      <MessageBubble
+        message={makeMessage({ text: '완성된 답변', status: 'done' })}
+      />,
+    );
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 

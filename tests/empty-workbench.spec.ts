@@ -5,7 +5,9 @@ test.describe('empty workbench', () => {
     await page.setViewportSize({ width: 1480, height: 960 });
     await page.goto('/');
 
-    await expect(page.getByRole('heading', { name: 'Vapor DS Automation Workbench' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Vapor 디자인시스템 자동화 워크벤치' }),
+    ).toBeVisible();
     await expect(
       page.getByText('자연어로 요청하면 Vapor 컴포넌트 코드'),
     ).toBeVisible();

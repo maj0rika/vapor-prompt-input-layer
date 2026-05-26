@@ -85,7 +85,10 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
           )}
 
           {showIndicator ? (
-            <StreamingIndicator />
+            <StreamingIndicator
+              startedAt={message.createdAt}
+              phase="thinking"
+            />
           ) : (
             message.text.length > 0 &&
             (isUser ? (
@@ -98,6 +101,14 @@ export function MessageBubble({ message, onRegenerate }: MessageBubbleProps) {
             ) : (
               <div aria-live={isStreaming ? 'polite' : undefined}>
                 <Markdown>{message.text}</Markdown>
+                {isStreaming && (
+                  <div className="mt-v-100">
+                    <StreamingIndicator
+                      startedAt={message.createdAt}
+                      phase="streaming"
+                    />
+                  </div>
+                )}
               </div>
             ))
           )}
