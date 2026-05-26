@@ -6,8 +6,9 @@ export type VaporComponentInput = {
 };
 
 const VAPOR_IMPORT_RE = /@vapor-ui\/core/g;
-const NATIVE_BUTTON_RE = /<button[\s>]/gi;
-const NATIVE_INPUT_RE = /<input[\s/>]/gi;
+// 대소문자 구분: 네이티브 <button> vs Vapor <Button> 구별. /gi 사용 시 Vapor 컴포넌트도 매칭되는 오류 발생.
+const NATIVE_BUTTON_RE = /<button[\s>]/g;
+const NATIVE_INPUT_RE = /<input[\s/>]/g;
 const ICON_BUTTON_RE = /<IconButton[^>]*>/g;
 const ARIA_LABEL_RE = /aria-label\s*=/g;
 
