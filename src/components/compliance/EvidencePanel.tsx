@@ -29,13 +29,11 @@ export function EvidencePanel({ evidence }: EvidencePanelProps) {
           <div className="flex items-center gap-v-100 overflow-x-auto">
             <span
               className="shrink-0 rounded-v-100 bg-v-canvas-300 px-v-100 py-v-50 font-mono text-xs text-v-hint"
-              aria-label="파일 경로"
             >
               {ev.file}
             </span>
             <span
               className="shrink-0 rounded-v-100 border border-v-normal px-v-100 py-v-50 font-mono text-xs text-v-hint"
-              aria-label={`${ev.line}번째 줄`}
             >
               L{ev.line}
             </span>

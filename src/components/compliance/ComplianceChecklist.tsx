@@ -48,18 +48,22 @@ export function ComplianceChecklist({
                 color="secondary"
                 size="md"
                 onClick={() => onSelectGate(gate.id)}
-                aria-label={`${gate.name} — ${STATUS_LABEL[gate.status]}${gate.issueCount > 0 ? `, 이슈 ${gate.issueCount}건` : ''}`}
                 className="w-full !justify-between"
               >
                 <div className="flex min-w-0 flex-col items-start gap-v-25">
                   <Text
                     typography="body3"
-                    foreground={isSelected ? 'primary-200' : 'normal-100'}
+                    foreground={isSelected ? undefined : 'normal-100'}
+                    className={isSelected ? '!text-white' : undefined}
                   >
                     {gate.name}
                   </Text>
                   {gate.issueCount > 0 && (
-                    <Text typography="body4" foreground="hint-200">
+                    <Text
+                      typography="body4"
+                      foreground={isSelected ? undefined : 'hint-200'}
+                      className={isSelected ? '!text-white' : undefined}
+                    >
                       이슈 {gate.issueCount}건
                     </Text>
                   )}

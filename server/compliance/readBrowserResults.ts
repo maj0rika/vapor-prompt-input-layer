@@ -17,7 +17,7 @@ export type BrowserSmokeResult = {
   }>;
 };
 
-const RESULT_PATH = ['test-results', 'compliance-smoke', 'result.json'];
+const RESULT_PATH = ['compliance-results', 'smoke', 'result.json'];
 /** 1시간 이상된 결과는 stale — 사용자에게 재실행 안내. */
 const STALE_AFTER_MS = 60 * 60 * 1000;
 

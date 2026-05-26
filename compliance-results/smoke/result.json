@@ -1,0 +1,118 @@
+{
+  "generatedAt": "2026-05-26T15:48:51.663Z",
+  "url": "http://127.0.0.1:5180",
+  "anyOverflow": false,
+  "testedBreakpoints": [
+    "mobile-390",
+    "tablet-768",
+    "desktop-1280",
+    "desktop-1440",
+    "desktop-1480"
+  ],
+  "testedThemes": [
+    "light",
+    "dark"
+  ],
+  "viewports": [
+    {
+      "name": "mobile-390",
+      "width": 390,
+      "height": 800,
+      "theme": "light",
+      "docOverflow": 0,
+      "bodyOverflow": 0,
+      "consoleErrors": 0,
+      "passed": true
+    },
+    {
+      "name": "mobile-390",
+      "width": 390,
+      "height": 800,
+      "theme": "dark",
+      "docOverflow": 0,
+      "bodyOverflow": 0,
+      "consoleErrors": 0,
+      "passed": true
+    },
+    {
+      "name": "tablet-768",
+      "width": 768,
+      "height": 1024,
+      "theme": "light",
+      "docOverflow": 0,
+      "bodyOverflow": 0,
+      "consoleErrors": 0,
+      "passed": true
+    },
+    {
+      "name": "tablet-768",
+      "width": 768,
+      "height": 1024,
+      "theme": "dark",
+      "docOverflow": 0,
+      "bodyOverflow": 0,
+      "consoleErrors": 0,
+      "passed": true
+    },
+    {
+      "name": "desktop-1280",
+      "width": 1280,
+      "height": 900,
+      "theme": "light",
+      "docOverflow": 0,
+      "bodyOverflow": 0,
+      "consoleErrors": 0,
+      "passed": true
+    },
+    {
+      "name": "desktop-1280",
+      "width": 1280,
+      "height": 900,
+      "theme": "dark",
+      "docOverflow": 0,
+      "bodyOverflow": 0,
+      "consoleErrors": 0,
+      "passed": true
+    },
+    {
+      "name": "desktop-1440",
+      "width": 1440,
+      "height": 900,
+      "theme": "light",
+      "docOverflow": 0,
+      "bodyOverflow": 0,
+      "consoleErrors": 0,
+      "passed": true
+    },
+    {
+      "name": "desktop-1440",
+      "width": 1440,
+      "height": 900,
+      "theme": "dark",
+      "docOverflow": 0,
+      "bodyOverflow": 0,
+      "consoleErrors": 0,
+      "passed": true
+    },
+    {
+      "name": "desktop-1480",
+      "width": 1480,
+      "height": 900,
+      "theme": "light",
+      "docOverflow": 0,
+      "bodyOverflow": 0,
+      "consoleErrors": 0,
+      "passed": true
+    },
+    {
+      "name": "desktop-1480",
+      "width": 1480,
+      "height": 900,
+      "theme": "dark",
+      "docOverflow": 0,
+      "bodyOverflow": 0,
+      "consoleErrors": 0,
+      "passed": true
+    }
+  ]
+}

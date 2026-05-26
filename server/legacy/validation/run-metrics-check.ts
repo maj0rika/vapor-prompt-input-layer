@@ -78,7 +78,7 @@ function record(
 }
 
 async function run(): Promise<void> {
-  const componentsDir = join(ROOT, 'src', 'components');
+  const componentsDir = join(ROOT, '..', 'src', 'legacy', 'components');
   const componentFiles = await readTextRecursive(
     componentsDir,
     ['.ts', '.tsx'],
@@ -142,8 +142,8 @@ async function run(): Promise<void> {
   );
 
   // S01: filename sanitize 함수가 parser + writeGen 양쪽에서 호출되는지
-  const parserSrc = await readFile(join(ROOT, 'src/agent/responseParser.ts'), 'utf8');
-  const writeGenSrc = await readFile(join(ROOT, 'server/legacy/validation/writeGeneratedFiles.ts'), 'utf8');
+  const parserSrc = await readFile(join(ROOT, '..', 'src/legacy/agent/responseParser.ts'), 'utf8');
+  const writeGenSrc = await readFile(join(ROOT, 'legacy/validation/writeGeneratedFiles.ts'), 'utf8');
   const s01 =
     /export function isSafeArtifactFilename/.test(parserSrc) &&
     /isSafeArtifactFilename\(/.test(parserSrc) &&
@@ -156,7 +156,7 @@ async function run(): Promise<void> {
   );
 
   // T02: validationProxy 의 concurrent guard
-  const proxySrc = await readFile(join(ROOT, 'server/legacy/validation/validationProxy.ts'), 'utf8');
+  const proxySrc = await readFile(join(ROOT, 'legacy/validation/validationProxy.ts'), 'utf8');
   record(
     /maxConcurrentRuns/.test(proxySrc) && /\b429\b/.test(proxySrc),
     'T02',
@@ -165,7 +165,7 @@ async function run(): Promise<void> {
   );
 
   // T03: TTL sweep export
-  const tempWsSrc = await readFile(join(ROOT, 'server/legacy/validation/createTempWorkspace.ts'), 'utf8');
+  const tempWsSrc = await readFile(join(ROOT, 'legacy/validation/createTempWorkspace.ts'), 'utf8');
   record(
     /sweepStaleTempWorkspaces/.test(tempWsSrc),
     'T03',
@@ -174,7 +174,7 @@ async function run(): Promise<void> {
   );
 
   // T04: SIGKILL escalation
-  const runCmdSrc = await readFile(join(ROOT, 'server/legacy/validation/runCommand.ts'), 'utf8');
+  const runCmdSrc = await readFile(join(ROOT, 'legacy/validation/runCommand.ts'), 'utf8');
   record(
     /SIGKILL/.test(runCmdSrc) && /SIGKILL_ESCALATION_DELAY_MS/.test(runCmdSrc),
     'T04',
@@ -183,7 +183,7 @@ async function run(): Promise<void> {
   );
 
   // U01: validation 탭 한국어
-  const previewPanelSrc = await readFile(join(ROOT, 'src/components/chat/PreviewPanel.tsx'), 'utf8');
+  const previewPanelSrc = await readFile(join(ROOT, '..', 'src/legacy/components/chat/PreviewPanel.tsx'), 'utf8');
   record(
     /validation:\s*'검증'/.test(previewPanelSrc),
     'U01',
@@ -192,7 +192,7 @@ async function run(): Promise<void> {
   );
 
   // U06: repair chain attempts UI
-  const chatScreenSrc = await readFile(join(ROOT, 'src/components/chat/ChatScreen.tsx'), 'utf8');
+  const chatScreenSrc = await readFile(join(ROOT, '..', 'src/legacy/components/chat/ChatScreen.tsx'), 'utf8');
   record(
     /MAX_REPAIR_ATTEMPTS_PER_CHAIN/.test(chatScreenSrc) && /repairChainAttempts/.test(chatScreenSrc),
     'U06',
@@ -201,7 +201,7 @@ async function run(): Promise<void> {
   );
 
   // U07: ThemeToggle 가 Vapor useTheme 을 사용
-  const themeToggleSrc = await readFile(join(ROOT, 'src/components/chat/ThemeToggle.tsx'), 'utf8');
+  const themeToggleSrc = await readFile(join(ROOT, '..', 'src/legacy/components/chat/ThemeToggle.tsx'), 'utf8');
   record(
     /useTheme/.test(themeToggleSrc) && /setTheme/.test(themeToggleSrc),
     'U07',
@@ -210,7 +210,7 @@ async function run(): Promise<void> {
   );
 
   // V05: token gate hsl/oklch
-  const tokenUsageSrc = await readFile(join(ROOT, 'src/agent/tokenUsage.ts'), 'utf8');
+  const tokenUsageSrc = await readFile(join(ROOT, '..', 'src/legacy/agent/tokenUsage.ts'), 'utf8');
   record(
     /hsl/.test(tokenUsageSrc) && /oklch/.test(tokenUsageSrc) && /NAMED_COLOR_KEYWORDS/.test(tokenUsageSrc),
     'V05',
@@ -219,7 +219,7 @@ async function run(): Promise<void> {
   );
 
   // V06: ESLint config 에 vapor boundary 규칙 존재
-  const eslintSrc = await readFile(join(ROOT, 'eslint.config.js'), 'utf8');
+  const eslintSrc = await readFile(join(ROOT, '..', 'eslint.config.js'), 'utf8');
   record(
     /no-restricted-imports/.test(eslintSrc) && /@vapor-ui\/core/.test(eslintSrc),
     'V06',
@@ -246,7 +246,7 @@ async function run(): Promise<void> {
   );
 
   // A05: prefers-reduced-motion
-  const convoSrc = await readFile(join(ROOT, 'src/components/chat/ConversationView.tsx'), 'utf8');
+  const convoSrc = await readFile(join(ROOT, '..', 'src/legacy/components/chat/ConversationView.tsx'), 'utf8');
   record(
     /prefers-reduced-motion/.test(convoSrc),
     'A05',
@@ -256,7 +256,7 @@ async function run(): Promise<void> {
 
   // S03: API key 클라이언트 노출 차단 — src/ 안에 process.env.DEEPSEEK 또는
   // import.meta.env.DEEPSEEK 가 없어야 함
-  const allSrc = await readTextRecursive(join(ROOT, 'src'), ['.ts', '.tsx'], ['.test.']);
+  const allSrc = await readTextRecursive(join(ROOT, '..', 'src'), ['.ts', '.tsx'], ['.test.']);
   const apiKeyLeaks = allSrc.filter((f) =>
     /(?:process\.env|import\.meta\.env)\.DEEPSEEK_API_KEY/.test(f.content),
   );
@@ -291,7 +291,7 @@ async function run(): Promise<void> {
   // 체감한다. perf 테스트가 budget assertion 으로 회귀를 막아야 한다.
   let parserPerfSrc = '';
   try {
-    parserPerfSrc = await readFile(join(ROOT, 'src/agent/responseParser.perf.test.ts'), 'utf8');
+    parserPerfSrc = await readFile(join(ROOT, '..', 'src/legacy/agent/responseParser.perf.test.ts'), 'utf8');
   } catch {
     parserPerfSrc = '';
   }
@@ -308,7 +308,7 @@ async function run(): Promise<void> {
   // 적용하고, timeout 분기가 테스트로 PASS 함을 정적 보장. runaway child
   // process 가 워커를 영원히 점유하지 않도록 한다.
   const runCmdTestSrc = await readFile(
-    join(ROOT, 'server/legacy/validation/runCommand.test.ts'),
+    join(ROOT, 'legacy/validation/runCommand.test.ts'),
     'utf8',
   );
   record(
@@ -326,7 +326,7 @@ async function run(): Promise<void> {
   // P01 책임이 사라지므로 정적 가드로 박는다.
   let liveSmokeSrc = '';
   try {
-    liveSmokeSrc = await readFile(join(ROOT, 'tests/live-deepseek.smoke.spec.ts'), 'utf8');
+    liveSmokeSrc = await readFile(join(ROOT, '..', 'tests/live-deepseek.smoke.spec.ts'), 'utf8');
   } catch {
     liveSmokeSrc = '';
   }
@@ -349,7 +349,7 @@ async function run(): Promise<void> {
   let spacingTokenSpecSrc = '';
   try {
     spacingTokenSpecSrc = await readFile(
-      join(ROOT, 'tests/vapor-spacing-tokens.spec.ts'),
+      join(ROOT, '..', 'tests/vapor-spacing-tokens.spec.ts'),
       'utf8',
     );
   } catch {

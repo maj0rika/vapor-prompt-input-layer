@@ -15,7 +15,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const URL = process.env.SMOKE_URL ?? 'http://127.0.0.1:5180';
-const OUT = resolve('test-results', 'compliance-smoke');
+const OUT = resolve('compliance-results', 'smoke');
 mkdirSync(OUT, { recursive: true });
 
 type Theme = 'light' | 'dark';
