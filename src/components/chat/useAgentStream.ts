@@ -15,6 +15,8 @@ export type UseAgentStreamResult = {
   /** 해당 어시스턴트 메시지를 직전 user 메시지로 다시 생성한다 (재시도). */
   regenerate: (assistantId: string) => void;
   cancel: () => void;
+  /** 진행 중인 스트림을 abort 하고 대화를 비워 EmptyState 로 되돌린다. */
+  reset: () => void;
 };
 
 /**
@@ -212,5 +214,13 @@ export function useAgentStream(client: AgentClient): UseAgentStreamResult {
     abortRef.current?.abort();
   }, []);
 
-  return { messages, isStreaming, send, loadSampleRun, regenerate, cancel };
+  const reset = useCallback(() => {
+    abortRef.current?.abort();
+    if (mountedRef.current) {
+      setIsStreaming(false);
+      setMessages([]);
+    }
+  }, []);
+
+  return { messages, isStreaming, send, loadSampleRun, regenerate, cancel, reset };
 }

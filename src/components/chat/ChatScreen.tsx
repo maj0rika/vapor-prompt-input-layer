@@ -59,7 +59,7 @@ export function ChatScreen({
   client,
 }: ChatScreenProps) {
   const agent = useMemo(() => client ?? createDefaultAgentClient(), [client]);
-  const { messages, isStreaming, send, loadSampleRun, regenerate, cancel } =
+  const { messages, isStreaming, send, loadSampleRun, regenerate, cancel, reset } =
     useAgentStream(agent);
 
   // 사용자가 명시적으로 닫은 artifact 의 id. 워크스페이스는 기본 열림이며,
@@ -177,6 +177,14 @@ export function ChatScreen({
     loadSampleRun(createVerifiedSampleRun());
   };
 
+  /** 예시·대화 모두 비우고 EmptyState 로 복귀해 다른 예시를 고를 수 있게 한다. */
+  const handleReset = () => {
+    setClosedDraftId(undefined);
+    setValidationPipeline({ state: 'idle' });
+    setRepairChainAttempts(0);
+    reset();
+  };
+
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-v-400 border border-v-normal bg-v-canvas-100 shadow-sm">
       {/* 헤더 바 */}
@@ -188,6 +196,16 @@ export function ChatScreen({
           </Text>
         </div>
         <div className="flex items-center gap-v-50">
+          {!isEmpty && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleReset}
+              aria-label="대화 초기화하고 예시 다시 선택"
+            >
+              예시 다시 선택
+            </Button>
+          )}
           {Boolean(draftId) && !showPreview && (
             <Button
               size="sm"
