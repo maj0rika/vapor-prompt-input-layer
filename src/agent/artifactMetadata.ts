@@ -168,6 +168,16 @@ function extractExportNames(source: string): Set<string> {
       if (name) names.add(name);
     }
   }
+  // `export default` 패턴 — 함수/클래스/식별자/괄호 표현식 모두 'default'
+  // 라는 export 이름을 갖는다. 이름이 같이 적힌 경우 (`export default function
+  // Foo`) 그 식별자도 함께 등록해 primaryExport 매칭 표면을 넓힌다.
+  for (const match of source.matchAll(
+    /export\s+default\s+(?:(?:function|class)\s+([A-Za-z_$][\w$]*)|([A-Za-z_$][\w$]*)|\()/g,
+  )) {
+    names.add('default');
+    const identifier = match[1] ?? match[2];
+    if (identifier) names.add(identifier);
+  }
   return names;
 }
 

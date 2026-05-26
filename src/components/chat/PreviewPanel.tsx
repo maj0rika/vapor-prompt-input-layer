@@ -1129,8 +1129,12 @@ function extractComponentExportNames(source: string): Set<string> {
       if (name) names.add(name);
     }
   }
-  if (/export\s+default\s+(?:function|class|\()/g.test(source)) {
+  for (const match of source.matchAll(
+    /export\s+default\s+(?:(?:function|class)\s+([A-Za-z_$][\w$]*)|([A-Za-z_$][\w$]*)|\()/g,
+  )) {
     names.add('default');
+    const identifier = match[1] ?? match[2];
+    if (identifier) names.add(identifier);
   }
   return names;
 }
