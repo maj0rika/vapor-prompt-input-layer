@@ -1,0 +1,58 @@
+name: update-visual-baselines
+
+# Manually dispatched workflow that regenerates Linux visual regression
+# baselines from the exact GH Actions runner image (ubuntu-latest), then
+# uploads the PNG snapshots as a downloadable artifact.
+#
+# Why this exists: Linux 베이스라인을 로컬 Docker (jammy/noble) 로 만들면
+# GH Actions runner 의 chromium / fontconfig 와 sub-pixel anti-aliasing
+# 차이로 diff ratio 가 threshold (0.02) 를 넘는 경우가 있다. CI 와 동일한
+# 환경에서 생성한 baseline 만이 안정적으로 매칭된다.
+#
+# 사용:
+#   1. main 에서 workflow_dispatch 트리거
+#   2. artifact "linux-baselines" 다운로드
+#   3. tests/visual-regression.spec.ts-snapshots/ 에 PNG 복사
+#   4. commit + push
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate:
+    name: Generate Linux baselines on ubuntu-latest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright chromium (with deps)
+        run: npx playwright install --with-deps chromium
+
+      # --update-snapshots 모드는 어떤 비교 결과도 fail 시키지 않고 baseline
+      # 을 새로 작성한다. CI=1 이 set 되어 있어 workers=2 / 늘어난 timeout
+      # 이 적용된다.
+      - name: Generate Linux baselines for visual-regression spec
+        env:
+          CI: '1'
+          VAPOR_VALIDATION_MAX_CONCURRENT: '50'
+        run: npx playwright test tests/visual-regression.spec.ts --update-snapshots
+
+      - name: Upload Linux baselines as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-baselines
+          path: tests/visual-regression.spec.ts-snapshots/*-chromium-linux.png
+          retention-days: 7
+          if-no-files-found: error
