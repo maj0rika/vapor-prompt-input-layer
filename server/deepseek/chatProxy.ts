@@ -7,7 +7,22 @@ type DeepSeekProxyRequest = {
   mode?: unknown;
   dataSources?: unknown;
   attachments?: unknown;
+  previousArtifactSource?: unknown;
+  validationResult?: unknown;
+  repairIntent?: unknown;
 };
+
+type FailedGate = 'typecheck' | 'unit' | 'runtime' | 'axe' | 'token' | 'cleanup';
+const FAILED_GATES: readonly FailedGate[] = [
+  'typecheck',
+  'unit',
+  'runtime',
+  'axe',
+  'token',
+  'cleanup',
+];
+/** previousArtifactSource 서버측 안전 상한. promptBuilder 가 추가로 8192 까지 자른다. */
+const MAX_PREVIOUS_ARTIFACT_BYTES = 64 * 1024;
 
 const DEEPSEEK_ENDPOINT = 'https://api.deepseek.com/chat/completions';
 
@@ -117,7 +132,8 @@ function readRequestBody(
   });
 }
 
-function normalizeAgentRequest(
+/** Exported for unit testing — keep in sync with handleDeepSeekChat. */
+export function normalizeAgentRequest(
   value: unknown,
 ): { ok: true; value: AgentRequest } | { ok: false; error: string } {
   const request = value as DeepSeekProxyRequest;
@@ -133,7 +149,47 @@ function normalizeAgentRequest(
         ? request.dataSources.filter((source): source is string => typeof source === 'string')
         : [],
       attachments: normalizeAttachments(request.attachments),
+      // Fix-with-Agent: 실패 게이트·이전 artifact·validation 상세를 prompt builder 가
+      // 볼 수 있도록 그대로 전달한다. 이게 빠지면 모델이 "어떤 게이트가 실패했는지"
+      // 다시 묻는 회귀가 발생한다.
+      previousArtifactSource: normalizePreviousArtifactSource(request.previousArtifactSource),
+      validationResult: request.validationResult,
+      repairIntent: normalizeRepairIntent(request.repairIntent),
     },
+  };
+}
+
+function normalizePreviousArtifactSource(value: unknown): string | undefined {
+  if (typeof value !== 'string' || value.length === 0) return undefined;
+  return value.length > MAX_PREVIOUS_ARTIFACT_BYTES
+    ? value.slice(0, MAX_PREVIOUS_ARTIFACT_BYTES)
+    : value;
+}
+
+function normalizeRepairIntent(value: unknown): AgentRequest['repairIntent'] {
+  if (!value || typeof value !== 'object') return undefined;
+  const raw = value as {
+    failedGates?: unknown;
+    maxAttempts?: unknown;
+    parentRunId?: unknown;
+  };
+
+  const failedGates = Array.isArray(raw.failedGates)
+    ? raw.failedGates.filter((gate): gate is FailedGate =>
+        typeof gate === 'string' && (FAILED_GATES as readonly string[]).includes(gate),
+      )
+    : [];
+  if (failedGates.length === 0) return undefined;
+
+  const maxAttempts =
+    typeof raw.maxAttempts === 'number' && Number.isFinite(raw.maxAttempts) && raw.maxAttempts > 0
+      ? raw.maxAttempts
+      : 1;
+
+  return {
+    failedGates,
+    maxAttempts,
+    parentRunId: typeof raw.parentRunId === 'string' ? raw.parentRunId : undefined,
   };
 }
 

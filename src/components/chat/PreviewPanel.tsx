@@ -217,14 +217,23 @@ export function PreviewPanel({
       aria-label="생성물 워크스페이스"
       className="flex min-h-0 flex-col overflow-hidden border-t border-v-normal bg-v-canvas-100 md:border-t-0 md:border-l"
     >
-      <header className="flex items-center justify-between border-b border-v-normal px-v-200 py-v-150">
-        <div className="flex min-w-0 flex-col gap-v-25">
-          <Text typography="subtitle2">Artifact 워크스페이스</Text>
-          <Text typography="body4" foreground="hint-200">
+      <header className="flex flex-wrap items-center justify-between gap-v-100 border-b border-v-normal px-v-200 py-v-150">
+        <div className="flex min-w-0 shrink-0 flex-col gap-v-25">
+          <Text
+            typography="subtitle2"
+            className="whitespace-nowrap"
+          >
+            Artifact 워크스페이스
+          </Text>
+          <Text
+            typography="body4"
+            foreground="hint-200"
+            className="whitespace-nowrap"
+          >
             생성된 Vapor 컴포넌트 패키지
           </Text>
         </div>
-        <div className="flex items-center gap-v-50">
+        <div className="flex flex-wrap items-center gap-v-50">
           {active && (
             <IconButton
               size="sm"
