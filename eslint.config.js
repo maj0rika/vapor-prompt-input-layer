@@ -118,4 +118,61 @@ export default defineConfig([
       ],
     },
   },
+
+  /*
+   * 3) compliance 경계 — compliance 코드는 레거시 LLM/DeepSeek/Agent 모듈을 import 할 수 없다.
+   *
+   * 금지 대상 레거시 디렉토리:
+   *   - src/agent/            (DeepSeek agent 엔진)
+   *   - src/components/chat/  (LLM chat UI)
+   *   - src/components/prompt/(LLM prompt UI)
+   *   - server/deepseek/      (DeepSeek API 서버)
+   *   - server/preview/       (미리보기 서버)
+   *
+   * 적용 범위:
+   *   - src/compliance/**
+   *   - src/components/compliance/**
+   *   - src/app/CompliancePage.tsx
+   */
+  {
+    files: [
+      'src/compliance/**/*.{ts,tsx}',
+      'src/components/compliance/**/*.{ts,tsx}',
+      'src/app/CompliancePage.tsx',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/agent/**', '**/agent'],
+              message:
+                'Compliance 코드는 레거시 src/agent/ 모듈을 import 할 수 없습니다. (legacy LLM 경계 — src/legacy/README.md 참고)',
+            },
+            {
+              group: ['**/components/chat/**', '**/components/chat'],
+              message:
+                'Compliance 코드는 레거시 src/components/chat/ 모듈을 import 할 수 없습니다. (legacy LLM 경계 — src/legacy/README.md 참고)',
+            },
+            {
+              group: ['**/components/prompt/**', '**/components/prompt'],
+              message:
+                'Compliance 코드는 레거시 src/components/prompt/ 모듈을 import 할 수 없습니다. (legacy LLM 경계 — src/legacy/README.md 참고)',
+            },
+            {
+              group: ['**/deepseek/**'],
+              message:
+                'Compliance 코드는 레거시 server/deepseek/ 모듈을 import 할 수 없습니다. (legacy LLM 경계 — src/legacy/README.md 참고)',
+            },
+            {
+              group: ['**/preview/**'],
+              message:
+                'Compliance 코드는 레거시 server/preview/ 모듈을 import 할 수 없습니다. (legacy LLM 경계 — src/legacy/README.md 참고)',
+            },
+          ],
+        },
+      ],
+    },
+  },
 ])
