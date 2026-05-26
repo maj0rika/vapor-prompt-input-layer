@@ -31,6 +31,7 @@ export type {
   ChatMessage,
   MessageAttachment,
   MessageStatus,
+  PriorTurn,
   Role,
 } from './types';
 export type { VerifiedSampleRun } from './verifiedSample';

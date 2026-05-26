@@ -1,6 +1,11 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { buildDeepSeekPayload } from '../../src/agent/promptBuilder';
-import type { AgentMode, AgentRequest, MessageAttachment } from '../../src/agent/types';
+import type {
+  AgentMode,
+  AgentRequest,
+  MessageAttachment,
+  PriorTurn,
+} from '../../src/agent/types';
 
 type DeepSeekProxyRequest = {
   text?: unknown;
@@ -10,6 +15,7 @@ type DeepSeekProxyRequest = {
   previousArtifactSource?: unknown;
   validationResult?: unknown;
   repairIntent?: unknown;
+  priorTurns?: unknown;
 };
 
 type FailedGate = 'typecheck' | 'unit' | 'runtime' | 'axe' | 'token' | 'cleanup';
@@ -155,8 +161,37 @@ export function normalizeAgentRequest(
       previousArtifactSource: normalizePreviousArtifactSource(request.previousArtifactSource),
       validationResult: request.validationResult,
       repairIntent: normalizeRepairIntent(request.repairIntent),
+      // 멀티턴: 직전 대화 history. role 화이트리스트 + turn 길이 cap + 개수 cap.
+      priorTurns: normalizePriorTurns(request.priorTurns),
     },
   };
+}
+
+/** 멀티턴 turn 의 안전 상한. promptBuilder 도 동일 cap 으로 한 번 더 자른다. */
+const MAX_PRIOR_TURNS_PROXY = 20;
+const MAX_PRIOR_TURN_CHARS_PROXY = 4 * 1024;
+
+function normalizePriorTurns(value: unknown): AgentRequest['priorTurns'] {
+  if (!Array.isArray(value)) return undefined;
+  const turns: PriorTurn[] = value.flatMap((turn): PriorTurn[] => {
+    if (!turn || typeof turn !== 'object') return [];
+    const raw = turn as { role?: unknown; content?: unknown };
+    const role = raw.role;
+    const content = raw.content;
+    if (role !== 'user' && role !== 'assistant') return [];
+    if (typeof content !== 'string' || content.length === 0) return [];
+    return [
+      {
+        role,
+        content:
+          content.length > MAX_PRIOR_TURN_CHARS_PROXY
+            ? content.slice(0, MAX_PRIOR_TURN_CHARS_PROXY)
+            : content,
+      },
+    ];
+  });
+  if (turns.length === 0) return undefined;
+  return turns.slice(-MAX_PRIOR_TURNS_PROXY);
 }
 
 function normalizePreviousArtifactSource(value: unknown): string | undefined {

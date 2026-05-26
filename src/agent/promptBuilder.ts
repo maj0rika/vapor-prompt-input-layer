@@ -1,9 +1,14 @@
 import type { AgentMode, AgentRequest, MessageAttachment } from './types';
 
 export type DeepSeekMessage = {
-  role: 'system' | 'user';
+  role: 'system' | 'user' | 'assistant';
   content: string;
 };
+
+/** 멀티턴 컨텍스트의 최대 turn 수 (user+assistant 합산). 토큰 비용 보호. */
+export const MAX_PRIOR_TURNS = 20;
+/** 각 prior turn 의 최대 문자 길이. artifact-포함 응답이 토큰 폭주하지 않도록 차단. */
+export const MAX_PRIOR_TURN_CHARS = 4 * 1024;
 
 export type DeepSeekPayload = {
   model: 'deepseek-v4-pro';
@@ -30,10 +35,21 @@ export const DS_AUTOMATION_SYSTEM_PROMPT = [
 ].join('\n');
 
 export function buildDeepSeekPayload(request: AgentRequest): DeepSeekPayload {
+  const priorMessages: DeepSeekMessage[] = (request.priorTurns ?? [])
+    .slice(-MAX_PRIOR_TURNS)
+    .map((turn) => ({
+      role: turn.role,
+      content:
+        turn.content.length > MAX_PRIOR_TURN_CHARS
+          ? `${turn.content.slice(0, MAX_PRIOR_TURN_CHARS)}\n…(truncated)`
+          : turn.content,
+    }));
+
   return {
     model: 'deepseek-v4-pro',
     messages: [
       { role: 'system', content: DS_AUTOMATION_SYSTEM_PROMPT },
+      ...priorMessages,
       { role: 'user', content: buildUserContent(request) },
     ],
     thinking: { type: 'enabled' },

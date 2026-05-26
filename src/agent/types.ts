@@ -49,6 +49,12 @@ export type ChatMessage = {
   request?: AgentRequest;
 };
 
+/** 멀티턴 컨텍스트로 모델에 함께 전달되는 직전 대화 turn. */
+export type PriorTurn = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
 /** 에이전트에 전달하는 요청. PromptBar 의 제출 payload 와 정렬된다. */
 export type AgentRequest = {
   text: string;
@@ -63,6 +69,11 @@ export type AgentRequest = {
     /** G011: 어느 ArtifactRun 의 실패를 수정하는 요청인지 lineage 추적용. */
     parentRunId?: string;
   };
+  /**
+   * 멀티턴 대화 컨텍스트. 현재 요청 직전까지의 user/assistant 메시지를
+   * 시간순으로 담는다. 비어 있으면 첫 turn 처럼 동작한다.
+   */
+  priorTurns?: PriorTurn[];
 };
 
 /**

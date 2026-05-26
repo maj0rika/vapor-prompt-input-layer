@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { isTerminal } from '../../agent';
 import type {
   AgentClient,
   AgentRequest,
   ChatMessage,
+  PriorTurn,
   VerifiedSampleRun,
 } from '../../agent';
+
+/** 멀티턴 컨텍스트 cap. promptBuilder/chatProxy 도 동일 cap 으로 한 번 더 자른다. */
+const MAX_PRIOR_TURNS = 20;
 
 export type UseAgentStreamResult = {
   messages: ChatMessage[];
@@ -32,6 +37,11 @@ export type UseAgentStreamResult = {
  */
 export function useAgentStream(client: AgentClient): UseAgentStreamResult {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  // send 안에서 closure 가 stale 한 messages 를 잡지 않도록 ref 로 항상 최신 보관.
+  const messagesRef = useRef<ChatMessage[]>(messages);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
   const [isStreaming, setIsStreaming] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
@@ -114,6 +124,25 @@ export function useAgentStream(client: AgentClient): UseAgentStreamResult {
       const controller = new AbortController();
       abortRef.current = controller;
 
+      // 멀티턴: 현재까지의 대화에서 text 가 있는 종료 메시지를 prior turns 로 묶는다.
+      // 진행 중인 streaming 메시지는 컨텍스트로 의미가 없으므로 제외한다.
+      const priorTurns: PriorTurn[] = messagesRef.current
+        .filter(
+          (message) =>
+            message.text.trim().length > 0 && isTerminal(message.status),
+        )
+        .slice(-MAX_PRIOR_TURNS)
+        .map((message) => ({ role: message.role, content: message.text }));
+      const requestWithHistory: AgentRequest = {
+        ...request,
+        priorTurns:
+          (request.priorTurns?.length ?? 0) > 0
+            ? request.priorTurns
+            : priorTurns.length > 0
+              ? priorTurns
+              : undefined,
+      };
+
       const now = Date.now();
       const userMessage: ChatMessage = {
         id: crypto.randomUUID(),
@@ -137,7 +166,7 @@ export function useAgentStream(client: AgentClient): UseAgentStreamResult {
 
       setMessages((prev) => [...prev, userMessage, assistantMessage]);
       setIsStreaming(true);
-      void runStream(request, assistantId, controller.signal);
+      void runStream(requestWithHistory, assistantId, controller.signal);
     },
     [runStream],
   );
@@ -200,12 +229,24 @@ export function useAgentStream(client: AgentClient): UseAgentStreamResult {
             : message,
         ),
       );
+      // regenerate 도 멀티턴: 같은 user 메시지가 직전이라도, 그 이전의 대화는
+      // 모델 컨텍스트로 함께 전달한다 (재생성 ≠ 새 대화).
+      const priorContextSource = messages.slice(0, index - 1);
+      const priorTurns: PriorTurn[] = priorContextSource
+        .filter(
+          (message) =>
+            message.text.trim().length > 0 && isTerminal(message.status),
+        )
+        .slice(-MAX_PRIOR_TURNS)
+        .map((message) => ({ role: message.role, content: message.text }));
+      const baseRequest = userMessage.request ?? { text: userMessage.text };
+      const requestWithHistory: AgentRequest = {
+        ...baseRequest,
+        priorTurns: priorTurns.length > 0 ? priorTurns : undefined,
+      };
+
       setIsStreaming(true);
-      void runStream(
-        userMessage.request ?? { text: userMessage.text },
-        assistantId,
-        controller.signal,
-      );
+      void runStream(requestWithHistory, assistantId, controller.signal);
     },
     [messages, runStream],
   );
