@@ -1,0 +1,69 @@
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# 동일 브랜치/PR 의 이전 실행을 자동 취소해 cost 와 시간 절약.
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-ci:
+    name: verify:ci (절대 게이트 22지표 + E2E + Lighthouse)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20 + npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Playwright 의 chromium + 필요한 시스템 라이브러리 (libnss3, libatk 등)
+      # 를 한 번에 설치한다. 별도 cache 는 두지 않는다 (browser binary 가
+      # ~150MB 라 actions cache 의 가치/복잡도 trade-off 가 모호).
+      - name: Install Playwright browsers (chromium + deps)
+        run: npx playwright install --with-deps chromium
+
+      # Lighthouse 는 chrome-launcher 로 시스템 chrome 을 찾는다. ubuntu
+      # 러너에는 google-chrome-stable 이 기본 설치되어 있지 않으므로
+      # 명시적으로 설치. setup-chrome action 이 stable channel 을 가져온다.
+      - name: Install Chrome stable (for Lighthouse)
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      # verify:ci 는 내부적으로
+      #   typecheck → lint → unit → build → bundle → E2E → generated →
+      #   lighthouse → metrics(22) 를 모두 실행한다. 어느 하나 실패 시 exit≠0.
+      - name: verify:ci
+        env:
+          # E2E 의 dev server 가 띄우는 validation proxy 의 concurrent cap.
+          # CI 워커가 작아 (~2 vCPU) 8 정도면 충분. preview-runtime spec 이
+          # 워커당 ~3 개 동시 validation 을 띄울 수 있어 여유롭게 잡는다.
+          VAPOR_VALIDATION_MAX_CONCURRENT: '50'
+        run: npm run verify:ci
+
+      # Playwright HTML report 와 trace 를 실패/성공 무관하게 보존해 회귀
+      # 발생 시 즉시 재현 가능하도록 한다.
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+          if-no-files-found: ignore
