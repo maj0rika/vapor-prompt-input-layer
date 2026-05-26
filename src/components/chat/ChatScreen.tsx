@@ -239,7 +239,7 @@ export function ChatScreen({
             <button
               type="button"
               aria-label={`Artifact workspace width ${Math.round(previewWidth)} percent`}
-              className="hidden w-2 cursor-col-resize appearance-none items-stretch justify-center border-0 bg-v-canvas-100 p-v-0 hover:bg-v-primary-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-v-primary md:flex"
+              className="hidden w-2 cursor-col-resize appearance-none items-stretch justify-center border-0 bg-v-canvas-100 p-v-0 hover:bg-v-primary-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-v-primary md:flex md:self-stretch"
               onPointerDown={(event) => {
                 event.preventDefault();
                 setIsResizing(true);
@@ -255,10 +255,10 @@ export function ChatScreen({
                 }
               }}
             >
-              <span className="h-full w-px bg-v-normal" />
+              <span className="h-full min-h-full w-px bg-v-normal" />
             </button>
             <div
-              className="artifact-workspace-pane flex min-h-0 min-w-0 flex-col md:flex-none"
+              className="artifact-workspace-pane flex min-h-0 min-w-0 flex-col md:flex-none md:self-stretch"
               style={{ '--artifact-workspace-width': `${previewWidth}%` } as CSSProperties}
             >
               <PreviewPanel

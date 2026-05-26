@@ -66,4 +66,43 @@ test.describe('workbench layout', () => {
     if (!after) throw new Error('workspace layout missing after resize');
     expect(after.width).toBeGreaterThan(before.width + 80);
   });
+
+  test('keeps the desktop split divider at full body height', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    await page
+      .getByLabel('자동화 프롬프트 입력')
+      .fill('primary 버튼 컴포넌트 생성, dark mode 지원, Vapor 토큰 준수');
+    await page.getByRole('button', { name: '자동화 실행' }).click();
+
+    const workspace = page.getByLabel('생성물 워크스페이스');
+    await expect(workspace).toBeVisible({ timeout: 6000 });
+
+    const splitter = page.getByRole('button', {
+      name: /Artifact workspace width/,
+    });
+    await expect(splitter).toBeVisible();
+
+    const heights = await page.evaluate(() => {
+      const workspaceElement = document.querySelector<HTMLElement>(
+        '[aria-label="생성물 워크스페이스"]',
+      );
+      const splitterElement = document.querySelector<HTMLElement>(
+        '[aria-label^="Artifact workspace width"]',
+      );
+      const splitBody = workspaceElement?.parentElement?.parentElement;
+      if (!workspaceElement || !splitterElement || !splitBody) {
+        throw new Error('split layout missing');
+      }
+
+      return {
+        body: splitBody.getBoundingClientRect().height,
+        splitter: splitterElement.getBoundingClientRect().height,
+        workspace: workspaceElement.getBoundingClientRect().height,
+      };
+    });
+
+    expect(heights.workspace).toBeGreaterThan(heights.body - 1);
+    expect(heights.splitter).toBeGreaterThan(heights.body - 1);
+  });
 });

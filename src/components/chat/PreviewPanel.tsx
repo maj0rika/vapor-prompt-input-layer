@@ -215,7 +215,7 @@ export function PreviewPanel({
   return (
     <aside
       aria-label="생성물 워크스페이스"
-      className="flex min-h-0 flex-col overflow-hidden border-t border-v-normal bg-v-canvas-100 md:border-t-0 md:border-l"
+      className="flex min-h-0 flex-1 flex-col overflow-hidden border-t border-v-normal bg-v-canvas-100 md:h-full md:border-t-0 md:border-l"
     >
       <header className="flex flex-wrap items-center justify-between gap-v-100 border-b border-v-normal px-v-200 py-v-150">
         <div className="flex min-w-0 shrink-0 flex-col gap-v-25">
