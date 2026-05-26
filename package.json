@@ -24,8 +24,6 @@
     "verify:lighthouse": "node server/validation/run-lighthouse-budget.ts",
     "verify:metrics": "node server/validation/run-metrics-check.ts",
     "verify:ci": "npm run verify && npm run verify:generated && npm run verify:lighthouse && npm run verify:metrics",
-    "smoke:live-deepseek": "playwright test --config=playwright.smoke.config.ts",
-    "smoke:live-deepseek:validation": "playwright test --config=playwright.smoke-validation.config.ts",
     "preview": "vite preview"
   },
   "dependencies": {
