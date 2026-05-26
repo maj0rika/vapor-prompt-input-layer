@@ -19,11 +19,12 @@
     "compliance:audit": "tsx server/compliance/runCompliance.ts",
     "compliance:governed": "tsx server/compliance/runCompliance.ts --governed",
     "verify:compliance": "tsx server/compliance/runCompliance.ts --governed --fail-on-fail",
-    "verify:bundle": "node server/validation/check-bundle-budget.ts",
-    "verify:generated": "node server/validation/run-generated-validation.ts",
-    "verify:lighthouse": "node server/validation/run-lighthouse-budget.ts",
-    "verify:metrics": "node server/validation/run-metrics-check.ts",
-    "verify:ci": "npm run verify && npm run verify:generated && npm run verify:lighthouse && npm run verify:metrics",
+    "verify:compliance:strict": "tsx server/compliance/runCompliance.ts --governed --fail-on-warn",
+    "verify:bundle": "node server/legacy/validation/check-bundle-budget.ts",
+    "verify:generated": "node server/legacy/validation/run-generated-validation.ts",
+    "verify:lighthouse": "node server/legacy/validation/run-lighthouse-budget.ts",
+    "verify:metrics": "node server/legacy/validation/run-metrics-check.ts",
+    "verify:ci": "npm run verify && npm run verify:generated && npm run verify:lighthouse && npm run verify:metrics && npm run verify:compliance:strict",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { validateGeneratedArtifact } from './validateGeneratedArtifact.ts';
 
 const fixturePath = resolve(
-  process.argv[2] ?? 'server/validation/fixtures/primary-button-artifact.md',
+  process.argv[2] ?? 'server/legacy/validation/fixtures/primary-button-artifact.md',
 );
 const markdown = await readFile(fixturePath, 'utf8');
 const result = await validateGeneratedArtifact(markdown);

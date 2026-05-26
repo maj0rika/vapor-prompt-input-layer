@@ -9,7 +9,7 @@
  * 모든 지표가 PASS 면 exit 0. 하나라도 FAIL 이면 exit 1 + JSON 결과 출력.
  *
  * 사용:
- *   node server/validation/run-metrics-check.ts
+ *   node server/legacy/validation/run-metrics-check.ts
  *   npm run verify:metrics
  */
 import { readFile, readdir } from 'node:fs/promises';
@@ -143,7 +143,7 @@ async function run(): Promise<void> {
 
   // S01: filename sanitize 함수가 parser + writeGen 양쪽에서 호출되는지
   const parserSrc = await readFile(join(ROOT, 'src/agent/responseParser.ts'), 'utf8');
-  const writeGenSrc = await readFile(join(ROOT, 'server/validation/writeGeneratedFiles.ts'), 'utf8');
+  const writeGenSrc = await readFile(join(ROOT, 'server/legacy/validation/writeGeneratedFiles.ts'), 'utf8');
   const s01 =
     /export function isSafeArtifactFilename/.test(parserSrc) &&
     /isSafeArtifactFilename\(/.test(parserSrc) &&
@@ -156,7 +156,7 @@ async function run(): Promise<void> {
   );
 
   // T02: validationProxy 의 concurrent guard
-  const proxySrc = await readFile(join(ROOT, 'server/validation/validationProxy.ts'), 'utf8');
+  const proxySrc = await readFile(join(ROOT, 'server/legacy/validation/validationProxy.ts'), 'utf8');
   record(
     /maxConcurrentRuns/.test(proxySrc) && /\b429\b/.test(proxySrc),
     'T02',
@@ -165,7 +165,7 @@ async function run(): Promise<void> {
   );
 
   // T03: TTL sweep export
-  const tempWsSrc = await readFile(join(ROOT, 'server/validation/createTempWorkspace.ts'), 'utf8');
+  const tempWsSrc = await readFile(join(ROOT, 'server/legacy/validation/createTempWorkspace.ts'), 'utf8');
   record(
     /sweepStaleTempWorkspaces/.test(tempWsSrc),
     'T03',
@@ -174,7 +174,7 @@ async function run(): Promise<void> {
   );
 
   // T04: SIGKILL escalation
-  const runCmdSrc = await readFile(join(ROOT, 'server/validation/runCommand.ts'), 'utf8');
+  const runCmdSrc = await readFile(join(ROOT, 'server/legacy/validation/runCommand.ts'), 'utf8');
   record(
     /SIGKILL/.test(runCmdSrc) && /SIGKILL_ESCALATION_DELAY_MS/.test(runCmdSrc),
     'T04',
@@ -308,7 +308,7 @@ async function run(): Promise<void> {
   // 적용하고, timeout 분기가 테스트로 PASS 함을 정적 보장. runaway child
   // process 가 워커를 영원히 점유하지 않도록 한다.
   const runCmdTestSrc = await readFile(
-    join(ROOT, 'server/validation/runCommand.test.ts'),
+    join(ROOT, 'server/legacy/validation/runCommand.test.ts'),
     'utf8',
   );
   record(

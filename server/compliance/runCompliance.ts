@@ -13,11 +13,14 @@ import { readBrowserSmokeResult } from './readBrowserResults.ts';
  *
  * Flags:
  *   --governed   compliance-governed 경로만 검사 (verify:compliance). 기본 = all.
- *   --fail-on-fail   overallStatus === FAIL 일 때 exit 1 (CI 게이트용).
+ *   --fail-on-fail   overallStatus === FAIL 일 때 exit 1.
+ *   --fail-on-warn   overallStatus !== PASS 일 때 exit 1 (strict mode).
  */
 const args = process.argv.slice(2);
 const governed = args.includes('--governed');
 const failOnFail = args.includes('--fail-on-fail');
+const failOnWarn = args.includes('--fail-on-warn');
+const strict = failOnWarn;
 const positional = args.filter((a) => !a.startsWith('--'));
 const projectRoot = resolve(positional[0] ?? process.cwd());
 const scope: ScanScope = governed ? 'governed' : 'all';
@@ -39,6 +42,12 @@ const report = createComplianceReport(signals, { eslintMessages, browserSmoke })
 
 process.stdout.write(JSON.stringify(report, null, 2) + '\n');
 
+if (failOnWarn && report.overallStatus === 'WARN') {
+  process.stderr.write(
+    `\n[compliance] overallStatus=WARN (scope=${scope}, strict mode). exit 1.\n`,
+  );
+  process.exit(1);
+}
 if (failOnFail && report.overallStatus === 'FAIL') {
   process.stderr.write(
     `\n[compliance] overallStatus=FAIL (scope=${scope}). exit 1.\n`,
