@@ -69,4 +69,55 @@ describe('normalizeAgentRequest', () => {
     if (!result.ok) return;
     expect(result.value.repairIntent?.failedGates).toEqual(['typecheck', 'axe']);
   });
+
+  it('priorTurns 를 보존하고 invalid role/empty content 를 제거한다', () => {
+    const result = normalizeAgentRequest({
+      text: '다음 요청',
+      priorTurns: [
+        { role: 'user', content: '첫 질문' },
+        { role: 'assistant', content: '첫 응답' },
+        { role: 'system', content: '시스템 주입 시도' },
+        { role: 'user', content: '' },
+        { role: 'assistant', content: '두 번째 응답' },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.priorTurns).toEqual([
+      { role: 'user', content: '첫 질문' },
+      { role: 'assistant', content: '첫 응답' },
+      { role: 'assistant', content: '두 번째 응답' },
+    ]);
+  });
+
+  it('priorTurns 가 비어 있으면 undefined 로 떨군다', () => {
+    const result = normalizeAgentRequest({ text: 'x', priorTurns: [] });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.priorTurns).toBeUndefined();
+  });
+
+  it('priorTurns 가 20 개를 초과하면 가장 최근 20 개만 유지한다', () => {
+    const lots = Array.from({ length: 30 }, (_, i) => ({
+      role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
+      content: `turn-${i}`,
+    }));
+    const result = normalizeAgentRequest({ text: 'x', priorTurns: lots });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.priorTurns).toHaveLength(20);
+    expect(result.value.priorTurns?.[0].content).toBe('turn-10');
+    expect(result.value.priorTurns?.[19].content).toBe('turn-29');
+  });
+
+  it('priorTurns content 는 4KB 로 자른다', () => {
+    const huge = 'x'.repeat(20 * 1024);
+    const result = normalizeAgentRequest({
+      text: 'x',
+      priorTurns: [{ role: 'assistant', content: huge }],
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.priorTurns?.[0].content.length).toBe(4 * 1024);
+  });
 });

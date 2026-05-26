@@ -170,6 +170,14 @@ export function ChatScreen({
     loadSampleRun(createTemplateSampleRun(templateKey));
   };
 
+  // 자연어 예시 칩이 PromptBar 입력창을 채우도록 하는 seed.
+  // key 를 bump 해서 PromptBar 를 remount, 새 defaultText 가 useState 초기값으로 들어가도록 한다.
+  const [promptSeed, setPromptSeed] = useState({ text: '', key: 0 });
+
+  const handlePickPromptText = (text: string) => {
+    setPromptSeed((prev) => ({ text, key: prev.key + 1 }));
+  };
+
   const handleRunVerifiedSample = () => {
     setClosedDraftId(undefined);
     setValidationPipeline({ state: 'idle' });
@@ -227,6 +235,7 @@ export function ChatScreen({
           {isEmpty ? (
             <EmptyState
               onPick={handlePickSuggestion}
+              onPickPromptText={handlePickPromptText}
               onRunVerifiedSample={handleRunVerifiedSample}
             />
           ) : (
@@ -306,6 +315,8 @@ export function ChatScreen({
       {/* 입력 영역 */}
       <div className="border-t border-v-normal p-v-300">
         <PromptBar
+          key={promptSeed.key}
+          defaultText={promptSeed.text}
           bare
           modeOptions={modeOptions}
           accept={acceptedFileTypes}

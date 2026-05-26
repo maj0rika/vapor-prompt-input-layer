@@ -105,3 +105,57 @@ describe('promptBuilder', () => {
     expect(content).toContain('전체 artifact');
   });
 });
+
+describe('buildDeepSeekPayload — 멀티턴', () => {
+  it('priorTurns 가 없으면 system + 단일 user 메시지만 생성한다', () => {
+    const payload = buildDeepSeekPayload({ text: '안녕' });
+    expect(payload.messages).toHaveLength(2);
+    expect(payload.messages[0].role).toBe('system');
+    expect(payload.messages[1].role).toBe('user');
+  });
+
+  it('priorTurns 를 system 다음에 시간순으로 끼워 넣는다', () => {
+    const payload = buildDeepSeekPayload({
+      text: '이번엔 dark mode 도 지원해줘',
+      priorTurns: [
+        { role: 'user', content: 'primary 버튼 만들어줘' },
+        { role: 'assistant', content: 'PrimaryButton.tsx 만들었습니다' },
+      ],
+    });
+    expect(payload.messages).toHaveLength(4);
+    expect(payload.messages[0].role).toBe('system');
+    expect(payload.messages[1]).toEqual({
+      role: 'user',
+      content: 'primary 버튼 만들어줘',
+    });
+    expect(payload.messages[2]).toEqual({
+      role: 'assistant',
+      content: 'PrimaryButton.tsx 만들었습니다',
+    });
+    expect(payload.messages[3].role).toBe('user');
+    expect(payload.messages[3].content).toContain('dark mode');
+  });
+
+  it('priorTurns 가 cap 을 초과하면 가장 최근 turn 만 유지한다', () => {
+    const lots = Array.from({ length: 30 }, (_, i) => ({
+      role: (i % 2 === 0 ? 'user' : 'assistant') as 'user' | 'assistant',
+      content: `turn-${i}`,
+    }));
+    const payload = buildDeepSeekPayload({ text: 'last', priorTurns: lots });
+    // system + (<=20 priors) + last user
+    expect(payload.messages.length).toBeLessThanOrEqual(1 + 20 + 1);
+    expect(payload.messages.find((m) => m.content === 'turn-0')).toBeUndefined();
+    expect(payload.messages.some((m) => m.content === 'turn-29')).toBe(true);
+  });
+
+  it('아주 긴 turn 은 잘라서 토큰 폭주를 막는다', () => {
+    const huge = 'x'.repeat(20 * 1024);
+    const payload = buildDeepSeekPayload({
+      text: '계속해줘',
+      priorTurns: [{ role: 'assistant', content: huge }],
+    });
+    const turn = payload.messages.find((m) => m.role === 'assistant');
+    expect(turn?.content.length).toBeLessThan(huge.length);
+    expect(turn?.content).toContain('(truncated)');
+  });
+});

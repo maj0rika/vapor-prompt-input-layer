@@ -71,18 +71,33 @@ export function ConversationView({
         onScroll={handleScroll}
         className="flex h-full min-h-0 flex-col gap-v-150 overflow-y-auto overflow-x-hidden p-v-200"
       >
-        {messages.map((message) => (
-          <MessageBubble
-            key={message.id}
-            message={message}
-            onRegenerate={
-              message.role === 'assistant' &&
-              message.artifactProvenance !== 'deterministic-sample'
-                ? () => onRegenerate(message.id)
-                : undefined
+        {messages.map((message, index) => {
+          // 보수 응답 diff 요약용: 자기 자신 이전의 가장 가까운 assistant
+          // 메시지의 artifactSource 를 찾는다.
+          let prevAssistantArtifactSource: string | undefined;
+          if (message.role === 'assistant' && message.artifactSource) {
+            for (let j = index - 1; j >= 0; j -= 1) {
+              const earlier = messages[j];
+              if (earlier.role === 'assistant' && earlier.artifactSource) {
+                prevAssistantArtifactSource = earlier.artifactSource;
+                break;
+              }
             }
-          />
-        ))}
+          }
+          return (
+            <MessageBubble
+              key={message.id}
+              message={message}
+              prevAssistantArtifactSource={prevAssistantArtifactSource}
+              onRegenerate={
+                message.role === 'assistant' &&
+                message.artifactProvenance !== 'deterministic-sample'
+                  ? () => onRegenerate(message.id)
+                  : undefined
+              }
+            />
+          );
+        })}
         <div ref={endRef} />
       </div>
       {showJumpToLatest && (

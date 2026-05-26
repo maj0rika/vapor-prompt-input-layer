@@ -67,9 +67,26 @@ export type EmptyStateProps = {
   onPick: (templateKey: TemplateKey) => void;
   /** deterministic sample 을 모델 호출 없이 workbench 에 로드한다. */
   onRunVerifiedSample: () => void;
+  /**
+   * 자연어 예시 칩 선택 시 호출 — fixture 로드 없이 PromptBar 입력창만 채운다.
+   * 미지정 시 자연어 섹션을 숨긴다.
+   */
+  onPickPromptText?: (text: string) => void;
 };
 
-export function EmptyState({ onPick, onRunVerifiedSample }: EmptyStateProps) {
+/** 자연어로 직접 입력해 시작할 수 있는 예시 prompt. */
+const NL_PROMPTS = [
+  'Vapor primary 버튼 컴포넌트 생성, dark mode 지원, Tooltip 포함',
+  'sticky header 가 있는 DataTable 컴포넌트, 정렬·페이지네이션 포함',
+  '첨부한 IconButton 의 a11y 결함 찾아서 fix 코드와 axe 테스트 작성',
+  'Figma Variables JSON 을 Vapor token CSS 로 변환하는 utility',
+];
+
+export function EmptyState({
+  onPick,
+  onRunVerifiedSample,
+  onPickPromptText,
+}: EmptyStateProps) {
   const [showUsage, setShowUsage] = useState(false);
   return (
     <div className="flex min-h-0 flex-1 flex-col justify-start gap-v-200 overflow-y-auto p-v-400 pb-v-700 pt-v-500">
@@ -121,6 +138,28 @@ export function EmptyState({ onPick, onRunVerifiedSample }: EmptyStateProps) {
                 검증 샘플 실행
               </Button>
             </div>
+
+            {onPickPromptText && (
+              <div className="flex flex-col gap-v-100">
+                <Text typography="subtitle2">자연어 예시</Text>
+                <Text typography="body4" foreground="hint-200">
+                  클릭하면 아래 입력창이 자동으로 채워집니다. 그대로 보내거나
+                  자유롭게 수정하세요. (실제 DeepSeek 호출 → 새 artifact 생성)
+                </Text>
+                <div className="flex flex-wrap gap-v-50">
+                  {NL_PROMPTS.map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      onClick={() => onPickPromptText(prompt)}
+                      className="rounded-v-200 border border-v-normal bg-v-canvas-100 px-v-150 py-v-100 text-left text-xs transition-colors hover:border-v-primary hover:bg-v-primary-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-v-primary"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="grid gap-v-100 sm:grid-cols-2">
               {TEMPLATES.map((template) => (

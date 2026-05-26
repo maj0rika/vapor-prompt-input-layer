@@ -127,6 +127,26 @@ export function ValidationPanel({
         )}
       </div>
 
+      {/* 사용자 가치 한 줄 — 게이트 통과/실패가 사용자에게 어떤 의미인지. */}
+      <div className="rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-200 py-v-150">
+        <Text
+          typography="body3"
+          foreground={
+            result.status === 'pass'
+              ? 'success-200'
+              : result.status === 'fail'
+                ? 'danger-200'
+                : 'warning-200'
+          }
+        >
+          {result.status === 'pass'
+            ? '모든 게이트 통과 — 이 artifact 는 빌드 / 단위 / 런타임 / 접근성 / 토큰 / 정리 검사를 모두 거쳤습니다. 그대로 사용해도 안전.'
+            : result.status === 'fail'
+              ? '실패한 게이트가 있습니다 — 아래 카드에서 출력을 확인하고 "Fix with Agent" 로 자동 보수 요청을 보낼 수 있어요.'
+              : '경고가 있습니다 — 빌드는 통과하지만 토큰·접근성 등 규칙 일부를 어겼습니다. 검토 권장.'}
+        </Text>
+      </div>
+
       {/* Summary list: each item is "Label: STATUS" for E2E selector compatibility */}
       <ul className="flex flex-col gap-v-50">
         {result.details.map((detail) => {

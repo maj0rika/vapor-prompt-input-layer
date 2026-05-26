@@ -337,6 +337,11 @@ export function PreviewPanel({
           aria-label="Verified sample provenance"
           className="grid gap-v-100 border-b border-v-normal bg-v-primary-100 px-v-200 py-v-150"
         >
+          <Text typography="body4" foreground="hint-200">
+            이 화면은 <strong>예시 데이터</strong>입니다. DeepSeek API 는 호출되지
+            않았어요 (연동 상태와 별개). 파서·Canvas·검증 러너는 실제 응답과 동일한
+            경로를 씁니다.
+          </Text>
           <div className="flex flex-wrap gap-v-50">
             <Badge size="sm" colorPalette="primary">
               검증된 샘플 실행
@@ -516,7 +521,39 @@ export function PreviewPanel({
             />
           </Suspense>
         ) : active ? (
-          <div aria-live="polite">
+          <div aria-live="polite" className="flex flex-col gap-v-150">
+            {active.id === 'story' && Boolean(canvas) && (
+              <div className="flex flex-wrap items-center justify-between gap-v-100 rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-200 py-v-150">
+                <Text typography="body4">
+                  story 코드만 표시됩니다. 각 story 의 props variant 는 Canvas
+                  탭에서 실제로 렌더됩니다.
+                </Text>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  colorPalette="primary"
+                  onClick={() => setActiveTab('canvas')}
+                >
+                  Canvas 탭으로 이동
+                </Button>
+              </div>
+            )}
+            {active.id === 'test' && (
+              <div className="flex flex-wrap items-center justify-between gap-v-100 rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-200 py-v-150">
+                <Text typography="body4">
+                  test 코드만 표시됩니다. 실제 Vitest 실행 결과·실패 출력은
+                  검증 탭에서 확인하세요 ("검증 실행" 으로 트리거).
+                </Text>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  colorPalette="primary"
+                  onClick={() => setActiveTab('validation')}
+                >
+                  검증 탭으로 이동
+                </Button>
+              </div>
+            )}
             <Markdown>{active.content}</Markdown>
           </div>
         ) : (
@@ -597,9 +634,11 @@ function ArtifactCanvas({
   );
   const parentOrigin = window.location.origin;
   const previewOrigin = useMemo(() => createIsolatedPreviewOrigin(parentOrigin), [parentOrigin]);
+  // 사용자가 명시적으로 다시 시도할 때 iframe 을 강제 재로드하기 위한 키.
+  const [reloadKey, setReloadKey] = useState(0);
   const previewSrc =
     artifactSource && model.canRunReactPreview && model.metadataValidation.status !== 'fail'
-      ? `${previewOrigin}/api/deepseek/preview?artifact=${encodeURIComponent(artifactSource)}&variant=${encodeURIComponent(activeVariantName)}&theme=${theme}&previewRunId=${encodeURIComponent(previewRunId)}&parentOrigin=${encodeURIComponent(parentOrigin)}`
+      ? `${previewOrigin}/api/deepseek/preview?artifact=${encodeURIComponent(artifactSource)}&variant=${encodeURIComponent(activeVariantName)}&theme=${theme}&previewRunId=${encodeURIComponent(previewRunId)}&parentOrigin=${encodeURIComponent(parentOrigin)}&reload=${reloadKey}`
       : undefined;
   const [previewState, setPreviewState] = useState<{
     src?: string;
@@ -818,21 +857,61 @@ function ArtifactCanvas({
         src={previewSrc}
         className="min-h-[180px] flex-1 rounded-v-300 border border-v-normal bg-v-canvas-100"
       />
-      {previewStatus === 'failed' && previewError && (
-        <div className="rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-200 py-v-150">
-          <Text typography="body4">{previewError}</Text>
+      {previewStatus === 'failed' && (
+        <div
+          role="alert"
+          className="flex flex-col gap-v-100 rounded-v-200 border border-v-danger bg-v-danger-100 px-v-200 py-v-150"
+        >
+          <Text typography="subtitle2" foreground="danger-200">
+            Canvas 렌더 실패
+          </Text>
+          <Text typography="body4">
+            {previewError ?? '생성된 컴포넌트를 마운트할 수 없었습니다.'}
+          </Text>
+          <Text typography="body4" foreground="hint-200">
+            Component / Story / Test 탭에서 코드와 메타데이터를 직접 확인할 수
+            있습니다. 모델이 잘못된 export 를 지정했거나 런타임 에러를 던졌을
+            가능성이 큽니다.
+          </Text>
+          <div className="flex flex-wrap gap-v-50">
+            <Button
+              size="sm"
+              variant="outline"
+              colorPalette="primary"
+              onClick={() => setReloadKey((k) => k + 1)}
+            >
+              다시 시도
+            </Button>
+          </div>
         </div>
       )}
       {previewStatus === 'timeout' && (
-        <div className="rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-200 py-v-150">
+        <div
+          role="alert"
+          className="flex flex-col gap-v-100 rounded-v-200 border border-v-warning bg-v-warning-100 px-v-200 py-v-150"
+        >
+          <Text typography="subtitle2" foreground="warning-200">
+            Canvas 런타임 응답 없음
+          </Text>
           <Text typography="body4">
-            Canvas runtime이 응답하지 않습니다. 페이지를 새로고침하거나 잠시 후 다시 시도해 주세요.
+            iframe 이 ready 신호를 보내지 않았습니다. 모델 응답이 너무 크거나
+            preview 서버가 막혀 있을 수 있어요.
           </Text>
           {previewError && (
             <Text typography="body4" foreground="hint-200">
               {previewError}
             </Text>
           )}
+          <div className="flex flex-wrap gap-v-50">
+            <Button
+              size="sm"
+              variant="outline"
+              colorPalette="primary"
+              onClick={() => setReloadKey((k) => k + 1)}
+            >
+              다시 시도
+            </Button>
+          </div>
         </div>
       )}
     </div>

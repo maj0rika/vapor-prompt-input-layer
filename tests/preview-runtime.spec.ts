@@ -324,7 +324,7 @@ test.describe('artifact canvas runtime', () => {
       timeout: 3000,
     });
     await expect(
-      page.getByText('Canvas runtime이 응답하지 않습니다. 페이지를 새로고침하거나 잠시 후 다시 시도해 주세요.'),
+      page.getByText('Canvas 런타임 응답 없음'),
     ).toBeVisible();
     // Must NOT appear as failed
     await expect(page.locator('[aria-label="Canvas runtime: failed"]')).not.toBeVisible();

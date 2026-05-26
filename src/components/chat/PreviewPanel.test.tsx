@@ -349,7 +349,7 @@ describe('PreviewPanel', () => {
 
     expect(screen.getByLabelText('Canvas runtime: timeout')).toBeInTheDocument();
     expect(
-      screen.getByText('Canvas runtime이 응답하지 않습니다. 페이지를 새로고침하거나 잠시 후 다시 시도해 주세요.'),
+      screen.getByText('Canvas 런타임 응답 없음'),
     ).toBeInTheDocument();
     // Must NOT show as 'failed'
     expect(screen.queryByLabelText('Canvas runtime: failed')).not.toBeInTheDocument();
