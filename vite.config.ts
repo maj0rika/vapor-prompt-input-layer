@@ -5,6 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { handleDeepSeekChat } from './server/deepseek/chatProxy';
 import { handleArtifactPreview } from './server/preview/previewProxy';
 import { handleGeneratedValidation } from './server/validation/validationProxy';
+import { handleComplianceReport } from './server/compliance/complianceProxy';
 
 function deepSeekProxyPlugin(apiKey?: string): Plugin {
   return {
@@ -34,6 +35,22 @@ function deepSeekProxyPlugin(apiKey?: string): Plugin {
   };
 }
 
+function complianceProxyPlugin(): Plugin {
+  return {
+    name: 'compliance-report-proxy',
+    configureServer(server) {
+      server.middlewares.use('/api/compliance/report', (req, res) => {
+        void handleComplianceReport(req, res);
+      });
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use('/api/compliance/report', (req, res) => {
+        void handleComplianceReport(req, res);
+      });
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
@@ -41,6 +58,7 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       deepSeekProxyPlugin(env.DEEPSEEK_API_KEY || process.env.DEEPSEEK_API_KEY),
+      complianceProxyPlugin(),
     ],
     server: {
       host: '0.0.0.0',
