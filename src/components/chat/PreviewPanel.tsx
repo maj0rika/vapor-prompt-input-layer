@@ -707,30 +707,36 @@ function ArtifactCanvas({
     };
 
     window.addEventListener('message', handleMessage);
+    // 부모 측 verification fetch 는 cross-origin (localhost ↔ 127.0.0.1
+    // 토글, host 바인딩, CORS preflight) 에서 "Failed to fetch" 로 떨어지는
+    // 경우가 많지만, iframe 자체 로드는 브라우저 직접 요청이라 별개로
+    // 성공한다. 따라서 fetch 결과는 "iframe 이 ready postMessage 도, error
+    // 도 못 보낸 채 endpoint 가 명확한 HTTP 에러를 반환했을 때" 에 한해
+    // 보조 진단 정보로만 사용한다. network-level Failed to fetch 만으로는
+    // 캔버스를 실패 상태로 단정하지 않는다.
     void fetch(previewSrc, { signal: abortController.signal })
       .then(async (response) => {
         if (response.ok || settled) return;
         settled = true;
         window.clearTimeout(timeoutId);
-        const message = await response.text();
+        const message = await response.text().catch(() => '');
         setPreviewState({
           src: previewSrc,
           status: 'failed',
-          error: `Preview endpoint failed (${response.status}): ${message}`,
+          error: `Preview endpoint failed (${response.status})${message ? `: ${message}` : ''}`,
         });
       })
       .catch((error: unknown) => {
+        // network 단의 Failed to fetch / CORS reject 는 부모 fetch 한정
+        // 실패로 취급하지 않는다. iframe 은 브라우저 직접 로드라 별개로
+        // 정상 ready 신호를 보낼 수 있고, 못 보내면 timeout 가드가
+        // 처리한다. 부모 fetch 결과는 HTTP 4xx/5xx 가 명확한 케이스만
+        // failed 로 단정한다.
         if (settled || abortController.signal.aborted) return;
-        settled = true;
-        window.clearTimeout(timeoutId);
-        setPreviewState({
-          src: previewSrc,
-          status: 'failed',
-          error:
-            error instanceof Error
-              ? `Preview endpoint failed: ${error.message}`
-              : 'Preview endpoint failed.',
-        });
+        console.warn(
+          '[VaporCanvas] preview fetch warning, iframe 신호를 우선 사용합니다:',
+          error,
+        );
       });
     timeoutId = window.setTimeout(() => {
       if (settled) return;
