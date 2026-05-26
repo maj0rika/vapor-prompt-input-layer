@@ -49,6 +49,9 @@ chat-log*.md
 *.prompt.md
 *.ai.md
 
+# Browser smoke results (dynamic, recreated on every verify:ci)
+/compliance-results/
+
 # Local drafts
 drafts/
 notes.local.md

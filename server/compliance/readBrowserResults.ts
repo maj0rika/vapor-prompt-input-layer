@@ -1,4 +1,4 @@
-import { readFileSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 export type BrowserSmokeResult = {
@@ -30,11 +30,13 @@ export function readBrowserSmokeResult(
 ): BrowserSmokeResult | undefined {
   const path = join(projectRoot, ...RESULT_PATH);
   try {
-    const stat = statSync(path);
-    const age = Date.now() - stat.mtimeMs;
-    if (age > STALE_AFTER_MS) return undefined;
     const text = readFileSync(path, 'utf-8');
-    return JSON.parse(text) as BrowserSmokeResult;
+    const parsed = JSON.parse(text) as BrowserSmokeResult;
+    const generatedAt = Date.parse(parsed.generatedAt);
+    if (!Number.isFinite(generatedAt)) return undefined;
+    const age = Date.now() - generatedAt;
+    if (age > STALE_AFTER_MS) return undefined;
+    return parsed;
   } catch {
     return undefined;
   }
