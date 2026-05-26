@@ -76,7 +76,8 @@ describe('aggregateGates', () => {
   it('golden snapshot — shape is stable', () => {
     const report = aggregateGates([warnGate, passGate]);
     // Strip generatedAt for deterministic snapshot
-    const { generatedAt: _ts, ...rest } = report;
+    const { generatedAt: _, ...rest } = report;
+    void _;
     expect(rest).toMatchInlineSnapshot(`
       {
         "gates": [

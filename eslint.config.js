@@ -69,6 +69,8 @@ export default defineConfig([
     files: [
       'src/components/prompt/**/*.{ts,tsx}',
       'src/components/chat/**/*.{ts,tsx}',
+      'src/legacy/components/prompt/**/*.{ts,tsx}',
+      'src/legacy/components/chat/**/*.{ts,tsx}',
       'src/main.tsx',
     ],
     rules: {
