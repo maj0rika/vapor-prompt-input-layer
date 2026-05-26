@@ -521,7 +521,39 @@ export function PreviewPanel({
             />
           </Suspense>
         ) : active ? (
-          <div aria-live="polite">
+          <div aria-live="polite" className="flex flex-col gap-v-150">
+            {active.id === 'story' && Boolean(canvas) && (
+              <div className="flex flex-wrap items-center justify-between gap-v-100 rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-200 py-v-150">
+                <Text typography="body4">
+                  story 코드만 표시됩니다. 각 story 의 props variant 는 Canvas
+                  탭에서 실제로 렌더됩니다.
+                </Text>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  colorPalette="primary"
+                  onClick={() => setActiveTab('canvas')}
+                >
+                  Canvas 탭으로 이동
+                </Button>
+              </div>
+            )}
+            {active.id === 'test' && (
+              <div className="flex flex-wrap items-center justify-between gap-v-100 rounded-v-200 border border-v-normal bg-v-canvas-200 px-v-200 py-v-150">
+                <Text typography="body4">
+                  test 코드만 표시됩니다. 실제 Vitest 실행 결과·실패 출력은
+                  검증 탭에서 확인하세요 ("검증 실행" 으로 트리거).
+                </Text>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  colorPalette="primary"
+                  onClick={() => setActiveTab('validation')}
+                >
+                  검증 탭으로 이동
+                </Button>
+              </div>
+            )}
             <Markdown>{active.content}</Markdown>
           </div>
         ) : (
