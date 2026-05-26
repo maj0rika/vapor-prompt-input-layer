@@ -86,7 +86,7 @@ export function CompliancePage() {
           role="status"
           className="mx-v-400 mb-v-200 rounded-v-200 border border-v-warning-200 bg-v-warning-100 px-v-300 py-v-200"
         >
-          <Text typography="body4" foreground="warning-300">
+          <Text typography="body4" foreground="warning-100">
             {error}
           </Text>
         </div>

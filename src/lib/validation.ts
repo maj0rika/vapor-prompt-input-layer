@@ -1,4 +1,4 @@
-import type { FileRejectReason, FileRejection } from '../components/prompt/types';
+import type { FileRejectReason, FileRejection } from '../legacy/components/prompt/types';
 
 export type FileConstraints = {
   accept?: string[];
@@ -87,5 +87,7 @@ export function describeRejection(reason: FileRejectReason): string {
       return '파일 크기가 허용 범위를 초과했습니다.';
     case 'too-many-files':
       return '파일을 하나만 첨부할 수 있습니다.';
+    default:
+      return `알 수 없는 오류 (${reason}).`;
   }
 }
