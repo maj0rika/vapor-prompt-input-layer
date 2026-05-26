@@ -125,6 +125,65 @@ test.describe('workbench E2E — natural language', () => {
     await expect(page.getByTestId('debug-response-body')).toContainText('artifact');
   });
 
+  test('(6) export default 식별자 + primaryExport="default" 응답도 Canvas 가 실제로 렌더된다', async ({
+    page,
+  }) => {
+    // 실 DeepSeek 가 다음 패턴으로 emit 하는 경우 회귀:
+    //   - artifact-meta 가 ```json 펜스로 감싸짐
+    //   - primaryExport = "default"
+    //   - artifact 본문이 `const X = ...; export default X` 형태
+    // 이전에는 metadata 검증이 fail 로 떨어지고 Canvas 가 마운트되지 않았다.
+    const ARTIFACT = `<artifact-meta>
+\`\`\`json
+{
+  "componentName": "PrimaryActionButton",
+  "primaryExport": "default",
+  "defaultProps": { "children": "Deploy component" },
+  "variants": [
+    { "name": "Default", "props": { "children": "Deploy component" } }
+  ]
+}
+\`\`\`
+</artifact-meta>
+
+<artifact type="component" filename="PrimaryActionButton.tsx">
+\`\`\`tsx
+import { Button } from '@vapor-ui/core';
+
+const PrimaryActionButton = ({ children, disabled = false }: { children: string; disabled?: boolean }) => (
+  <Button type="button" colorPalette="primary" disabled={disabled}>{children}</Button>
+);
+
+export default PrimaryActionButton;
+\`\`\`
+</artifact>
+`;
+
+    await mockDeepSeekChat(page, { artifactOverride: ARTIFACT });
+
+    await page.goto('/');
+    await page
+      .getByLabel('자동화 프롬프트 입력')
+      .fill('Primary 버튼 컴포넌트 만들어줘');
+    await page.getByRole('button', { name: '자동화 실행' }).click();
+
+    await expect(page.getByLabel('생성물 워크스페이스')).toBeVisible({
+      timeout: 8000,
+    });
+    // 메타데이터가 fail 이 아니어야 Canvas 가 마운트된다. componentName 과
+    // primaryExport 가 다르므로 'warn' 등급이지만 fail 은 아님.
+    await expect(page.getByText('Canvas 사용 불가')).toHaveCount(0);
+    await expect(page.locator('iframe[title="생성물 Canvas 미리보기"]')).toBeVisible({
+      timeout: 10_000,
+    });
+    // iframe 안에서 실제 컴포넌트가 렌더되었는지 확인.
+    await expect(
+      page
+        .frameLocator('iframe[title="생성물 Canvas 미리보기"]')
+        .getByRole('button', { name: 'Deploy component' }),
+    ).toBeVisible({ timeout: 12_000 });
+  });
+
   test('(4) viewport 1480: 자연어 component 흐름 후에도 horizontal overflow 없음', async ({
     page,
   }) => {

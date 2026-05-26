@@ -17,6 +17,12 @@ type RouteOptions = {
   templateKey?: TemplateKey;
   /** 추가 prose. 생략 시 selectScript 의 reply 를 그대로 emit. */
   replyOverride?: string;
+  /**
+   * selectScript 우회: 임의 artifact (artifact-meta + artifact 태그 포함)
+   * 를 그대로 SSE 본문으로 emit. 실 DeepSeek 의 특수 패턴 (export
+   * default Identifier, ```json fence 등) 회귀를 재현할 때 사용한다.
+   */
+  artifactOverride?: string;
 };
 
 function toSseFrame(content: string): string {
@@ -59,7 +65,8 @@ export async function mockDeepSeekChat(page: Page, options: RouteOptions = {}): 
         ? selectScriptByTemplateKey(options.templateKey)
         : selectScript(request.text ?? '', mode);
       const reply = options.replyOverride ?? script.reply;
-      await fulfillSse(route, buildSseBody(reply, script.draft));
+      const artifact = options.artifactOverride ?? script.draft;
+      await fulfillSse(route, buildSseBody(reply, artifact));
     } catch (err) {
       await route.fulfill({
         status: 500,
