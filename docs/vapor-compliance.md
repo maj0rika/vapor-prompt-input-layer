@@ -145,5 +145,5 @@
 
 ```bash
 npm run verify:ci          # 정적 분석 + 빌드 + E2E 전체
-npm run verify:compliance  # Vapor 7개 게이트 전용 (Phase 3에서 추가)
+npm run verify:compliance  # Vapor 7개 게이트 전용
 ```
