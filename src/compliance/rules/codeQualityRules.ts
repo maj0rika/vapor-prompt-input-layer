@@ -27,7 +27,7 @@ export function checkCodeQuality(input: CodeQualityInput = {}): Gate {
   const evidence: Evidence[] = [];
   const fixGuide: FixGuide[] = [];
 
-  const checks: Array<{ ok: boolean; pass: string; fail: string; fix?: FixGuide }> = [];
+  const checks: Array<{ ok: boolean; pass: string; fail: string; fix?: FixGuide; location?: string }> = [];
 
   // 1) TypeScript strict 모드
   if (input.tsconfigText !== undefined) {
@@ -40,6 +40,7 @@ export function checkCodeQuality(input: CodeQualityInput = {}): Gate {
         title: 'tsconfig 에 strict: true 추가',
         detail: 'tsconfig.app.json 의 compilerOptions 에 "strict": true 를 명시하세요.',
       },
+      location: 'tsconfig.json',
     });
   }
 
@@ -54,6 +55,7 @@ export function checkCodeQuality(input: CodeQualityInput = {}): Gate {
         title: 'package.json scripts 보강',
         detail: `다음 항목을 package.json scripts 에 추가하세요: ${missing.join(', ')}.`,
       },
+      location: 'package.json',
     });
   }
 
@@ -68,6 +70,7 @@ export function checkCodeQuality(input: CodeQualityInput = {}): Gate {
         title: 'README 확장',
         detail: '제품 정체성, 실행, 검증, 한계, 데모 스크립트를 추가하세요.',
       },
+      location: 'README.md',
     });
   }
 
@@ -89,9 +92,9 @@ export function checkCodeQuality(input: CodeQualityInput = {}): Gate {
 
   for (const c of checks) {
     if (c.ok) {
-      evidence.push({ message: c.pass });
+      evidence.push({ message: c.pass, location: c.location });
     } else {
-      evidence.push({ message: c.fail });
+      evidence.push({ message: c.fail, location: c.location });
       if (c.fix) fixGuide.push(c.fix);
     }
   }

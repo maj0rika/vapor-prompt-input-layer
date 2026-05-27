@@ -20,8 +20,6 @@ export function EvidencePanel({ evidence }: EvidencePanelProps) {
     );
   }
 
-  const hasAnyLocation = evidence.some((ev) => ev.file || ev.line > 0);
-
   return (
     <ul className="flex flex-col gap-v-150" aria-label="증거 목록">
       {evidence.map((ev, i) => {
@@ -53,7 +51,7 @@ export function EvidencePanel({ evidence }: EvidencePanelProps) {
               )}
               {ev.line > 0 && (
                 <span className="shrink-0 rounded-v-100 border border-v-normal px-v-100 py-v-50 font-mono text-xs text-v-hint">
-                  L{ev.line}
+                  L:{ev.line}
                 </span>
               )}
             </div>

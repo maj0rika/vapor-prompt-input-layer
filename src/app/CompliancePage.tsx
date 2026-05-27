@@ -59,9 +59,12 @@ export function CompliancePage() {
   }, [runScan]);
 
   const handleReset = () => {
+    // Cancel any in-flight fetch by advancing the fetch ID
+    fetchIdRef.current += 1;
     setReport(null);
     setSelectedGateId('');
     setError(null);
+    setIsRunning(false);
   };
 
   const selectedGate = report

@@ -40,7 +40,9 @@ export function ComplianceGateCard({ gate }: ComplianceGateCardProps) {
               {gate.issueCount > 0
                 ? gate.status === 'PASS'
                   ? `검증 항목 ${gate.issueCount}건`
-                  : `이슈 ${gate.issueCount}건 발견`
+                  : gate.status === 'WARN'
+                    ? `확인 필요 ${gate.issueCount}건`
+                    : `이슈 ${gate.issueCount}건 발견`
                 : '이슈 없음'}
             </Text>
           </div>
@@ -65,16 +67,20 @@ export function ComplianceGateCard({ gate }: ComplianceGateCardProps) {
             <Tabs.Button value="evidence">
               증거 목록{gate.issueCount > 0 ? ` (${gate.issueCount})` : ''}
             </Tabs.Button>
-            <Tabs.Button value="fix">수정 가이드</Tabs.Button>
+            {gate.fixGuide.steps.length > 0 && (
+              <Tabs.Button value="fix">수정 가이드</Tabs.Button>
+            )}
           </Tabs.List>
 
           <Tabs.Panel value="evidence" className="pt-v-200">
             <EvidencePanel evidence={gate.evidence} />
           </Tabs.Panel>
 
-          <Tabs.Panel value="fix" className="pt-v-200">
-            <FixGuidePanel fixGuide={gate.fixGuide} />
-          </Tabs.Panel>
+          {gate.fixGuide.steps.length > 0 && (
+            <Tabs.Panel value="fix" className="pt-v-200">
+              <FixGuidePanel fixGuide={gate.fixGuide} />
+            </Tabs.Panel>
+          )}
         </Tabs.Root>
       </Card.Body>
     </Card.Root>

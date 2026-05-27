@@ -25,7 +25,10 @@ export function checkDocumentation(input: DocumentationInput): Gate {
   const docExists = input.vaporComplianceDocExists ?? false;
 
   if (!input.readmeContent) {
-    evidence.push({ message: 'README.md not found or empty.' });
+    evidence.push({
+      message: 'README.md not found or empty.',
+      location: 'README.md',
+    });
     fixGuide.push({
       title: 'Create README.md',
       detail: `Add a README.md that mentions "${WORKBENCH_TEXT}".`,
@@ -33,23 +36,33 @@ export function checkDocumentation(input: DocumentationInput): Gate {
   } else if (!readmeMentionsWorkbench) {
     evidence.push({
       message: `README.md does not contain "${WORKBENCH_TEXT}".`,
+      location: 'README.md',
     });
     fixGuide.push({
       title: `Add "${WORKBENCH_TEXT}" to README.md`,
       detail: `Update README.md to describe the Vapor UI Compliance Workbench purpose and usage.`,
     });
   } else {
-    evidence.push({ message: `README.md contains "${WORKBENCH_TEXT}".` });
+    evidence.push({
+      message: `README.md contains "${WORKBENCH_TEXT}".`,
+      location: 'README.md',
+    });
   }
 
   if (!docExists) {
-    evidence.push({ message: 'docs/vapor-compliance.md does not exist.' });
+    evidence.push({
+      message: 'docs/vapor-compliance.md does not exist.',
+      location: 'docs/vapor-compliance.md',
+    });
     fixGuide.push({
       title: 'Create docs/vapor-compliance.md',
       detail: 'Add docs/vapor-compliance.md documenting compliance gates, scoring, and how to fix violations.',
     });
   } else {
-    evidence.push({ message: 'docs/vapor-compliance.md exists.' });
+    evidence.push({
+      message: 'docs/vapor-compliance.md exists.',
+      location: 'docs/vapor-compliance.md',
+    });
   }
 
   const hasFail = !readmeMentionsWorkbench || !docExists;
