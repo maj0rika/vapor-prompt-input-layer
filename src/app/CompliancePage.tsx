@@ -80,7 +80,10 @@ export function CompliancePage() {
       />
 
       {report && (
-        <div className="flex items-center gap-v-100 px-v-400 py-v-150">
+        <section
+          aria-label="검사 정보"
+          className="flex items-center gap-v-100 px-v-400 py-v-150"
+        >
           <Text typography="body4" foreground="hint-200">
             마지막 검사:{' '}
             {new Date(report.timestamp).toLocaleString('ko-KR', {
@@ -95,7 +98,7 @@ export function CompliancePage() {
           <span className="rounded-v-100 bg-v-canvas-300 px-v-100 py-v-25 text-xs text-v-hint">
             빌드 시 생성
           </span>
-        </div>
+        </section>
       )}
 
       {error && (

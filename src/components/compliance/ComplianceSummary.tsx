@@ -90,10 +90,10 @@ function StatChip({
 }) {
   const textClass =
     palette === 'success'
-      ? 'text-green-600'
+      ? 'text-green-700'
       : palette === 'warning'
-        ? 'text-yellow-600'
-        : 'text-red-600';
+        ? 'text-yellow-700'
+        : 'text-red-700';
 
   const bgClass =
     palette === 'success'

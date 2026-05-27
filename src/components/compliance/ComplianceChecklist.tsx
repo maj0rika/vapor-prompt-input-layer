@@ -78,7 +78,9 @@ export function ComplianceChecklist({
                   >
                     {gate.status === 'PASS'
                       ? `검증 항목 ${gate.issueCount}건`
-                      : `이슈 ${gate.issueCount}건`}
+                      : gate.status === 'WARN'
+                        ? `확인 필요 ${gate.issueCount}건`
+                        : `이슈 ${gate.issueCount}건`}
                   </Text>
                 )}
               </div>
