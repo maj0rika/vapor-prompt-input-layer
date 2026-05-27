@@ -80,10 +80,9 @@ test.describe('Vapor UI Compliance Workbench', () => {
     await page.keyboard.press('Tab');
     await expect(page.getByRole('button', { name: '리포트 초기화' })).toBeFocused();
 
-    // Tab → 첫 번째 게이트 버튼
+    // Tab → 첫 번째 게이트
     await page.keyboard.press('Tab');
-    const firstGateButton = options.first().getByRole('button');
-    await expect(firstGateButton).toBeFocused();
+    await expect(options.first()).toBeFocused();
 
     // 첫 번째 게이트는 자동 선택 상태여야 함
     await expect(options.first()).toHaveAttribute('aria-selected', 'true');
@@ -95,8 +94,7 @@ test.describe('Vapor UI Compliance Workbench', () => {
 
     // ---- Tab으로 두 번째 게이트로 이동 후 Enter 선택 ----
     await page.keyboard.press('Tab');
-    const secondGateButton = options.nth(1).getByRole('button');
-    await expect(secondGateButton).toBeFocused();
+    await expect(options.nth(1)).toBeFocused();
 
     await page.keyboard.press('Enter');
     // 두 번째 게이트가 선택되고 첫 번째 게이트 선택 해제
@@ -109,8 +107,7 @@ test.describe('Vapor UI Compliance Workbench', () => {
     // ---- Tab으로 남은 게이트들도 모두 포커스 가능한지 확인 ----
     for (let i = 2; i < gateCount; i++) {
       await page.keyboard.press('Tab');
-      const gateButton = options.nth(i).getByRole('button');
-      await expect(gateButton).toBeFocused();
+      await expect(options.nth(i)).toBeFocused();
     }
 
     // 마지막 게이트를 Enter 로 선택
@@ -130,7 +127,7 @@ test.describe('Vapor UI Compliance Workbench', () => {
     const issueGate = options.filter({ hasText: /경고|실패/ }).first();
     const hasIssueGate = (await issueGate.count()) > 0;
     const targetGate = hasIssueGate ? issueGate : options.first();
-    await targetGate.getByRole('button').click();
+    await targetGate.click();
 
     // 게이트 카드가 렌더되었는지 확인
     await expect(page.getByTestId('gate-status-badge')).toBeVisible();
@@ -139,8 +136,8 @@ test.describe('Vapor UI Compliance Workbench', () => {
     // 게이트 체크리스트 마지막 항목에서 Tab → 게이트 카드 탭 영역으로 이동
     const gateCount = await options.count();
     const lastOption = options.nth(gateCount - 1);
-    await lastOption.getByRole('button').focus();
-    await expect(lastOption.getByRole('button')).toBeFocused();
+    await lastOption.focus();
+    await expect(lastOption).toBeFocused();
 
     // Tab → 증거 목록 탭 (마지막 게이트 다음에 위치)
     await page.keyboard.press('Tab');
@@ -183,11 +180,13 @@ test.describe('Vapor UI Compliance Workbench', () => {
 
     // 첫 번째 게이트 선택 → 증거 탭이 기본 활성화됨
     const firstOption = options.first();
-    await firstOption.getByRole('button').click();
+    // 첫 게이트는 auto-selected 상태 — 클릭 대신 게이트 카드 렌더 대기
+    await page.getByTestId(/gate-card-/).waitFor({ timeout: 5000 });
+    await firstOption.click();
 
     // 증거 패널이 이슈 없음 또는 증거 목록을 표시하는지 확인
     const noIssueText = page.getByText(/이슈가 없습니다/);
-    const evidenceList = page.getByRole('list', { name: '이슈 증거 목록' });
+    const evidenceList = page.getByRole('list', { name: '증거 목록' });
     const evidenceVisible =
       (await noIssueText.isVisible().catch(() => false)) ||
       (await evidenceList.isVisible().catch(() => false));
@@ -196,10 +195,10 @@ test.describe('Vapor UI Compliance Workbench', () => {
     // 이슈가 있는 게이트로 전환 시 증거 패널 갱신 확인
     const issueGate = options.filter({ hasText: /경고|실패/ }).first();
     if ((await issueGate.count()) > 0) {
-      await issueGate.getByRole('button').click();
+      await issueGate.click();
 
       // 이슈가 있는 게이트는 증거 목록이 표시되어야 함
-      const hasEvidence = await page.getByRole('list', { name: '이슈 증거 목록' }).isVisible().catch(() => false);
+      const hasEvidence = await page.getByRole('list', { name: '증거 목록' }).isVisible().catch(() => false);
       const hasNoIssue = await page.getByText(/이슈가 없습니다/).isVisible().catch(() => false);
       expect(hasEvidence || hasNoIssue).toBe(true);
 

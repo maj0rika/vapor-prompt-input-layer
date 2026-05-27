@@ -71,7 +71,7 @@ test.describe('compliance actions', () => {
       const gateOption = page.getByTestId(testId);
 
       // 게이트 항목 클릭
-      await gateOption.getByRole('button').click();
+      await gateOption.click();
 
       // 해당 게이트만 선택 상태
       await expect(gateOption).toHaveAttribute('aria-selected', 'true');
