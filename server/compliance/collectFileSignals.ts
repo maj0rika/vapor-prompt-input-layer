@@ -1,9 +1,16 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, extname } from 'node:path';
 
+export type FileSource = {
+  path: string;
+  content: string;
+};
+
 export type FileSignals = {
   /** Combined source text from all scanned .ts/.tsx files */
   combinedSource: string;
+  /** Per-file content for location-level evidence reporting */
+  fileSources: FileSource[];
   /** List of scanned file paths (relative) */
   scannedFiles: string[];
   /** README.md content, or undefined if not found */
@@ -154,9 +161,16 @@ export function collectFileSignals(
     scriptNames = undefined;
   }
 
+  const relativeFiles = scannedFiles.map((f) => f.replace(projectRoot + '/', ''));
+  const fileSources = scannedFiles.map((f, i) => ({
+    path: relativeFiles[i],
+    content: (() => { try { return readFileSync(f, 'utf-8'); } catch { return ''; } })(),
+  }));
+
   return {
     combinedSource,
-    scannedFiles: scannedFiles.map((f) => f.replace(projectRoot + '/', '')),
+    fileSources,
+    scannedFiles: relativeFiles,
     readmeContent,
     vaporComplianceDocExists,
     tsconfigText,

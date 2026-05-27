@@ -27,16 +27,20 @@ export function EvidencePanel({ evidence }: EvidencePanelProps) {
           className="flex flex-col gap-v-75 rounded-v-200 border border-v-normal bg-v-canvas-200 p-v-200"
         >
           <div className="flex items-center gap-v-100 overflow-x-auto">
-            <span
-              className="shrink-0 rounded-v-100 bg-v-canvas-300 px-v-100 py-v-50 font-mono text-xs text-v-hint"
-            >
-              {ev.file}
-            </span>
-            <span
-              className="shrink-0 rounded-v-100 border border-v-normal px-v-100 py-v-50 font-mono text-xs text-v-hint"
-            >
-              L{ev.line}
-            </span>
+            {ev.file && (
+              <span
+                className="shrink-0 rounded-v-100 bg-v-canvas-300 px-v-100 py-v-50 font-mono text-xs text-v-hint"
+              >
+                {ev.file}
+              </span>
+            )}
+            {ev.line > 0 && (
+              <span
+                className="shrink-0 rounded-v-100 border border-v-normal px-v-100 py-v-50 font-mono text-xs text-v-hint"
+              >
+                L{ev.line}
+              </span>
+            )}
           </div>
           <pre className="overflow-x-auto rounded-v-100 bg-v-canvas-100 p-v-150 text-xs">
             <code className="font-mono text-v-foreground-normal">{ev.snippet}</code>

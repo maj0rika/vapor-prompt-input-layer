@@ -39,11 +39,21 @@ void _DEMO_RAW_COLOR; // intentional demo violation, suppress unused warning
 
 function adaptGate(g: EngineGate): ComplianceGate {
   const meta = GATE_META[g.gateId];
-  const evidence: Evidence[] = g.evidence.map((e) => ({
-    file: e.location ?? '',
-    line: 0,
-    snippet: e.message,
-  }));
+  const evidence: Evidence[] = g.evidence.map((e) => {
+    let file = '';
+    let line = 0;
+    if (e.location) {
+      const colonIdx = e.location.lastIndexOf(':');
+      if (colonIdx > 0) {
+        file = e.location.slice(0, colonIdx);
+        const linePart = e.location.slice(colonIdx + 1);
+        line = parseInt(linePart, 10) || 0;
+      } else {
+        file = e.location;
+      }
+    }
+    return { file, line, snippet: e.message };
+  });
   const steps: FixStep[] = g.fixGuide.map((f, idx) => ({
     step: idx + 1,
     description: f.title + (f.detail ? ` — ${f.detail}` : ''),

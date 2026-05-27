@@ -32,8 +32,8 @@ export function createComplianceReport(
         ? { overflowDetected: inputs.browserSmoke.anyOverflow }
         : {},
     ),
-    checkVaporComponents({ source: signals.combinedSource }),
-    checkTokens({ source: signals.combinedSource }),
+    checkVaporComponents({ fileSources: signals.fileSources }),
+    checkTokens({ fileSources: signals.fileSources }),
     checkAccessibility({ eslintMessages: inputs.eslintMessages }),
     checkResponsive(
       inputs.browserSmoke
