@@ -59,3 +59,4 @@ notes.local.md
 .env.local
 .env.*.local
 .vercel
+public/compliance-report.json
